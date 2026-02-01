@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/routes/app_routes.dart';
 
 class AdminSidebar extends StatefulWidget {
-  const AdminSidebar({super.key});
+  final int initialIndex;
+  final bool isMobile;
+  const AdminSidebar({super.key, this.initialIndex = 0, this.isMobile = false});
 
   @override
   State<AdminSidebar> createState() => _AdminSidebarState();
 }
 
 class _AdminSidebarState extends State<AdminSidebar> {
-  int _selectedIndex = 0;
-  bool _isExpanded = true; 
+  late int _selectedIndex;
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+    _isExpanded = !widget.isMobile; // Always expanded if not mobile (default), but actually if isMobile we want it expanded too? 
+    // Wait, typically sidebar on desktop is expanded by default. On mobile drawer it MUST be expanded.
+    _isExpanded = true;
+  }
 
   final List<Map<String, dynamic>> _menuItems = [
     {'icon': Icons.dashboard_outlined, 'label': 'Dashboard'},
@@ -38,7 +51,7 @@ class _AdminSidebarState extends State<AdminSidebar> {
              child: Row(
               children: [
                 InkWell(
-                  onTap: () => setState(() => _isExpanded = !_isExpanded),
+                  onTap: widget.isMobile ? null : () => setState(() => _isExpanded = !_isExpanded),
                   child: Icon(Icons.widgets, color: Colors.blue.shade700, size: 28)
                 ),
                 if (_isExpanded) ...[
@@ -73,7 +86,16 @@ class _AdminSidebarState extends State<AdminSidebar> {
                   label: item['label'],
                   isSelected: isSelected,
                   isExpanded: _isExpanded,
-                  onTap: () => setState(() => _selectedIndex = index),
+                  onTap: () {
+                    setState(() => _selectedIndex = index);
+                    if (item['label'] == 'Events') {
+                      context.go(AppRoutes.adminEventTypes);
+                    } else if (item['label'] == 'Dashboard') {
+                      context.go(AppRoutes.adminDashboard);
+                    } else if (item['label'] == 'Decorations') {
+                      context.go(AppRoutes.adminDecorations);
+                    }
+                  },
                 );
               },
             ),

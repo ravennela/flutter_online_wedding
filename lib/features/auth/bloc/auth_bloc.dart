@@ -1,10 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_online/features/auth/domain/usecase/send_otp_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import '../data/repositories/auth_repository_impl.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepositoryImpl authRepository;
+  final SendOtpUsecase authRepository;
   
   AuthBloc(this.authRepository) : super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
@@ -19,9 +20,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final result = await authRepository.login(event.phone);
+      final result = await authRepository.call(event.phone);
       result.fold(
-        (failure) => emit(AuthError(failure.message)),
+        (failure) => emit(AuthError(failure.toString())),
         (success) => emit(OtpSent(event.phone)),
       );
     } catch (e) {
@@ -35,11 +36,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final result = await authRepository.verifyOtp(event.phone, event.otp);
-      result.fold(
-        (failure) => emit(AuthError(failure.message)),
-        (user) => emit(AuthAuthenticated(user)),
-      );
+      // final result = await authRepository.verifyOtp(event.phone, event.otp);
+      // result.fold(
+      //   (failure) => emit(AuthError(failure.message)),
+      //   (user) => emit(AuthAuthenticated(user)),
+      // );
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -51,7 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await authRepository.logout();
+     // await authRepository.logout();
       emit(AuthUnauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
@@ -64,11 +65,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final result = await authRepository.getCurrentUser();
-      result.fold(
-        (failure) => emit(AuthUnauthenticated()),
-        (user) => emit(AuthAuthenticated(user)),
-      );
+      // final result = await authRepository.getCurrentUser();
+      // result.fold(
+      //   (failure) => emit(AuthUnauthenticated()),
+      //   (user) => emit(AuthAuthenticated(user)),
+      // );
     } catch (e) {
       emit(AuthUnauthenticated());
     }

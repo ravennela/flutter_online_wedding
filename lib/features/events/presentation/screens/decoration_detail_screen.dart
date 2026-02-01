@@ -2,8 +2,8 @@ import 'package:flutter/material.dart' hide ErrorWidget;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../shared/widgets/error_widget.dart';
-import '../../bloc/event_bloc.dart';
-import '../../bloc/event_state.dart';
+import '../../bloc/event/event_bloc.dart';
+import '../../bloc/event/event_state.dart';
 
 class DecorationDetailScreen extends StatelessWidget {
   const DecorationDetailScreen({super.key});

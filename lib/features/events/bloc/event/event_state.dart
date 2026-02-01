@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import '../data/models/event_model.dart';
-import '../data/models/decoration_model.dart';
+import '../../data/models/event_model.dart';
+import '../../data/models/decoration_model.dart';
 
 abstract class EventState extends Equatable {
   const EventState();

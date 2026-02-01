@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../shared/widgets/error_widget.dart';
-import '../../bloc/event_bloc.dart';
-import '../../bloc/event_state.dart';
+import '../../bloc/event/event_bloc.dart';
+import '../../bloc/event/event_state.dart';
 
 class EventDetailScreen extends StatelessWidget {
   const EventDetailScreen({super.key});

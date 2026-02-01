@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'event_event.dart';
 import 'event_state.dart';
-import '../data/repositories/event_repository_impl.dart';
+import '../../data/repositories/event_repository_impl.dart';
 
 class EventBloc extends Bloc<EventEvent, EventState> {
   final EventRepositoryImpl eventRepository;

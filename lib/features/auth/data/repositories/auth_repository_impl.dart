@@ -1,15 +1,12 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter_online/features/auth/domain/models/send_otp_model.dart';
+import 'package:flutter_online/features/auth/domain/repository/auth_repository.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../sources/auth_remote_source.dart';
-import '../models/user_model.dart';
+import '../../domain/models/user_model.dart';
 
-abstract class AuthRepository {
-  Future<Either<Failure, void>> login(String phone);
-  Future<Either<Failure, UserModel>> verifyOtp(String phone, String otp);
-  Future<Either<Failure, void>> logout();
-  Future<Either<Failure, UserModel>> getCurrentUser();
-}
+
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteSource remoteSource;
@@ -17,14 +14,14 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this.remoteSource);
   
   @override
-  Future<Either<Failure, void>> login(String phone) async {
+  Future<Either<String, SendOtpModel>> login(String phone) async {
     try {
-      await remoteSource.login(phone);
-      return const Right(null);
+      final response= await remoteSource.login(phone);
+      return  Right(SendOtpModel.fromJson(response));
     } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
+      return Left(e.message);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(e.toString());
     }
   }
   

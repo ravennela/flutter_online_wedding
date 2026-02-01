@@ -77,11 +77,11 @@ class AdminTopBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 16,
-                  backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=68'), 
-                  backgroundColor: Colors.grey,
-                ),
+                // const CircleAvatar(
+                //   radius: 16,
+                //   backgroundImage: NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=crop&w=150&h=150'), 
+                //   onBackgroundImageError: (_, __) {},
+                // ),
                 const SizedBox(width: 12),
                 Column(
                   mainAxisSize: MainAxisSize.min,

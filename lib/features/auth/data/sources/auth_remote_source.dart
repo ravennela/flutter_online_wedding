@@ -2,10 +2,10 @@ import 'dart:async';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../models/user_model.dart';
+import '../../domain/models/user_model.dart';
 
 abstract class AuthRemoteSource {
-  Future<void> login(String phone);
+  Future<Map<String, dynamic>> login(String phone);
   Future<UserModel> verifyOtp(String phone, String otp);
   Future<void> logout();
   Future<UserModel> getCurrentUser();
@@ -17,16 +17,20 @@ class AuthRemoteSourceImpl implements AuthRemoteSource {
   AuthRemoteSourceImpl(this.apiClient);
   
   @override
-  Future<void> login(String phone) async {
+  Future<Map<String, dynamic>> login(String phone) async {
     try {
-      await apiClient.post(
-        ApiConstants.login,
-        data: {'phone': phone},
+    final response=  await apiClient.post(
+        ApiConstants.sendOtp,
+        data: {'mobileNumber': phone},
       );
-    } catch (e) {
-      throw ServerException('Failed to send OTP: ${e.toString()}');
+
+      return response.data;
+    }catch (e) {
+      rethrow;
     }
+   
   }
+
   
   @override
   Future<UserModel> verifyOtp(String phone, String otp) async {
@@ -47,7 +51,7 @@ class AuthRemoteSourceImpl implements AuthRemoteSource {
   @override
   Future<void> logout() async {
     try {
-      await apiClient.post(ApiConstants.login.replaceAll('/login', '/logout'));
+      await apiClient.post(ApiConstants.sendOtp.replaceAll('/login', '/logout'));
     } catch (e) {
       throw ServerException('Failed to logout: ${e.toString()}');
     }

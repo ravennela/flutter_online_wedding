@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/admin_sidebar.dart';
-import '../widgets/admin_top_bar.dart';
+import '../widgets/admin_scaffold.dart';
 import '../widgets/kpi_card.dart';
 import '../widgets/analytics_section.dart';
 import '../widgets/recent_bookings_table.dart';
@@ -12,52 +11,54 @@ class AdminDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Light premium bg
-      body: Row(
-        children: [
-          const AdminSidebar(),
-          Expanded(
+    return AdminScaffold(
+      title: 'Dashboard',
+      selectedIndex: 0,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 1000;
+          final padding = isMobile ? 16.0 : 32.0;
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(padding),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AdminTopBar(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _DashboardHeader(),
-                        const SizedBox(height: 32),
-                        const KpiSection(),
-                        const SizedBox(height: 32),
-                        const AnalyticsSection(),
-                        const SizedBox(height: 32),
-                        const RecentBookingsTable(),
-                         const SizedBox(height: 32),
-                        const Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(flex: 2, child: UpcomingEventsSection()),
-                            SizedBox(width: 32),
-                            Expanded(flex: 1, child: PendingActionsPanel()),
-                          ],
-                        ),
-                        // Bottom spacing
-                        const SizedBox(height: 48),
-                        Center(
-                            child: Text(
-                          "© 2025 Event Management Platform Admin",
-                          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                        )),
-                      ],
-                    ),
+                if (!isMobile) ...[
+                   const _DashboardHeader(),
+                   const SizedBox(height: 32),
+                ],
+                KpiSection(isMobile: isMobile),
+                const SizedBox(height: 32),
+                const AnalyticsSection(),
+                const SizedBox(height: 32),
+                const RecentBookingsTable(),
+                const SizedBox(height: 32),
+                if (isMobile) ...[
+                  const UpcomingEventsSection(),
+                  const SizedBox(height: 32),
+                  const PendingActionsPanel(),
+                ] else ...[
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 2, child: UpcomingEventsSection()),
+                      SizedBox(width: 32),
+                      Expanded(flex: 1, child: PendingActionsPanel()),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 48),
+                Center(
+                  child: Text(
+                    "© 2025 Event Management Platform Admin",
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -88,10 +89,24 @@ class _DashboardHeader extends StatelessWidget {
 }
 
 class KpiSection extends StatelessWidget {
-  const KpiSection({super.key});
+  final bool isMobile;
+  const KpiSection({super.key, required this.isMobile});
 
   @override
   Widget build(BuildContext context) {
+    if (isMobile) {
+      return const Column(
+        children: [
+           KpiCard(title: "Total Bookings", value: "1,240", change: "12% increase", isPositive: true),
+           SizedBox(height: 16),
+           KpiCard(title: "Today's Events", value: "8", change: "+2 new", isPositive: true),
+           SizedBox(height: 16),
+           KpiCard(title: "Monthly Revenue", value: "\$45.2k", change: "8.4% growth", isPositive: true),
+           SizedBox(height: 16),
+           KpiCard(title: "Pending Actions", value: "12", change: "1 Urgent", isPositive: false, isUrgent: true),
+        ],
+      );
+    }
     return const Row(
       children: [
         Expanded(child: KpiCard(title: "Total Bookings", value: "1,240", change: "12% increase", isPositive: true)),
