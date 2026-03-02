@@ -1,6 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/core/routes/app_routes.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_state.dart';
+import 'package:flutter_online/features/cities/presentation/widgets/city_selector_widget.dart';
+import 'package:flutter_online/features/home/domain/models/admin_home_model.dart';
+import 'package:flutter_online/features/home/presentation/bloc/admin_home_bloc.dart';
+import 'package:flutter_online/features/home/presentation/bloc/admin_home_event.dart';
+import 'package:flutter_online/features/home/presentation/bloc/admin_home_state.dart';
+import 'package:flutter_online/shared/widgets/error_widget.dart' as app_error;
+import 'package:flutter_online/shared/widgets/loading_widget.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -16,7 +26,6 @@ class _PublicHomePageState extends State<PublicHomePage>
     with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
-  String _selectedCity = 'Hyderabad';
 
   @override
   void initState() {
@@ -48,245 +57,432 @@ class _PublicHomePageState extends State<PublicHomePage>
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(context),
       drawer: _buildDrawer(context),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWeb = constraints.maxWidth > 900;
-          return CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // 1. Combined Hero + Search (Fixed Alignment)
-              SliverToBoxAdapter(child: _HeroHeaderSection(isWeb: isWeb)),
-
-              // 2. Categories
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWeb ? 64 : 16,
-                    vertical: 32,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSectionHeader('Explore Categories', isWeb),
-                      const SizedBox(height: 32),
-                      _CategoryRail(isWeb: isWeb),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 3. New Content: "Our Premium Services"
-              SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.symmetric(vertical: 48),
-                  child: _ServicesSection(isWeb: isWeb),
-                ),
-              ),
-
-              // 4. Featured Collections (Editorial Style)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: _FeaturedCollections(isWeb: isWeb),
-                ),
-              ),
-
-              // 5. New Content: "Real Celebrations" (Gallery/Testimonial look)
-              SliverToBoxAdapter(child: _RealEventsSection(isWeb: isWeb)),
-
-              // 6. Trending Decorations (Grid)
-              SliverPadding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isWeb ? 64 : 16,
-                  vertical: 32,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      _buildSectionHeader(
-                        'Trending Decorations',
-                        isWeb,
-                        showViewAll: true,
-                      ),
-                      const SizedBox(height: 24),
-                      _TrendingGrid(isWeb: isWeb),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 7. Trust & Footer
-              SliverToBoxAdapter(child: _TrustSection(isWeb: isWeb)),
-              SliverToBoxAdapter(child: _buildFooter()),
-            ],
-          );
+      body: BlocBuilder<AdminHomeBloc, AdminHomeState>(
+        builder: (context, state) {
+          if (state is AdminHomeLoading) {
+            return const LoadingWidget(message: 'Loading...');
+          }
+          if (state is AdminHomeFailure) {
+            return app_error.ErrorWidget(
+              message: state.message,
+              onRetry: () =>
+                  context.read<AdminHomeBloc>().add(const FetchAdminHome()),
+            );
+          }
+          if (state is AdminHomeLoaded) {
+            return _buildContent(context, state.data);
+          }
+          return const LoadingWidget(message: 'Loading...');
         },
       ),
     );
   }
 
+  Widget _buildContent(BuildContext context, AdminHomeModel data) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWeb = constraints.maxWidth > 900;
+        return CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            SliverToBoxAdapter(
+                child: _HeroHeaderSection(hero: data.hero, isWeb: isWeb)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isWeb ? 64 : 16,
+                  vertical: 32,
+                ),
+                child: Column(
+                  children: [
+                    _buildSectionHeader('Explore Categories', isWeb),
+                    const SizedBox(height: 32),
+                    _CategoryRail(categories: data.categories, isWeb: isWeb),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Container(
+                color: AppColors.surface,
+                padding: const EdgeInsets.symmetric(vertical: 48),
+                child: _ServicesSection(services: data.services, isWeb: isWeb),
+              ),
+            ),
+            if (data.featuredEvents.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: _FeaturedCollections(
+                    featuredEvents: data.featuredEvents,
+                    isWeb: isWeb,
+                  ),
+                ),
+              ),
+            SliverToBoxAdapter(
+              child: _RealEventsSection(
+                realCelebrations: data.realCelebrations,
+                isWeb: isWeb,
+              ),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isWeb ? 64 : 16,
+                vertical: 32,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildSectionHeader(
+                      'Trending Decorations',
+                      isWeb,
+                      showViewAll: true,
+                    ),
+                    const SizedBox(height: 24),
+                    _TrendingGrid(
+                      trendingDecorations: data.trendingDecorations,
+                      isWeb: isWeb,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(child: _TrustSection(isWeb: isWeb)),
+            SliverToBoxAdapter(child: _buildFooter()),
+          ],
+        );
+      },
+    );
+  }
+
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 1024;
+    final isTablet = width >= 768 && width < 1024;
+    final isMobile = width < 768;
+
     return PreferredSize(
       preferredSize: const Size.fromHeight(70),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         color: _isScrolled
             ? AppColors.surface
-            : Colors.black.withOpacity(0.2), // Darker overlay initially
+            : Colors.black.withOpacity(0.2),
 
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SafeArea(
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _isScrolled
-                      ? AppColors.primary.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.diamond_outlined,
-                  color: _isScrolled ? AppColors.primary : Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'LuxeEvents',
-                style: AppTextStyles.headingM.copyWith(
-                  color: _isScrolled ? AppColors.textPrimary : Colors.white,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              const Spacer(),
-              _buildGlassyLocationBadge(isScrolled: _isScrolled),
-              const SizedBox(width: 12),
-              TextButton(
-                onPressed: () {
-                  context.push(AppRoutes.login);
-                },
-                child: Text(
-                  'Login',
-                  style: AppTextStyles.labelM.copyWith(
-                    color: _isScrolled ? AppColors.primary : Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: _isScrolled ? AppColors.textPrimary : Colors.white,
-                ),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
-            ],
+          child: BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, authState) {
+              final isLoggedIn = authState is AuthAuthenticated;
+              final isScrolled = _isScrolled;
+
+              if (isMobile) {
+                return _buildMobileAppBar(context, isScrolled);
+              }
+              if (isTablet) {
+                return _buildTabletAppBar(context, isScrolled, isLoggedIn);
+              }
+              return _buildDesktopAppBar(context, isScrolled, isLoggedIn);
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      backgroundColor: AppColors.surface,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              image: DecorationImage(
-                image: NetworkImage(
-                  'https://images.pexels.com/photos/2072181/pexels-photo-2072181.jpeg?auto=compress&cs=tinysrgb&w=800',
-                ),
-                fit: BoxFit.cover,
-                opacity: 0.5,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
+  Widget _buildMobileAppBar(BuildContext context, bool isScrolled) {
+    return Row(
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.menu,
+            color: isScrolled ? AppColors.textPrimary : Colors.white,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+        Expanded(
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 30,
-                  child: Icon(Icons.person, size: 30, color: AppColors.primary),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: isScrolled
+                        ? AppColors.primary.withOpacity(0.1)
+                        : Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.diamond_outlined,
+                    color: isScrolled ? AppColors.primary : Colors.white,
+                    size: 20,
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(width: 8),
                 Text(
-                  'Welcome, Guest',
-                  style: AppTextStyles.headingM.copyWith(color: Colors.white),
+                  'LuxeEvents',
+                  style: AppTextStyles.headingM.copyWith(
+                    color: isScrolled ? AppColors.textPrimary : Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.event),
-            title: const Text('My Events'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite),
-            title: const Text('Wishlist'),
-            onTap: () {},
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.support_agent),
-            title: const Text('Help Center'),
-            onTap: () {},
-          ),
-        ],
-      ),
+        ),
+        BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, authState) {
+            final isLoggedIn = authState is AuthAuthenticated;
+            if (isLoggedIn) {
+              return GestureDetector(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person_outline,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+              );
+            }
+            return TextButton(
+              onPressed: () => context.push(AppRoutes.login),
+              child: Text(
+                'Login',
+                style: AppTextStyles.labelM.copyWith(
+                  color: isScrolled ? AppColors.primary : Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildGlassyLocationBadge({required bool isScrolled}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isScrolled
-            ? AppColors.background
-            : Colors.black.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: isScrolled ? AppColors.divider : Colors.white30,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.location_on,
-            size: 14,
+  Widget _buildTabletAppBar(
+    BuildContext context,
+    bool isScrolled,
+    bool isLoggedIn,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isScrolled
+                ? AppColors.primary.withOpacity(0.1)
+                : Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.diamond_outlined,
             color: isScrolled ? AppColors.primary : Colors.white,
           ),
-          const SizedBox(width: 6),
-          Text(
-            _selectedCity,
-            style: AppTextStyles.labelM.copyWith(
-              color: isScrolled ? AppColors.textPrimary : Colors.white,
-              fontWeight: FontWeight.w600,
+        ),
+        const SizedBox(width: 12),
+        Text(
+          'LuxeEvents',
+          style: AppTextStyles.headingM.copyWith(
+            color: isScrolled ? AppColors.textPrimary : Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+        const Spacer(),
+        CitySelectorWidget(isScrolled: isScrolled),
+        if (isLoggedIn) ...[
+          const SizedBox(width: 24),
+          _MyBookingsLink(isScrolled: isScrolled),
+          const SizedBox(width: 24),
+          _ProfileIcon(isScrolled: isScrolled),
+        ] else ...[
+          const SizedBox(width: 12),
+          TextButton(
+            onPressed: () => context.push(AppRoutes.login),
+            child: Text(
+              'Login',
+              style: AppTextStyles.labelM.copyWith(
+                color: isScrolled ? AppColors.primary : Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.keyboard_arrow_down,
-            size: 16,
-            color: isScrolled ? AppColors.textSecondary : Colors.white70,
+        ],
+        const SizedBox(width: 8),
+        IconButton(
+          icon: Icon(
+            Icons.menu,
+            color: isScrolled ? AppColors.textPrimary : Colors.white,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopAppBar(
+    BuildContext context,
+    bool isScrolled,
+    bool isLoggedIn,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isScrolled
+                ? AppColors.primary.withOpacity(0.1)
+                : Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.diamond_outlined,
+            color: isScrolled ? AppColors.primary : Colors.white,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          'LuxeEvents',
+          style: AppTextStyles.headingM.copyWith(
+            color: isScrolled ? AppColors.textPrimary : Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+        const Spacer(),
+        CitySelectorWidget(isScrolled: isScrolled),
+        if (isLoggedIn) ...[
+          const SizedBox(width: 28),
+          _MyBookingsLink(isScrolled: isScrolled),
+          const SizedBox(width: 28),
+          _ProfileIcon(isScrolled: isScrolled),
+        ] else ...[
+          const SizedBox(width: 12),
+          TextButton(
+            onPressed: () => context.push(AppRoutes.login),
+            child: Text(
+              'Login',
+              style: AppTextStyles.labelM.copyWith(
+                color: isScrolled ? AppColors.primary : Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
-      ),
+        const SizedBox(width: 12),
+        IconButton(
+          icon: Icon(
+            Icons.menu,
+            color: isScrolled ? AppColors.textPrimary : Colors.white,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final isLoggedIn = authState is AuthAuthenticated;
+        final userName = isLoggedIn && authState is AuthAuthenticated
+            ? (authState.user.name.isNotEmpty ? authState.user.name : 'User')
+            : 'Guest';
+
+        return Drawer(
+          backgroundColor: AppColors.surface,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  image: DecorationImage(
+                    image: NetworkImage(
+                      'https://images.pexels.com/photos/2072181/pexels-photo-2072181.jpeg?auto=compress&cs=tinysrgb&w=800',
+                    ),
+                    fit: BoxFit.cover,
+                    opacity: 0.5,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Colors.white,
+                      radius: 30,
+                      child: Icon(Icons.person, size: 30, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Welcome, $userName',
+                      style: AppTextStyles.headingM.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home),
+                title: const Text('Home'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(AppRoutes.home);
+                },
+              ),
+              if (isLoggedIn) ...[
+                ListTile(
+                  leading: const Icon(Icons.calendar_today, color: AppColors.primary),
+                  title: const Text('My Bookings'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go(AppRoutes.myBookings);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: const Text('Profile'),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+              ListTile(
+                leading: const Icon(Icons.event),
+                title: const Text('My Events'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.favorite),
+                title: const Text('Wishlist'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.support_agent),
+                title: const Text('Help Center'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -370,9 +566,89 @@ class _PublicHomePageState extends State<PublicHomePage>
    SUB-WIDGETS 
    ================================================================= */
 
+/// Premium nav link for "My Bookings" – text link with hover gold underline.
+class _MyBookingsLink extends StatefulWidget {
+  final bool isScrolled;
+
+  const _MyBookingsLink({required this.isScrolled});
+
+  @override
+  State<_MyBookingsLink> createState() => _MyBookingsLinkState();
+}
+
+class _MyBookingsLinkState extends State<_MyBookingsLink> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isScrolled = widget.isScrolled;
+    final color = _hover || !isScrolled
+        ? (isScrolled ? AppColors.primary : Colors.white)
+        : (isScrolled ? AppColors.textPrimary : Colors.white70);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => context.go(AppRoutes.myBookings),
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 200),
+          style: AppTextStyles.labelM.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+            decoration: _hover ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: isScrolled ? AppColors.primary : Colors.white,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('My Bookings'),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: _hover ? 2 : 0,
+                margin: const EdgeInsets.only(top: 2),
+                width: 60,
+                color: isScrolled ? AppColors.primary : Colors.white,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileIcon extends StatelessWidget {
+  final bool isScrolled;
+
+  const _ProfileIcon({required this.isScrolled});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Scaffold.of(context).openDrawer(),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isScrolled
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.white.withOpacity(0.2),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.person_outline,
+          color: isScrolled ? AppColors.primary : Colors.white,
+          size: 22,
+        ),
+      ),
+    );
+  }
+}
+
 class _HeroHeaderSection extends StatelessWidget {
+  final AdminHomeHeroModel hero;
   final bool isWeb;
-  const _HeroHeaderSection({required this.isWeb});
+  const _HeroHeaderSection({required this.hero, required this.isWeb});
 
   @override
   Widget build(BuildContext context) {
@@ -383,12 +659,12 @@ class _HeroHeaderSection extends StatelessWidget {
       height: heroHeight + searchOverlap + 20,
       child: Stack(
         alignment: Alignment.topCenter,
-        clipBehavior: Clip.none, // Allow overflow for search bar
+        clipBehavior: Clip.none,
         children: [
           SizedBox(
             height: heroHeight,
             width: double.infinity,
-            child: const _HeroCarousel(),
+            child: _HeroCarousel(hero: hero),
           ),
           Positioned(
             top: heroHeight - 30,
@@ -409,14 +685,15 @@ class _HeroHeaderSection extends StatelessWidget {
 }
 
 class _HeroCarousel extends StatefulWidget {
-  const _HeroCarousel();
+  final AdminHomeHeroModel hero;
+  const _HeroCarousel({required this.hero});
 
   @override
   State<_HeroCarousel> createState() => _HeroCarouselState();
 }
 
 class _HeroCarouselState extends State<_HeroCarousel> {
-  final List<String> images = [
+  static const List<String> _defaultImages = [
     'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=80',
     'https://images.pexels.com/photos/2072181/pexels-photo-2072181.jpeg?auto=compress&cs=tinysrgb&w=800',
     'https://images.pexels.com/photos/1729799/pexels-photo-1729799.jpeg?auto=compress&cs=tinysrgb&w=800',
@@ -430,10 +707,19 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted) {
         setState(() {
+          final images = _getImages();
           _currentIndex = (_currentIndex + 1) % images.length;
         });
       }
     });
+  }
+
+  List<String> _getImages() {
+    if (widget.hero.imageUrl != null &&
+        widget.hero.imageUrl!.isNotEmpty) {
+      return [widget.hero.imageUrl!];
+    }
+    return _defaultImages;
   }
 
   @override
@@ -444,6 +730,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final images = _getImages();
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -454,6 +741,9 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             key: ValueKey<String>(images[_currentIndex]),
             fit: BoxFit.cover,
             width: double.infinity,
+            errorBuilder: (_, __, ___) => Container(
+              color: AppColors.primary.withOpacity(0.2),
+            ),
           ),
         ),
         Container(
@@ -474,7 +764,9 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Create Timeless Memories',
+                widget.hero.subtitle.isNotEmpty
+                    ? widget.hero.subtitle
+                    : 'Create Timeless Memories',
                 style: AppTextStyles.headingM.copyWith(
                   color: Colors.white70,
                   letterSpacing: 2,
@@ -483,7 +775,9 @@ class _HeroCarouselState extends State<_HeroCarousel> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Elegance in \nEvery Detail',
+                widget.hero.title.isNotEmpty
+                    ? widget.hero.title
+                    : 'Elegance in \nEvery Detail',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.headingXL.copyWith(
                   color: Colors.white,
@@ -576,21 +870,31 @@ class _SearchCard extends StatelessWidget {
   }
 }
 
-class _CategoryRail extends StatelessWidget {
-  final bool isWeb;
-  const _CategoryRail({required this.isWeb});
+IconData _categoryIconFromString(String icon) {
+  switch (icon.toLowerCase()) {
+    case 'wedding':
+      return Icons.favorite_border;
+    case 'birthday':
+      return Icons.cake_outlined;
+    case 'corporate':
+      return Icons.business_center_outlined;
+    case 'saree':
+      return Icons.style_outlined;
+    default:
+      return Icons.celebration_outlined;
+  }
+}
 
-  final List<Map<String, dynamic>> categories = const [
-    {'name': 'Weddings', 'icon': Icons.favorite_border},
-    {'name': 'Birthdays', 'icon': Icons.cake_outlined},
-    {'name': 'Corporate', 'icon': Icons.business_center_outlined},
-    {'name': 'Parties', 'icon': Icons.celebration_outlined},
-    {'name': 'Decor', 'icon': Icons.camera_alt_outlined},
-    {'name': 'Catering', 'icon': Icons.restaurant_menu},
-  ];
+class _CategoryRail extends StatelessWidget {
+  final List<AdminHomeCategoryModel> categories;
+  final bool isWeb;
+  const _CategoryRail({required this.categories, required this.isWeb});
 
   @override
   Widget build(BuildContext context) {
+    if (categories.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return SizedBox(
       height: 120,
       child: Center(
@@ -607,7 +911,7 @@ class _CategoryRail extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(Map<String, dynamic> item) {
+  Widget _buildItem(AdminHomeCategoryModel item) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -625,11 +929,30 @@ class _CategoryRail extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(item['icon'], color: AppColors.primary, size: 28),
+          child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.network(
+                    item.imageUrl!,
+                    fit: BoxFit.cover,
+                    width: 70,
+                    height: 70,
+                    errorBuilder: (_, __, ___) => Icon(
+                      _categoryIconFromString(item.name),
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
+                  ),
+                )
+              : Icon(
+                  _categoryIconFromString(item.name),
+                  color: AppColors.primary,
+                  size: 28,
+                ),
         ),
         const SizedBox(height: 14),
         Text(
-          item['name'],
+          item.name,
           style: AppTextStyles.labelS.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -641,9 +964,25 @@ class _CategoryRail extends StatelessWidget {
   }
 }
 
+IconData _serviceIconFromString(String icon) {
+  switch (icon.toLowerCase()) {
+    case 'decor':
+      return Icons.design_services;
+    case 'camera':
+      return Icons.photo_camera;
+    case 'music':
+      return Icons.music_note;
+    case 'food':
+      return Icons.restaurant;
+    default:
+      return Icons.design_services;
+  }
+}
+
 class _ServicesSection extends StatelessWidget {
+  final List<AdminHomeServiceModel> services;
   final bool isWeb;
-  const _ServicesSection({required this.isWeb});
+  const _ServicesSection({required this.services, required this.isWeb});
 
   @override
   Widget build(BuildContext context) {
@@ -668,29 +1007,13 @@ class _ServicesSection extends StatelessWidget {
           spacing: 32,
           runSpacing: 32,
           alignment: WrapAlignment.center,
-          children: [
-            _buildServiceCard(
-              Icons.design_services,
-              'Custom Decor',
-              'Tailored designs that match your vision perfectly.',
-            ),
-            _buildServiceCard(
-              Icons.photo_camera,
-              'Photography',
-              'Capturing every moment with professional excellence.',
-            ),
-            _buildServiceCard(
-              Icons.music_note,
-              'Entertainment',
-              'Live bands, DJs, and performances to keep you moving.',
-            ),
-            if (isWeb)
-              _buildServiceCard(
-                Icons.restaurant,
-                'Catering',
-                'Exquisite menus crafted by top chefs.',
-              ),
-          ],
+          children: services
+              .map((s) => _buildServiceCard(
+                    _serviceIconFromString(s.icon),
+                    s.title,
+                    s.description,
+                  ))
+              .toList(),
         ),
       ],
     );
@@ -732,31 +1055,40 @@ class _ServicesSection extends StatelessWidget {
   }
 }
 
+const String _defaultFeaturedImage1 =
+    'https://images.pexels.com/photos/948185/pexels-photo-948185.jpeg?auto=compress&cs=tinysrgb&w=800';
+const String _defaultFeaturedImage2 =
+    'https://images.pexels.com/photos/1467992/pexels-photo-1467992.jpeg?auto=compress&cs=tinysrgb&w=800';
+
 class _FeaturedCollections extends StatelessWidget {
+  final List<AdminHomeFeaturedEventModel> featuredEvents;
   final bool isWeb;
-  const _FeaturedCollections({required this.isWeb});
+  const _FeaturedCollections({
+    required this.featuredEvents,
+    required this.isWeb,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildBigCard(
-          context,
-          title: "The Royal Wedding",
-          subtitle: "Elegant Palaces & Premium Decor",
-          imageUrl:
-              'https://images.pexels.com/photos/948185/pexels-photo-948185.jpeg?auto=compress&cs=tinysrgb&w=800',
-          alignLeft: true,
-        ),
-        const SizedBox(height: 2),
-        _buildBigCard(
-          context,
-          title: "Birthday Bash",
-          subtitle: "Fun Themes for Kids & Adults",
-          imageUrl:
-              'https://images.pexels.com/photos/1467992/pexels-photo-1467992.jpeg?auto=compress&cs=tinysrgb&w=800',
-          alignLeft: false,
-        ),
+        for (int i = 0; i < featuredEvents.length; i++) ...[
+          if (i > 0) const SizedBox(height: 2),
+          _buildBigCard(
+            context,
+            title: featuredEvents[i].title.isNotEmpty
+                ? featuredEvents[i].title
+                : (i == 0 ? "The Royal Wedding" : "Birthday"),
+            subtitle: featuredEvents[i].subtitle.isNotEmpty
+                ? featuredEvents[i].subtitle
+                : (i == 0
+                    ? "Elegant Palaces & Premium Decor"
+                    : "Fun Themes for Kids & Adults"),
+            imageUrl: featuredEvents[i].imageUrl ??
+                (i == 0 ? _defaultFeaturedImage1 : _defaultFeaturedImage2),
+            alignLeft: i.isEven,
+          ),
+        ],
       ],
     );
   }
@@ -859,9 +1191,16 @@ class _FeaturedCollections extends StatelessWidget {
   }
 }
 
+const String _defaultCelebrationImage =
+    'https://images.unsplash.com/photo-1511795409834-ef04bbd61622';
+
 class _RealEventsSection extends StatelessWidget {
+  final List<AdminHomeRealCelebrationModel> realCelebrations;
   final bool isWeb;
-  const _RealEventsSection({required this.isWeb});
+  const _RealEventsSection({
+    required this.realCelebrations,
+    required this.isWeb,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -876,7 +1215,7 @@ class _RealEventsSection extends StatelessWidget {
               Text('Real Celebrations', style: AppTextStyles.headingL),
               GestureDetector(
                 onTap: () {
-                  context.push(AppRoutes.adminDashboard);
+                  context.push(AppRoutes.eventList);
                 },
                 child: const Icon(
                   Icons.arrow_forward_ios,
@@ -889,31 +1228,25 @@ class _RealEventsSection extends StatelessWidget {
           const SizedBox(height: 24),
           SizedBox(
             height: 280,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildEventCard(
-                  'Suhas & Priya',
-                  'Wedding',
-                  'https://images.unsplash.com/photo-1511795409834-ef04bbd61622',
-                ),
-                _buildEventCard(
-                  'Corporate Annual Meet',
-                  'Corporate',
-                  'https://images.unsplash.com/photo-1511578314322-379afb476865',
-                ),
-                _buildEventCard(
-                  'Aravind\'s 25th',
-                  'Birthday',
-                  'https://images.pexels.com/photos/3014856/pexels-photo-3014856.jpeg?auto=compress&cs=tinysrgb&w=800',
-                ),
-                _buildEventCard(
-                  'Music Fest 2025',
-                  'Concert',
-                  'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4',
-                ),
-              ],
-            ),
+            child: realCelebrations.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No celebrations to show',
+                      style: AppTextStyles.bodyM,
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: realCelebrations.length,
+                    itemBuilder: (context, index) {
+                      final item = realCelebrations[index];
+                      return _buildEventCard(
+                        item.title,
+                        item.type,
+                        item.imageUrl ?? _defaultCelebrationImage,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -934,6 +1267,10 @@ class _RealEventsSection extends StatelessWidget {
                 url,
                 fit: BoxFit.cover,
                 width: double.infinity,
+                errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.divider,
+                  child: const Icon(Icons.image_not_supported, size: 48),
+                ),
               ),
             ),
           ),
@@ -952,42 +1289,41 @@ class _RealEventsSection extends StatelessWidget {
   }
 }
 
-class _TrendingGrid extends StatelessWidget {
-  final bool isWeb;
-  _TrendingGrid({required this.isWeb});
+String _formatPrice(double price) {
+  if (price >= 100000) {
+    return '₹${(price / 100000).toStringAsFixed(1)}L';
+  }
+  return '₹${price.toStringAsFixed(0)}';
+}
 
-  final List<Map<String, dynamic>> items = [
-    {
-      'title': 'Floral Stage',
-      'price': '₹42,000',
-      'image': 'https://images.unsplash.com/photo-1469334031218-e382a71b716b',
-    },
-    {
-      'title': 'Cabana Setup',
-      'price': '₹15,500',
-      'image': 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3',
-    },
-    {
-      'title': 'Balloon Decor',
-      'price': '₹5,000',
-      'image': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7',
-    },
-    {
-      'title': 'Vintage Entrance',
-      'price': '₹12,000',
-      'image': 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce',
-    },
-  ];
+const String _defaultDecorationImage =
+    'https://images.unsplash.com/photo-1469334031218-e382a71b716b';
+
+class _TrendingGrid extends StatelessWidget {
+  final List<AdminHomeTrendingDecorationModel> trendingDecorations;
+  final bool isWeb;
+  const _TrendingGrid({
+    required this.trendingDecorations,
+    required this.isWeb,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (trendingDecorations.isEmpty) {
+      return const Center(
+        child: Text(
+          'No trending decorations to show',
+          style: AppTextStyles.bodyM,
+        ),
+      );
+    }
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount = isWeb ? 4 : 2;
         return GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
-          itemCount: items.length,
+          itemCount: trendingDecorations.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             childAspectRatio: 0.75,
@@ -995,61 +1331,76 @@ class _TrendingGrid extends StatelessWidget {
             mainAxisSpacing: 24,
           ),
           itemBuilder: (context, index) {
-            return _HoverScale(child: _buildCard(items[index]));
+            return _HoverScale(
+              child: _buildCard(trendingDecorations[index],context),
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildCard(Map<String, dynamic> item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+  Widget _buildCard(AdminHomeTrendingDecorationModel item,BuildContext context) {
+    final imageUrl = item.imageUrl ?? _defaultDecorationImage;
+    return GestureDetector(
+      onTap: () {
+        context.push('/decoration/${item.id}');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.divider,
+                    child: const Icon(Icons.image_not_supported, size: 48),
+                  ),
+                ),
               ),
-              child: Image.network(item['image'], fit: BoxFit.cover),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['title'],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyL.copyWith(
-                    fontWeight: FontWeight.w600,
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodyL.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item['price'],
-                  style: AppTextStyles.labelL.copyWith(
-                    color: AppColors.primary,
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatPrice(item.price),
+                    style: AppTextStyles.labelL.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

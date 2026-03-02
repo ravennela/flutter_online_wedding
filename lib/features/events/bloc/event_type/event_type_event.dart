@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/models/event_type_list_item.dart';
 
 abstract class EventTypeEvent extends Equatable {
   const EventTypeEvent();
@@ -41,4 +42,47 @@ class FetchEventTypes extends EventTypeEvent {
 
   @override
   List<Object?> get props => [page, size, search, active];
+}
+
+/// 🗑️ Soft Delete Event Type (update active = false)
+class DeleteEventType extends EventTypeEvent {
+  final EventTypeListItem item;
+
+  const DeleteEventType(this.item);
+
+
+  @override
+  List<Object?> get props => [item];
+}
+
+/// 📄 Get Single Event Type by ID
+class GetEventTypeByIdEvent extends EventTypeEvent {
+  final String id;
+
+  const GetEventTypeByIdEvent(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
+/// ✏️ Update Event Type (Full update)
+class UpdateEventType extends EventTypeEvent {
+  final String id;
+  final String name;
+  final String? description;
+  final String? iconUrl;
+  final bool active;
+  final int? sortOrder;
+
+  const UpdateEventType({
+    required this.id,
+    required this.name,
+    this.description,
+    this.iconUrl,
+    required this.active,
+    this.sortOrder,
+  });
+
+  @override
+  List<Object?> get props => [id, name, description, iconUrl, active, sortOrder];
 }

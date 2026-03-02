@@ -1,23 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/models/decoration_item.dart';
 
-abstract class DecorationState {}
+part 'events/decoration_event.dart';
+part 'states/decoration_state.dart';
 
-class DecorationInitial extends DecorationState {}
-class DecorationLoading extends DecorationState {}
-class DecorationLoaded extends DecorationState {
-  final List<DecorationItem> decorations;
-  DecorationLoaded(this.decorations);
-}
-class DecorationError extends DecorationState {
-  final String message;
-  DecorationError(this.message);
-}
+class DecorationBloc extends Bloc<DecorationEvent, DecorationState> {
+  DecorationBloc() : super(DecorationInitial()) {
+    on<LoadDecorations>(_onLoadDecorations);
+  }
 
-class DecorationCubit extends Cubit<DecorationState> {
-  DecorationCubit() : super(DecorationInitial());
-
-  void loadDecorations(String eventId) async {
+  Future<void> _onLoadDecorations(LoadDecorations event, Emitter<DecorationState> emit) async {
     emit(DecorationLoading());
     await Future.delayed(const Duration(milliseconds: 800));
 

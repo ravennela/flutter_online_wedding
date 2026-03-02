@@ -1,47 +1,69 @@
 class BookingModel {
-  final String id;
-  final String eventId;
-  final String userId;
-  final DateTime bookingDate;
+  final String bookingId;
+  final String eventType;
+  final String decorationTitle;
+  final String city;
   final DateTime eventDate;
   final String status;
+  final String? paymentStatus;
   final double totalAmount;
-  final Map<String, dynamic>? additionalData;
-  
+  final DateTime createdAt;
+  final String? fullAddress;
+  final String? customerNote;
+  final String? razorpayOrderId;
+
   BookingModel({
-    required this.id,
-    required this.eventId,
-    required this.userId,
-    required this.bookingDate,
+    required this.bookingId,
+    required this.eventType,
+    required this.decorationTitle,
+    required this.city,
     required this.eventDate,
     required this.status,
+    this.paymentStatus,
     required this.totalAmount,
-    this.additionalData,
+    required this.createdAt,
+    this.fullAddress,
+    this.customerNote,
+    this.razorpayOrderId,
   });
-  
+
   factory BookingModel.fromJson(Map<String, dynamic> json) {
+    final eventDateStr = json['eventDate'] as String?;
+    final createdAtStr = json['createdAt'] as String?;
     return BookingModel(
-      id: json['id'] as String,
-      eventId: json['event_id'] as String,
-      userId: json['user_id'] as String,
-      bookingDate: DateTime.parse(json['booking_date'] as String),
-      eventDate: DateTime.parse(json['event_date'] as String),
-      status: json['status'] as String,
-      totalAmount: (json['total_amount'] as num).toDouble(),
-      additionalData: json['additional_data'] as Map<String, dynamic>?,
+      bookingId: json['bookingId'] as String,
+      eventType: json['eventType'] as String? ?? '',
+      decorationTitle: json['decorationTitle'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      eventDate: eventDateStr != null
+          ? (eventDateStr.length > 10
+              ? DateTime.parse(eventDateStr)
+              : DateTime.parse('$eventDateStr'))
+          : DateTime.now(),
+      status: json['status'] as String? ?? 'REQUESTED',
+      paymentStatus: json['paymentStatus'] as String?,
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
+      createdAt: createdAtStr != null ? DateTime.parse(createdAtStr) : DateTime.now(),
+      fullAddress: json['fullAddress'] as String?,
+      customerNote: json['customerNote'] as String?,
+      razorpayOrderId: json['razorpayOrderId'] as String?,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'event_id': eventId,
-      'user_id': userId,
-      'booking_date': bookingDate.toIso8601String(),
-      'event_date': eventDate.toIso8601String(),
+      'bookingId': bookingId,
+      'eventType': eventType,
+      'decorationTitle': decorationTitle,
+      'city': city,
+      'eventDate': eventDate.toIso8601String(),
       'status': status,
-      'total_amount': totalAmount,
-      'additional_data': additionalData,
+      'paymentStatus': paymentStatus,
+      'totalAmount': totalAmount,
+      'createdAt': createdAt.toIso8601String(),
+      'fullAddress': fullAddress,
+      'customerNote': customerNote,
+      'razorpayOrderId': razorpayOrderId,
     };
   }
 }

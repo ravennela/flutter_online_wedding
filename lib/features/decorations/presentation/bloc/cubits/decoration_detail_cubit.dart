@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/models/decoration_detail.dart';
+import '../../../domain/models/decoration_detail.dart';
 
 abstract class DecorationDetailState {}
 
@@ -32,6 +32,9 @@ class DecorationDetailCubit extends Cubit<DecorationDetailState> {
     try {
       final mockDetail = DecorationDetail(
         id: id,
+        cityId: id,
+        eventTypeId: "wedding",
+        
         title: "Grand Floral Archway - Rose Gold Edition",
         providerName: "Bloom & Co.",
         providerImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80", // User avatar
@@ -48,7 +51,7 @@ class DecorationDetailCubit extends Cubit<DecorationDetailState> {
           "Customizable Silk Florals": "Choose your color palette to match your theme.",
           "Premium Lighting": "Includes 4x LED spot lights for evening events."
         },
-        description: "Transform your venue with our signature Rose Gold Floral Archway. Handcrafted with premium silk flowers and real foliage, this setup creates a breathtaking focal point for your vows or entrance."
+        description: "Transform your venue with our signature Rose Gold Floral Archway. Handcrafted with premium silk flowers and real foliage, this setup creates a breathtaking focal point for your vows or entrance.", inclusions: '', exclusions: ''
       );
       emit(DecorationDetailLoaded(mockDetail));
     } catch (e) {

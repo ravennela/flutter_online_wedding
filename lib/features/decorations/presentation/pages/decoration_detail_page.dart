@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_online/di/service_locator.dart';
+import 'package:flutter_online/features/decorations/domain/usecases/get_decoration_by_id_usecase.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../bloc/decoration_detail_cubit.dart';
+import '../bloc/decoration_detail_bloc.dart';
 import '../../domain/models/decoration_detail.dart';
 import '../widgets/tag_chip.dart';
 import '../widgets/feature_tile.dart';
@@ -17,7 +19,7 @@ class DecorationDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => DecorationDetailCubit()..loadDecorationDetail(decorationId),
+      create: (context) => DecorationDetailBloc(getDecorationByIdUseCase: getIt<GetDecorationByIdUseCase>())..add(LoadDecorationDetail(decorationId)),
       child: const _DecorationDetailView(),
     );
   }
@@ -30,7 +32,7 @@ class _DecorationDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F), // Deep Dark Background (from Tablet/Mobile screens)
-      body: BlocBuilder<DecorationDetailCubit, DecorationDetailState>(
+      body: BlocBuilder<DecorationDetailBloc, DecorationDetailState>(
         builder: (context, state) {
           if (state is DecorationDetailLoading) {
             return const Center(child: CircularProgressIndicator(color: AppColors.primary));

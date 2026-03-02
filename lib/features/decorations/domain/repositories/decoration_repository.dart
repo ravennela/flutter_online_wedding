@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter_online/core/errors/failures.dart';
 import 'package:flutter_online/features/decorations/domain/models/create_decoration_model.dart';
 import 'package:flutter_online/features/decorations/domain/models/city_list_item.dart';
+import 'package:flutter_online/features/decorations/domain/models/decoration_detail.dart';
 import 'package:flutter_online/features/decorations/domain/models/decoration_list_response.dart';
 
 
@@ -9,6 +11,14 @@ abstract class DecorationRepository {
   Future<Either<String, CreateDecorationModel>> createDecoration(
     Map<String, dynamic> data,
   );
+
+  /// Update a decoration package (ADMIN).
+  Future<Either<String, CreateDecorationModel>> updateDecoration(
+    String id,
+    Map<String, dynamic> data,
+  );
+
+  Future<Either<Failure, void>> deleteDecoration(String id);
 
   /// Fetch cities for dropdown (ADMIN).
   Future<Either<String, List<CityListItem>>> fetchCities({
@@ -27,5 +37,8 @@ abstract class DecorationRepository {
     String? sortBy,
     String? sortDir,
   });
+
+  /// Get decoration details by ID.
+  Future<Either<String, DecorationDetail>> getDecorationById(String id);
 }
 

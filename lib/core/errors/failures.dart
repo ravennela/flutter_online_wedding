@@ -30,7 +30,14 @@ class ValidationFailure extends Failure {
   const ValidationFailure(super.message);
 }
 
-/// Unauthorized failure
-class AuthFailure  extends Failure {
-  const AuthFailure (super.message);
+class AuthFailure extends Failure {
+  const AuthFailure(super.message);
+}
+
+class NotFoundFailure extends Failure {
+  const NotFoundFailure(super.message);
+}
+
+class UnknownFailure extends Failure {
+  const UnknownFailure(super.message);
 }

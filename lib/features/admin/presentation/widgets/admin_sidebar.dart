@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/routes/app_routes.dart';
 
 class AdminSidebar extends StatefulWidget {
@@ -94,6 +96,8 @@ class _AdminSidebarState extends State<AdminSidebar> {
                       context.go(AppRoutes.adminDashboard);
                     } else if (item['label'] == 'Decorations') {
                       context.go(AppRoutes.adminDecorations);
+                    } else if (item['label'] == 'Bookings') {
+                      context.go(AppRoutes.adminBookings);
                     }
                   },
                 );
@@ -109,7 +113,9 @@ class _AdminSidebarState extends State<AdminSidebar> {
                    label: "Logout",
                    isSelected: false,
                    isExpanded: _isExpanded,
-                   onTap: () {},
+                   onTap: () {
+                     context.read<AuthCubit>().logout();
+                   },
                    isDanger: true,
             ),
           ),

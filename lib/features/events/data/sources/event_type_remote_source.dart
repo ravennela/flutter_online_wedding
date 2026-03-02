@@ -15,6 +15,13 @@ abstract class EventTypeRemoteDatasource {
     String? search,
     bool? active,
   });
+
+  Future<Map<String, dynamic>> updateEventType(
+    String id,
+    Map<String, dynamic> data,
+  );
+
+  Future<Map<String, dynamic>> getEventTypeById(String id);
 }
 
 /// Implementation
@@ -77,5 +84,52 @@ class EventTypeRemoteDatasourceImpl
     );
 
     return response.data as Map<String, dynamic>;
+  }
+
+  /// ✏️ Update Event Type (e.g. Soft Delete)
+  @override
+  Future<Map<String, dynamic>> updateEventType(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final String url = ApiConstants.updateEventType.replaceAll('{id}', id);
+
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      final String token = preferences.getString(ApiConstants.token) ?? "";
+
+      final headers = {
+        "Authorization": "Bearer $token",
+      };
+      // ApiClient might handle headers automatically if configured, similar to create
+      // but matching createEventType method style:
+
+      final response = await dioClient.put(
+        url,
+        data: data,
+      );
+
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getEventTypeById(String id) async {
+    try {
+      final String url = "${ApiConstants.fetchEventTypes}/$id";
+
+      print("Fetching Event Type by ID from URL: $url");
+
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      final String token = preferences.getString(ApiConstants.token) ?? "";
+
+     
+      final response = await dioClient.get(url);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      rethrow;
+    }
   }
 }

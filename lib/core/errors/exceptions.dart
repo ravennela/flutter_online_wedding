@@ -29,7 +29,10 @@ class ValidationException extends AppException {
   const ValidationException(super.message, [super.originalError]);
 }
 
-/// Unauthorized exception
 class UnauthorizedException extends AppException {
   const UnauthorizedException(super.message, [super.originalError]);
+}
+
+class NotFoundException extends AppException {
+  const NotFoundException(super.message, [super.originalError]);
 }

@@ -1,19 +1,28 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/features/events/domain/usecases/event_type_usecase.dart';
 import 'package:flutter_online/features/events/domain/usecases/fetch_event_types_usecase.dart';
+import 'package:flutter_online/features/events/domain/usecases/update_event_type_usecase.dart';
+import 'package:flutter_online/features/events/domain/usecases/get_event_type_by_id_usecase.dart';
 import 'event_type_event.dart';
 import 'event_type_state.dart';
 
 class EventTypeBloc extends Bloc<EventTypeEvent, EventTypeState> {
   final CreateEventTypeUsecase createEventTypeUsecase;
   final FetchEventTypesUsecase fetchEventTypesUsecase;
+  final UpdateEventTypeUseCase updateEventTypeUsecase;
+  final GetEventTypeByIdUseCase getEventTypeByIdUseCase;
 
   EventTypeBloc({
     required this.createEventTypeUsecase,
     required this.fetchEventTypesUsecase,
+    required this.updateEventTypeUsecase,
+    required this.getEventTypeByIdUseCase,
   }) : super(CreateEventTypeInitial()) {
     on<SubmitCreateEventType>(_onCreateEventType);
     on<FetchEventTypes>(_onFetchEventTypes);
+    on<DeleteEventType>(_onDeleteEventType);
+    on<GetEventTypeByIdEvent>(_onGetEventTypeById);
+    on<UpdateEventType>(_onUpdateEventType);
   }
 
   Future<void> _onCreateEventType(
@@ -62,4 +71,63 @@ class EventTypeBloc extends Bloc<EventTypeEvent, EventTypeState> {
       )),
     );
   }
+
+  Future<void> _onDeleteEventType(
+    DeleteEventType event,
+    Emitter<EventTypeState> emit,
+  ) async {
+    emit(EventTypesListLoading()); // reusing loading state usually meant for list, or specific action loading
+
+    final result = await updateEventTypeUsecase(
+      id: event.item.id,
+      name: event.item.name,
+      description: event.item.description,
+      active: false, // Soft delete
+      iconUrl: event.item.iconUrl,
+      sortOrder: event.item.sortOrder,
+    );
+
+    result.fold(
+      (error) => emit(EventTypesListFailure(error)),
+      (success) {
+        emit(const EventTypeDeleteSuccess("Event type deleted successfully"));
+        add(const FetchEventTypes(page: 0, size: 100)); // Reload list
+      },
+    );
+  }
+  Future<void> _onGetEventTypeById(
+    GetEventTypeByIdEvent event,
+    Emitter<EventTypeState> emit,
+  ) async {
+    emit(EventTypeDetailLoading());
+
+    final result = await getEventTypeByIdUseCase(event.id);
+
+    result.fold(
+      (error) => emit(EventTypeDetailFailure(error)),
+      (data) => emit(EventTypeDetailLoaded(data)),
+    );
+  }
+
+  Future<void> _onUpdateEventType(
+    UpdateEventType event,
+    Emitter<EventTypeState> emit,
+  ) async {
+    emit(UpdateEventTypeLoading());
+
+    final result = await updateEventTypeUsecase(
+      id: event.id,
+      name: event.name,
+      description: event.description,
+      iconUrl: event.iconUrl,
+      active: event.active,
+      sortOrder: event.sortOrder,
+    );
+
+    result.fold(
+      (error) => emit(UpdateEventTypeFailure(error)),
+      (success) => emit(const UpdateEventTypeSuccess("Event type updated successfully")),
+    );
+  }
 }
+

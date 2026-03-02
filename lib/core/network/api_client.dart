@@ -3,11 +3,16 @@ import 'package:dio/dio.dart';
 import '../config/env.dart';
 import '../errors/exceptions.dart';
 import 'dio_interceptor.dart';
+import 'package:flutter_online/features/auth/data/datasources/token_storage.dart';
+import 'package:flutter_online/core/network/unauthorized_notifier.dart';
 
 class ApiClient {
   late final Dio _dio;
 
-  ApiClient() {
+  ApiClient({
+    required TokenStorage tokenStorage,
+    required UnauthorizedNotifier unauthorizedNotifier,
+  }) {
     _dio = Dio(
       BaseOptions(
         baseUrl: Env.baseUrl,
@@ -20,7 +25,10 @@ class ApiClient {
       ),
     );
 
-    _dio.interceptors.add(DioInterceptor());
+    _dio.interceptors.add(DioInterceptor(
+      tokenStorage: tokenStorage,
+      unauthorizedNotifier: unauthorizedNotifier,
+    ));
   }
 
   Dio get dio => _dio;
@@ -89,6 +97,28 @@ class ApiClient {
     }
   }
 
+  // ================== PATCH ==================
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      return await _dio.patch(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options ?? Options(extra: {'requiresAuth': requiresAuth}),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    } on SocketException catch (e) {
+      throw NetworkException('No internet connection', e);
+    }
+  }
+
   // ================== DELETE ==================
   Future<Response> delete(
     String path, {
@@ -116,7 +146,12 @@ class ApiClient {
     final response = e.response;
 
     if (response == null) {
-      return ServerException('Unexpected server error', e);
+      // Typically happens on CORS block or DNS failure in Flutter Web
+      return ServerException(
+        'Network error or CORS block. Ensure the backend allows CORS for this origin.',
+        e,
+      );
+
     }
 
     switch (response.statusCode) {

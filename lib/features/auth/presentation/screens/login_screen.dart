@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_online/features/auth/bloc/auth_bloc.dart';
-import 'package:flutter_online/features/auth/bloc/auth_event.dart';
-import 'package:flutter_online/features/auth/bloc/auth_state.dart';
+import 'package:flutter_online/features/auth/domain/models/login_redirect_data.dart';
+import 'package:flutter_online/features/auth/domain/models/otp_screen_args.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_state.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// Optional redirect data when user came from a protected action.
+  final LoginRedirectData? redirectData;
+
+  const LoginScreen({super.key, this.redirectData});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -27,11 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
   void _onSendOtp() {
     if (_phoneController.text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 10-digit mobile number')),
+        const SnackBar(
+          content: Text('Please enter a valid 10-digit mobile number'),
+        ),
       );
       return;
     }
-    context.read<AuthBloc>().add(LoginRequested(_phoneController.text));
+    context.read<AuthCubit>().sendOtp(_phoneController.text);
     // Navigate to OTP Verification (Placeholder logic)
     // context.pushNamed('otp_verification', extra: _phoneController.text);
     // For now purely UI as requested
@@ -60,17 +66,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return Stack(
       children: [
         // Background
-        Positioned.fill(
-          child: Container(color: const Color(0xFFF9F6F0)),
-        ),
-        
+        Positioned.fill(child: Container(color: const Color(0xFFF9F6F0))),
+
         // Floating Back Button
         Positioned(
           top: 40,
           left: 40,
-          child: _BackButton(
-            onTap: () => context.go(AppRoutes.splash),
-          ),
+          child: _BackButton(onTap: () => context.pop()),
         ),
 
         // Centered Card
@@ -96,7 +98,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             child: SingleChildScrollView(
-              child: _LoginFormContent(controller: _phoneController, onSendOtp: _onSendOtp),
+              child: _LoginFormContent(
+                controller: _phoneController,
+                onSendOtp: _onSendOtp,
+                redirectData: widget.redirectData,
+              ),
             ),
           ),
         ),
@@ -114,17 +120,22 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 24, top: 16),
-              child: _BackButton(
-                onTap: () => context.go(AppRoutes.splash),
-              ),
+              child: _BackButton(onTap: () => context.pop()),
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 children: [
-                   const SizedBox(height: 20),
-                   _LoginFormContent(controller: _phoneController, onSendOtp: _onSendOtp),
-                   const SizedBox(height: 40),
+                  const SizedBox(height: 20),
+                  _LoginFormContent(
+                    controller: _phoneController,
+                    onSendOtp: _onSendOtp,
+                    redirectData: widget.redirectData,
+                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -140,8 +151,13 @@ class _LoginScreenState extends State<LoginScreen> {
 class _LoginFormContent extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSendOtp;
+  final LoginRedirectData? redirectData;
 
-  const _LoginFormContent({required this.controller, required this.onSendOtp});
+  const _LoginFormContent({
+    required this.controller,
+    required this.onSendOtp,
+    this.redirectData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +179,7 @@ class _LoginFormContent extends StatelessWidget {
             child: Icon(Icons.diamond_outlined, color: goldColor, size: 32),
           ),
         ),
-        
+
         const SizedBox(height: 32),
 
         // 2. Branding
@@ -263,27 +279,30 @@ class _LoginFormContent extends StatelessWidget {
         Text(
           "A 6-digit code will be sent via SMS for verification.",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade400,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
         ),
 
         const SizedBox(height: 32),
 
         // 6. Action Button
-        BlocConsumer<AuthBloc,AuthState>(
+        BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
-            if(state is OtpSent){
-            context.push(AppRoutes.otp);
-            } else if(state is AuthError){
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
+            if (state is OtpSent) {
+              context.push(
+                AppRoutes.otp,
+                extra: OtpScreenArgs(
+                  phone: state.phone,
+                  redirectData: redirectData,
+                ),
               );
+            } else if (state is AuthError) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
             }
           },
           builder: (context, state) {
-            if(state is AuthLoading){
+            if (state is AuthLoading) {
               return const Center(child: CircularProgressIndicator());
             }
             return SizedBox(
@@ -311,7 +330,6 @@ class _LoginFormContent extends StatelessWidget {
               ),
             );
           },
-          
         ),
 
         const SizedBox(height: 48),
@@ -368,11 +386,11 @@ class _BackButton extends StatelessWidget {
           color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
-             BoxShadow(
-               color: Colors.black.withOpacity(0.05),
-               blurRadius: 10,
-               offset: const Offset(0, 2),
-             )
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
           ],
           border: Border.all(color: Colors.grey.shade100),
         ),

@@ -1,13 +1,14 @@
-/// Domain model for create decoration API response.
 class CreateDecorationModel {
   final String id;
   final String name;
   final String eventTypeId;
+  final String? eventTypeName;
   final String cityId;
+  final String? cityName;
   final String? description;
   final String? inclusions;
   final String? exclusions;
-  final int basePrice;
+  final double basePrice;
   final List<String> imageUrls;
   final bool active;
 
@@ -15,7 +16,9 @@ class CreateDecorationModel {
     required this.id,
     required this.name,
     required this.eventTypeId,
+    this.eventTypeName,
     required this.cityId,
+    this.cityName,
     this.description,
     this.inclusions,
     this.exclusions,
@@ -34,11 +37,13 @@ class CreateDecorationModel {
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       eventTypeId: json['eventTypeId'] as String? ?? '',
+      eventTypeName: json['eventTypeName'] as String?,
       cityId: json['cityId'] as String? ?? '',
+      cityName: json['cityName'] as String?,
       description: json['description'] as String?,
       inclusions: json['inclusions'] as String?,
       exclusions: json['exclusions'] as String?,
-      basePrice: (json['basePrice'] as num?)?.toInt() ?? 0,
+      basePrice: (json['basePrice'] as num?)?.toDouble() ?? 0.0,
       imageUrls: urls,
       active: json['active'] as bool? ?? true,
     );
@@ -48,7 +53,9 @@ class CreateDecorationModel {
         'id': id,
         'name': name,
         'eventTypeId': eventTypeId,
+        'eventTypeName': eventTypeName,
         'cityId': cityId,
+        'cityName': cityName,
         'description': description,
         'inclusions': inclusions,
         'exclusions': exclusions,

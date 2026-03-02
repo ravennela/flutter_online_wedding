@@ -62,32 +62,45 @@ class _EventTypesPageState extends State<EventTypesPage> {
     return AdminScaffold(
       title: 'Event Types',
       selectedIndex: 2,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isMobile = constraints.maxWidth < 1000;
-          final horizontalPadding = isMobile ? 16.0 : 48.0;
-          
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(horizontalPadding, 32, horizontalPadding, 48),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1400),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!isMobile) ...[
-                      _buildHeader(context),
-                      const SizedBox(height: 48),
+      body: BlocListener<EventTypeBloc, EventTypeState>(
+        listener: (context, state) {
+          if (state is EventTypeDeleteSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message), backgroundColor: Colors.green),
+            );
+          } else if (state is EventTypesListFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+            );
+          }
+        },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 1000;
+            final horizontalPadding = isMobile ? 16.0 : 48.0;
+            
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(horizontalPadding, 32, horizontalPadding, 48),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1400),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!isMobile) ...[
+                        _buildHeader(context),
+                        const SizedBox(height: 48),
+                      ],
+                      _buildFilterBar(context),
+                      const SizedBox(height: 24),
+                      _buildEventList(),
                     ],
-                    _buildFilterBar(context),
-                    const SizedBox(height: 24),
-                    _buildEventList(),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -409,7 +422,10 @@ class _EventTypeRowCardState extends State<_EventTypeRowCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.adminEventTypesDetailPath(widget.item.id)),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
@@ -526,7 +542,7 @@ class _EventTypeRowCardState extends State<_EventTypeRowCard> {
 
             // 4. Actions
             IconButton(
-              onPressed: () {},
+              onPressed: () => context.push(AppRoutes.adminEventTypesEditPath(widget.item.id)),
               icon: Icon(
                 Icons.edit_outlined,
                 color: Colors.grey.shade600,
@@ -535,18 +551,47 @@ class _EventTypeRowCardState extends State<_EventTypeRowCard> {
               tooltip: "Edit",
               splashRadius: 20,
             ),
-            IconButton(
-              onPressed: () {},
+            PopupMenuButton<String>(
               icon: Icon(
                 Icons.more_vert,
                 color: Colors.grey.shade400,
                 size: 20,
               ),
               tooltip: "More",
-              splashRadius: 20,
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+              onSelected: (value) {
+                if (value == 'delete') {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete Event Type'),
+                      content: Text('Are you sure you want to delete "${widget.item.name}"?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            context.read<EventTypeBloc>().add(DeleteEventType(widget.item));
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
           ],
         ),
+      ),
       ),
     );
   }

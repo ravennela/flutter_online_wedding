@@ -101,7 +101,7 @@ class LoginCard extends StatelessWidget {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
-                context.push(AppRoutes.otp);
+                context.push(AppRoutes.login);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD4A017),

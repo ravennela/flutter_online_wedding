@@ -13,7 +13,8 @@ import '../widgets/admin_sidebar.dart';
 import '../widgets/admin_top_bar.dart';
 
 class CreateEventTypePage extends StatefulWidget {
-  const CreateEventTypePage({super.key});
+  final String? id;
+  const CreateEventTypePage({super.key, this.id});
 
   @override
   State<CreateEventTypePage> createState() => _CreateEventTypePageState();
@@ -29,6 +30,14 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
   String? _coverImageUrl; // URL after upload (if API supports upload)
 
   static const double _formMaxWidth = 720;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.id != null) {
+      context.read<EventTypeBloc>().add(GetEventTypeByIdEvent(widget.id!));
+    }
+  }
 
   @override
   void dispose() {
@@ -71,15 +80,28 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
     // Use URL if available (from upload); otherwise empty string
     final iconUrl = _coverImageUrl ?? '';
 
-    context.read<EventTypeBloc>().add(
-          SubmitCreateEventType(
-            name: name,
-            description: description,
-            iconUrl: iconUrl.isEmpty ? null : iconUrl,
-            //active: _statusActive,
-            sortOrder: 1,
-          ),
-        );
+    if (widget.id != null) {
+      context.read<EventTypeBloc>().add(
+            UpdateEventType(
+              id: widget.id!,
+              name: name,
+              description: description,
+              iconUrl: iconUrl.isEmpty ? null : iconUrl,
+              active: _statusActive,
+              sortOrder: 1,
+            ),
+          );
+    } else {
+      context.read<EventTypeBloc>().add(
+            SubmitCreateEventType(
+              name: name,
+              description: description,
+              iconUrl: iconUrl.isEmpty ? null : iconUrl,
+              //active: _statusActive,
+              sortOrder: 1,
+            ),
+          );
+    }
   }
 
   @override
@@ -90,6 +112,15 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Event type "${state.message}" created successfully'),
+              backgroundColor: Colors.green.shade600,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.go(AppRoutes.adminEventTypes);
+        } else if (state is UpdateEventTypeSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${state.message}'),
               backgroundColor: Colors.green.shade600,
               behavior: SnackBarBehavior.floating,
             ),
@@ -108,10 +139,37 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
               ),
             ),
           );
+        } else if (state is UpdateEventTypeFailure) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error),
+              backgroundColor: Colors.red.shade600,
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'Dismiss',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+        } else if (state is EventTypeDetailLoaded) {
+          _nameController.text = state.eventType.name;
+          _descriptionController.text = state.eventType.description ?? '';
+          setState(() {
+            _statusActive = state.eventType.active;
+            _coverImageUrl = state.eventType.iconUrl;
+          });
         }
       },
       builder: (context, state) {
-        final isSaving = state is CreateEventTypeLoading;
+        final isSaving = state is CreateEventTypeLoading || state is UpdateEventTypeLoading;
+        final isLoading = state is EventTypeDetailLoading;
+
+        if (isLoading) {
+           return const Scaffold(
+             body: Center(child: CircularProgressIndicator()),
+           );
+        }
 
         return Scaffold(
           backgroundColor: const Color(0xFFF5F7FA),
@@ -139,7 +197,8 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
                               children: [
                                 _CreateEventHeader(
                                   onBack: () =>
-                                      context.go(AppRoutes.adminEventTypes),
+                                      context.go(AppRoutes.adminEventTypes,),
+                                  isEdit: widget.id != null,
                                 ),
                                 const SizedBox(height: 32),
                                 _EventTypeDetailsCard(
@@ -150,12 +209,14 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
                                   onStatusChanged: (active) =>
                                       setState(() => _statusActive = active),
                                   coverImageBytes: _coverImageBytes,
+                                  coverImageUrl: _coverImageUrl,
                                   onPickCoverImage: _pickCoverImage,
                                   onRemoveCoverImage: _removeCoverImage,
                                   onCancel: () =>
                                       context.go(AppRoutes.adminEventTypes),
                                   onSave: () => _onSave(context),
                                   isSaving: isSaving,
+                                  isEdit: widget.id != null,
                                 ),
                               ],
                             ),
@@ -176,8 +237,12 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
 
 class _CreateEventHeader extends StatelessWidget {
   final VoidCallback onBack;
+  final bool isEdit;
 
-  const _CreateEventHeader({required this.onBack});
+  const _CreateEventHeader({
+    required this.onBack,
+    required this.isEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -186,9 +251,6 @@ class _CreateEventHeader extends StatelessWidget {
         IconButton(
           onPressed: onBack,
           icon: const Icon(Icons.arrow_back),
-          style: IconButton.styleFrom(
-            foregroundColor: const Color(0xFF1A1F36),
-          ),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -197,7 +259,7 @@ class _CreateEventHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Create Event',
+                isEdit ? 'Edit Event' : 'Create Event',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1A1F36),
@@ -205,7 +267,9 @@ class _CreateEventHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'ADMIN / EVENT TYPES / CREATE',
+                isEdit
+                    ? 'ADMIN / EVENT TYPES / EDIT'
+                    : 'ADMIN / EVENT TYPES / CREATE',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -238,11 +302,13 @@ class _EventTypeDetailsCard extends StatelessWidget {
   final bool statusActive;
   final ValueChanged<bool> onStatusChanged;
   final Uint8List? coverImageBytes;
+  final String? coverImageUrl;
   final VoidCallback onPickCoverImage;
   final VoidCallback onRemoveCoverImage;
   final VoidCallback onCancel;
   final VoidCallback onSave;
   final bool isSaving;
+  final bool isEdit;
 
   const _EventTypeDetailsCard({
     required this.formKey,
@@ -251,10 +317,12 @@ class _EventTypeDetailsCard extends StatelessWidget {
     required this.statusActive,
     required this.onStatusChanged,
     required this.coverImageBytes,
+    this.coverImageUrl,
     required this.onPickCoverImage,
     required this.onRemoveCoverImage,
     required this.onCancel,
     required this.onSave,
+    required this.isEdit,
     required this.isSaving,
   });
 
@@ -391,6 +459,7 @@ class _EventTypeDetailsCard extends StatelessWidget {
               const SizedBox(height: 8),
               _CoverImageUpload(
                 coverImageBytes: coverImageBytes,
+                coverImageUrl: coverImageUrl,
                 onPick: onPickCoverImage,
                 onRemove: onRemoveCoverImage,
               ),
@@ -500,7 +569,7 @@ class _EventTypeDetailsCard extends StatelessWidget {
                             ),
                           )
                         : const Icon(Icons.check_rounded, size: 20),
-                    label: Text(isSaving ? 'Saving...' : 'Save Event Type'),
+                    label: Text(isSaving ? (isEdit  ? 'Saving...' : 'Updating...') : (isEdit ? 'Save Event Type' : 'Update Event Type')),
                   ),
                 ],
               ),
@@ -514,11 +583,13 @@ class _EventTypeDetailsCard extends StatelessWidget {
 
 class _CoverImageUpload extends StatelessWidget {
   final Uint8List? coverImageBytes;
+  final String? coverImageUrl;
   final VoidCallback onPick;
   final VoidCallback onRemove;
 
   const _CoverImageUpload({
     required this.coverImageBytes,
+    this.coverImageUrl,
     required this.onPick,
     required this.onRemove,
   });
@@ -531,12 +602,19 @@ class _CoverImageUpload extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.memory(
-              coverImageBytes!,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+            child: coverImageUrl != null 
+                ? Image.network(
+                    coverImageUrl!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ) 
+                : Image.memory(
+                    coverImageBytes!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
           ),
           Positioned(
             top: 12,
@@ -557,7 +635,12 @@ class _CoverImageUpload extends StatelessWidget {
         ],
       );
     }
-
+    
+    // Also handle if remote URL is present but no bytes (initial load)
+    // The parent widget _EventTypeDetailsCard passes coverImageBytes. 
+    // We should probably pass the URL too if we want to show it.
+    // _EventTypeDetailsCard doesn't have coverImageUrl param. I need to add it.
+    
     return GestureDetector(
       onTap: onPick,
       child: Container(

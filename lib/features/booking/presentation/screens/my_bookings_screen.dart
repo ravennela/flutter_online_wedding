@@ -33,7 +33,7 @@ class MyBookingsScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final booking = state.bookings[index];
                 return ListTile(
-                  title: Text('Booking #${booking.id}'),
+                  title: Text('Booking #${booking.bookingId}'),
                   subtitle: Text('Status: ${booking.status}'),
                   trailing: Text('\$${booking.totalAmount.toStringAsFixed(2)}'),
                   onTap: () {

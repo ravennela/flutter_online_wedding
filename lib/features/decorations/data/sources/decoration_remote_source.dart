@@ -1,10 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_online/core/constants/api_constants.dart';
+import 'package:flutter_online/core/errors/exceptions.dart';
 import 'package:flutter_online/core/network/api_client.dart';
 
 /// Abstract contract for decoration remote operations.
 abstract class DecorationRemoteSource {
   /// Create a decoration package (ADMIN).
   Future<Map<String, dynamic>> createDecoration(Map<String, dynamic> data);
+
+  /// Update a decoration package (ADMIN).
+  Future<Map<String, dynamic>> updateDecoration(String id, Map<String, dynamic> data);
 
   /// Fetch decorations (ADMIN).
   Future<Map<String, dynamic>> fetchDecorations({
@@ -17,6 +22,8 @@ abstract class DecorationRemoteSource {
     String? sortBy,
     String? sortDir,
   });
+  Future<void> deleteDecoration(String id);
+  Future<Map<String, dynamic>> getDecorationById(String id);
 
   /// Fetch cities for dropdown (ADMIN).
   /// Response: { content: [{ id, name }], last, page, size, totalElements, totalPages }
@@ -40,6 +47,16 @@ class DecorationRemoteSourceImpl implements DecorationRemoteSource {
       ApiConstants.createDecoration,
       data: data,
     );
+    return response.data as Map<String, dynamic>;
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateDecoration(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final url = ApiConstants.updateDecoration.replaceFirst('{id}', id);
+    final response = await dioClient.put(url, data: data);
     return response.data as Map<String, dynamic>;
   }
 
@@ -111,5 +128,22 @@ class DecorationRemoteSourceImpl implements DecorationRemoteSource {
       }
     }
     return [];
+  }
+
+   @override
+  Future<void> deleteDecoration(String id) async {
+    try { 
+    
+      final response = await dioClient.delete(ApiConstants.deleteDecoration.replaceFirst('{id}', id));
+
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getDecorationById(String id) async {
+    final response = await dioClient.get('${ApiConstants.createDecoration}/$id');
+    return response.data as Map<String, dynamic>;
   }
 }

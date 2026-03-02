@@ -1,11 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/features/decorations/domain/usecases/create_decoration_usecase.dart';
 import 'package:flutter_online/features/decorations/domain/usecases/fetch_cities_usecase.dart';
-import 'package:flutter_online/features/decorations/domain/models/city_list_item.dart';
-import 'package:flutter_online/features/events/domain/models/event_type_list_item.dart';
 import 'package:flutter_online/features/events/domain/usecases/fetch_event_types_usecase.dart';
-import 'create_decoration_event.dart';
-import 'create_decoration_state.dart';
+import 'events/create_decoration_event.dart';
+import 'states/create_decoration_state.dart';
 
 class CreateDecorationBloc
     extends Bloc<CreateDecorationEvent, CreateDecorationState> {

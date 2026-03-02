@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter_online/features/auth/domain/models/verify_otp_model.dart';
+
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/errors/exceptions.dart';
@@ -6,7 +8,7 @@ import '../../domain/models/user_model.dart';
 
 abstract class AuthRemoteSource {
   Future<Map<String, dynamic>> login(String phone);
-  Future<UserModel> verifyOtp(String phone, String otp);
+  Future<Map<String,dynamic>> verifyOtp(String phone, String otp);
   Future<void> logout();
   Future<UserModel> getCurrentUser();
 }
@@ -33,7 +35,7 @@ class AuthRemoteSourceImpl implements AuthRemoteSource {
 
   
   @override
-  Future<UserModel> verifyOtp(String phone, String otp) async {
+  Future<Map<String,dynamic>> verifyOtp(String phone, String otp) async {
     try {
       final response = await apiClient.post(
         ApiConstants.verifyOtp,
@@ -42,7 +44,8 @@ class AuthRemoteSourceImpl implements AuthRemoteSource {
           'otp': otp,
         },
       );
-      return UserModel.fromJson(response.data['user'] as Map<String, dynamic>);
+      print("response.data"+response.toString());
+     return response.data;
     } catch (e) {
       throw ServerException('Failed to verify OTP: ${e.toString()}');
     }

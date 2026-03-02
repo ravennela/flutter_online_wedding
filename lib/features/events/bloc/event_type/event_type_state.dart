@@ -34,6 +34,29 @@ class CreateEventTypeFailure extends EventTypeState {
   List<Object?> get props => [error];
 }
 
+/// Loading while update API is in progress
+class UpdateEventTypeLoading extends EventTypeState {}
+
+/// Success after updating event type
+class UpdateEventTypeSuccess extends EventTypeState {
+  final String message;
+
+  const UpdateEventTypeSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Error state for update
+class UpdateEventTypeFailure extends EventTypeState {
+  final String error;
+
+  const UpdateEventTypeFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}
+
 /// Loading event types list
 class EventTypesListLoading extends EventTypeState {}
 
@@ -69,6 +92,39 @@ class EventTypesListFailure extends EventTypeState {
   final String error;
 
   const EventTypesListFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}
+
+/// Success after deleting (soft delete) event type
+class EventTypeDeleteSuccess extends EventTypeState {
+  final String message;
+
+  const EventTypeDeleteSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Loading event type detail
+class EventTypeDetailLoading extends EventTypeState {}
+
+/// Loaded event type detail
+class EventTypeDetailLoaded extends EventTypeState {
+  final EventTypeListItem eventType;
+
+  const EventTypeDetailLoaded(this.eventType);
+
+  @override
+  List<Object?> get props => [eventType];
+}
+
+/// Error state for detail fetch
+class EventTypeDetailFailure extends EventTypeState {
+  final String error;
+
+  const EventTypeDetailFailure(this.error);
 
   @override
   List<Object?> get props => [error];

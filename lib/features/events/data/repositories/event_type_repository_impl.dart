@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_online/core/errors/exceptions.dart';
 import 'package:flutter_online/features/events/data/sources/event_type_remote_source.dart';
 import 'package:flutter_online/features/events/domain/models/create_event_type_model.dart';
+import 'package:flutter_online/features/events/domain/models/event_type_list_item.dart';
 import 'package:flutter_online/features/events/domain/models/event_type_list_response.dart';
 import 'package:flutter_online/features/events/domain/repositories/event_type_repository.dart';
 
@@ -12,6 +13,7 @@ class EventTypeRepositoryImpl implements EventTypeRepository {
   final EventTypeRemoteDatasource remoteDatasource;
 
   EventTypeRepositoryImpl({required this.remoteDatasource});
+
 
   /// ➕ Create Event Type
   @override
@@ -53,6 +55,52 @@ class EventTypeRepositoryImpl implements EventTypeRepository {
         active: active,
       );
       return Right(EventTypeListResponse.fromJson(response));
+    } on SocketException {
+      return const Left("No internet connection");
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map
+          ? (e.response!.data['message'] ?? e.response!.data['error'])
+          : null;
+      return Left(
+        msg?.toString() ?? e.message ?? 'Server error occurred',
+      );
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return const Left("Something went wrong");
+    }
+  }
+  /// ✏️ Update Event Type (e.g. Soft Delete)
+  @override
+  Future<Either<String, CreateEventTypeModel>> updateEventTypeRepo(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await remoteDatasource.updateEventType(id, data);
+      return Right(CreateEventTypeModel.fromJson(response));
+    } on SocketException {
+      return const Left("No internet connection");
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map
+          ? (e.response!.data['message'] ?? e.response!.data['error'])
+          : null;
+      return Left(
+        msg?.toString() ?? e.message ?? 'Server error occurred',
+      );
+    } on ServerException catch (e) {
+      return Left(e.message);
+    } catch (e) {
+      return const Left("Something went wrong");
+    }
+  }
+
+  /// 📄 Get Single Event Type by ID
+  @override
+  Future<Either<String, EventTypeListItem>> getEventTypeByIdRepo(String id) async {
+    try {
+      final response = await remoteDatasource.getEventTypeById(id);
+      return Right(EventTypeListItem.fromJson(response));
     } on SocketException {
       return const Left("No internet connection");
     } on DioException catch (e) {

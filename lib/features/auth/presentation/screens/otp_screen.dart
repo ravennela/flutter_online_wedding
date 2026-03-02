@@ -1,11 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_online/features/auth/domain/models/otp_screen_args.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_online/features/auth/presentation/cubit/auth_state.dart';
+import 'package:flutter_online/features/auth/presentation/utils/auth_helpers.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/routes/app_routes.dart';
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key});
+  final OtpScreenArgs args;
+
+  const OtpScreen({super.key, required this.args});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -54,18 +60,36 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _onVerify() {
-    // Log OTP Submitted
-    String otp = _controllers.map((e) => e.text).join();
-    debugPrint("OTP Submitted: $otp");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('OTP Submitted')),
-    );
+    final otp = _controllers.map((e) => e.text).join();
+    if (otp.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter 6-digit OTP')),
+      );
+      return;
+    }
+    context.read<AuthCubit>().verifyOtp(widget.args.phone, otp);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F6F0), // Luxury Champagne/Beige
+ @override
+Widget build(BuildContext context) {
+  return BlocListener<AuthCubit, AuthState>(
+    listener: (context, state) {
+      if (state is AuthAuthenticated) {
+        onLoginSuccess(
+          context,
+          widget.args.redirectData,
+          userRole: state.user.role,
+        );
+      }
+
+      if (state is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.message)),
+        );
+      }
+    },
+    child: Scaffold(
+      backgroundColor: const Color(0xFFF9F6F0),
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 768) {
@@ -75,9 +99,9 @@ class _OtpScreenState extends State<OtpScreen> {
           }
         },
       ),
-    );
-  }
-
+    ),
+  );
+}
   // --- Desktop Layout ---
   Widget _buildDesktopLayout() {
     return Stack(
@@ -92,7 +116,7 @@ class _OtpScreenState extends State<OtpScreen> {
           top: 40,
           left: 40,
           child: _BackButton(
-            onTap: () => context.go(AppRoutes.login),
+            onTap: () => context.pop(),
           ),
         ),
 
@@ -120,6 +144,7 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
             child: SingleChildScrollView(
               child: _OtpFormContent(
+                phone: widget.args.phone,
                 controllers: _controllers,
                 focusNodes: _focusNodes,
                 timerValue: _start,
@@ -144,7 +169,7 @@ class _OtpScreenState extends State<OtpScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 24, top: 16),
               child: _BackButton(
-                onTap: () => context.go(AppRoutes.login),
+                onTap: () => context.pop(),
               ),
             ),
             Expanded(
@@ -152,6 +177,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   child: _OtpFormContent(
+                    phone: widget.args.phone,
                     controllers: _controllers,
                     focusNodes: _focusNodes,
                     timerValue: _start,
@@ -171,6 +197,7 @@ class _OtpScreenState extends State<OtpScreen> {
 // --- Common Components ---
 
 class _OtpFormContent extends StatelessWidget {
+  final String phone;
   final List<TextEditingController> controllers;
   final List<FocusNode> focusNodes;
   final int timerValue;
@@ -178,6 +205,7 @@ class _OtpFormContent extends StatelessWidget {
   final VoidCallback onResend;
 
   const _OtpFormContent({
+    required this.phone,
     required this.controllers,
     required this.focusNodes,
     required this.timerValue,
@@ -245,7 +273,7 @@ class _OtpFormContent extends StatelessWidget {
             children: [
               const TextSpan(text: "We’ve sent a 6-digit code to "),
               TextSpan(
-                text: "+91 XXXXXXXX12",
+                text: "+91 ${phone.length >= 8 ? '******${phone.substring(phone.length - 2)}' : phone}",
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black,

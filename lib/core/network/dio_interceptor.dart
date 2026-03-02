@@ -1,8 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_online/features/auth/data/datasources/token_storage.dart';
+import 'package:flutter_online/core/network/unauthorized_notifier.dart';
 
 class DioInterceptor extends Interceptor {
-  DioInterceptor();
+  final TokenStorage tokenStorage;
+  final UnauthorizedNotifier unauthorizedNotifier;
+
+  DioInterceptor({
+    required this.tokenStorage,
+    required this.unauthorizedNotifier,
+  });
 
   @override
   void onRequest(
@@ -12,9 +20,7 @@ class DioInterceptor extends Interceptor {
     final requiresAuth = options.extra['requiresAuth'] ?? true;
 
     if (requiresAuth) {
-      // TODO: Replace with secure storage later
-      final token = await _getAccessToken();
-
+      final token = await tokenStorage.getAccessToken();
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
@@ -54,21 +60,11 @@ class DioInterceptor extends Interceptor {
       debugPrint('Data: ${err.response?.data}');
     }
 
-    // Central place to catch 401
     if (err.response?.statusCode == 401) {
-      // TODO:
-      // 1. Clear token
-      // 2. Navigate to login
-      // 3. Emit logout event (later with Bloc)
+      tokenStorage.clearTokens();
+      unauthorizedNotifier.notifyUnauthorized();
     }
 
     super.onError(err, handler);
-  }
-
-  /// TEMP: Replace later with flutter_secure_storage
-  Future<String?> _getAccessToken() async {
-    // Example:
-    // return await SecureStorage.instance.readToken();
-    return null;
   }
 }

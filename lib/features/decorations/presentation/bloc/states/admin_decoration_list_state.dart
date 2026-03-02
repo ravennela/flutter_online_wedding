@@ -1,4 +1,4 @@
-import 'package:flutter_online/features/decorations/domain/models/decoration_list_response.dart';
+part of '../admin_decoration_list_bloc.dart';
 
 abstract class AdminDecorationListState {}
 
@@ -14,4 +14,9 @@ class AdminDecorationListLoaded extends AdminDecorationListState {
 class AdminDecorationListError extends AdminDecorationListState {
   final String message;
   AdminDecorationListError(this.message);
+}
+
+class AdminDecorationDeleteSuccess extends AdminDecorationListState {
+  final String message;
+  AdminDecorationDeleteSuccess(this.message);
 }

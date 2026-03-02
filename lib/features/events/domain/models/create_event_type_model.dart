@@ -11,27 +11,27 @@ String createEventTypeToJson(CreateEventTypeModel data) => json.encode(data.toJs
 
 class CreateEventTypeModel {
     bool active;
-    String description;
-    String iconUrl;
+    String? description;
+    String? iconUrl;
     String id;
     String name;
-    int sortOrder;
+    int? sortOrder;
 
     CreateEventTypeModel({
         required this.active,
-        required this.description,
-        required this.iconUrl,
+        this.description,
+        this.iconUrl,
         required this.id,
         required this.name,
-        required this.sortOrder,
+        this.sortOrder,
     });
 
     factory CreateEventTypeModel.fromJson(Map<String, dynamic> json) => CreateEventTypeModel(
-        active: json["active"],
+        active: json["active"] ?? false,
         description: json["description"],
         iconUrl: json["iconUrl"],
-        id: json["id"],
-        name: json["name"],
+        id: json["id"] ?? "",
+        name: json["name"] ?? "",
         sortOrder: json["sortOrder"],
     );
 

@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../decorations/domain/models/city_list_item.dart';
 import '../../../decorations/presentation/bloc/create_decoration_bloc.dart';
-import '../../../decorations/presentation/bloc/create_decoration_event.dart';
-import '../../../decorations/presentation/bloc/create_decoration_state.dart';
+
+import '../../../decorations/presentation/bloc/events/create_decoration_event.dart';
+import '../../../decorations/presentation/bloc/states/create_decoration_state.dart';
 import '../../../events/domain/models/event_type_list_item.dart';
 import '../widgets/admin_sidebar.dart';
 import '../widgets/admin_top_bar.dart';

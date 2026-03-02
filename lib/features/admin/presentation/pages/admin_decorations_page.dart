@@ -7,8 +7,7 @@ import 'dart:async';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../di/service_locator.dart';
-import '../../../../features/decorations/presentation/bloc/admin_decoration_list_cubit.dart';
-import '../../../../features/decorations/presentation/bloc/admin_decoration_list_state.dart';
+import '../../../../features/decorations/presentation/bloc/admin_decoration_list_bloc.dart';
 import '../../../../features/events/bloc/event_type/event_type_bloc.dart';
 import '../../../../features/events/bloc/event_type/event_type_event.dart';
 import '../../../../features/events/bloc/event_type/event_type_state.dart';
@@ -19,21 +18,22 @@ class AdminDecorationsPage extends StatelessWidget {
   const AdminDecorationsPage({super.key});
 
   @override
-
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => getIt<AdminDecorationListCubit>()..loadDecorations(),
+          create: (_) =>
+              getIt<AdminDecorationListBloc>()..add(LoadAdminDecorations()),
         ),
         BlocProvider(
-          create: (_) => getIt<EventTypeBloc>()..add(const FetchEventTypes(page: 0, size: 100)),
+          create: (_) =>
+              getIt<EventTypeBloc>()
+                ..add(const FetchEventTypes(page: 0, size: 100)),
         ),
       ],
       child: const _AdminDecorationsContentWrapper(),
     );
   }
-
 }
 
 class _AdminDecorationsContentWrapper extends StatelessWidget {
@@ -70,9 +70,7 @@ class _AdminDecorationsContentWrapper extends StatelessWidget {
 class _DecorationsContent extends StatefulWidget {
   final bool isMobile;
 
-  const _DecorationsContent({
-    this.isMobile = false,
-  });
+  const _DecorationsContent({this.isMobile = false});
 
   @override
   State<_DecorationsContent> createState() => _DecorationsContentState();
@@ -98,10 +96,12 @@ class _DecorationsContentState extends State<_DecorationsContent> {
   }
 
   void _loadDecorations({int page = 0}) {
-    context.read<AdminDecorationListCubit>().loadDecorations(
-      page: page,
-      search: _searchController.text,
-      eventTypeId: _selectedEventTypeId,
+    context.read<AdminDecorationListBloc>().add(
+      LoadAdminDecorations(
+        page: page,
+        search: _searchController.text,
+        eventTypeId: _selectedEventTypeId,
+      ),
     );
   }
 
@@ -118,7 +118,12 @@ class _DecorationsContentState extends State<_DecorationsContent> {
     final horizontalPadding = isDesktop ? 32.0 : 16.0;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, widget.isMobile ? 16 : 32, horizontalPadding, 48),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        widget.isMobile ? 16 : 32,
+        horizontalPadding,
+        48,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1400),
@@ -136,7 +141,7 @@ class _DecorationsContentState extends State<_DecorationsContent> {
       ),
     );
   }
-  
+
   // ... existing headers ...
 
   Widget _buildDesktopHeader(BuildContext context) {
@@ -146,59 +151,85 @@ class _DecorationsContentState extends State<_DecorationsContent> {
         Text(
           'Decorations',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1F36),
-              ),
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1F36),
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           'Manage all decoration packages',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
       ],
     );
   }
 
   Widget _buildDecorationList(BuildContext context) {
-    return BlocBuilder<AdminDecorationListCubit, AdminDecorationListState>(
-      builder: (context, state) {
-        if (state is AdminDecorationListLoading) {
-          return const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()));
-        } else if (state is AdminDecorationListError) {
-          return Center(child: Padding(padding: const EdgeInsets.all(32), child: Text(state.message, style: const TextStyle(color: Colors.red))));
-        } else if (state is AdminDecorationListLoaded) {
-          final items = state.response.content;
-          if (items.isEmpty) {
-            return _buildEmptyState();
-          }
-
-          return Column(
-            children: [
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  return widget.isMobile
-                      ? _DecorationMobileCard(item: items[index])
-                      : _DecorationDesktopCard(item: items[index]);
-                },
-              ),
-              const SizedBox(height: 24),
-              _buildPagination(context, state.response),
-            ],
+    return BlocListener<AdminDecorationListBloc, AdminDecorationListState>(
+      listener: (context, state) {
+        if (state is AdminDecorationDeleteSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+            ),
           );
         }
-        return const SizedBox.shrink();
       },
+      child: BlocBuilder<AdminDecorationListBloc, AdminDecorationListState>(
+        builder: (context, state) {
+          if (state is AdminDecorationListLoading ||
+              state is AdminDecorationDeleteSuccess) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          } else if (state is AdminDecorationListError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  state.message,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
+          } else if (state is AdminDecorationListLoaded) {
+            final items = state.response.content;
+            if (items.isEmpty) {
+              return _buildEmptyState();
+            }
+
+            return Column(
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    return widget.isMobile
+                        ? _DecorationMobileCard(item: items[index])
+                        : _DecorationDesktopCard(item: items[index]);
+                  },
+                ),
+                const SizedBox(height: 24),
+                _buildPagination(context, state.response),
+              ],
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
-  Widget _buildPagination(BuildContext context, DecorationListResponse response) {
+  Widget _buildPagination(
+    BuildContext context,
+    DecorationListResponse response,
+  ) {
     if (response.totalPages <= 1) return const SizedBox.shrink();
 
     return Row(
@@ -206,29 +237,32 @@ class _DecorationsContentState extends State<_DecorationsContent> {
       children: [
         IconButton(
           onPressed: response.page > 0
-              ? () => context.read<AdminDecorationListCubit>().loadDecorations(
+              ? () => context.read<AdminDecorationListBloc>().add(
+                  LoadAdminDecorations(
                     page: response.page - 1,
                     search: _searchController.text,
                     eventTypeId: _selectedEventTypeId,
-                  )
+                  ),
+                )
               : null,
           icon: const Icon(Icons.chevron_left),
         ),
         Text('Page ${response.page + 1} of ${response.totalPages}'),
         IconButton(
           onPressed: !response.last
-              ? () => context.read<AdminDecorationListCubit>().loadDecorations(
+              ? () => context.read<AdminDecorationListBloc>().add(
+                  LoadAdminDecorations(
                     page: response.page + 1,
                     search: _searchController.text,
                     eventTypeId: _selectedEventTypeId,
-                  )
+                  ),
+                )
               : null,
           icon: const Icon(Icons.chevron_right),
         ),
       ],
     );
   }
-    
 
   Widget _buildSearchAndFilters(BuildContext context, bool isDesktop) {
     return Container(
@@ -259,8 +293,15 @@ class _DecorationsContentState extends State<_DecorationsContent> {
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
                       hintText: 'Search decorations...',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey.shade400,
+                        size: 20,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide(color: Colors.grey.shade200),
@@ -275,16 +316,23 @@ class _DecorationsContentState extends State<_DecorationsContent> {
                       ),
                       filled: true,
                       fillColor: Colors.grey.shade50,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 16,
+                      ),
                       isDense: true,
                       suffixIcon: Container(
                         margin: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                           color: Colors.white,
-                           shape: BoxShape.circle,
-                           border: Border.all(color: Colors.grey.shade200),
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey.shade200),
                         ),
-                        child: Icon(Icons.tune, size: 16, color: Colors.grey.shade600),
+                        child: Icon(
+                          Icons.tune,
+                          size: 16,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ),
                   ),
@@ -294,7 +342,11 @@ class _DecorationsContentState extends State<_DecorationsContent> {
                 const SizedBox(width: 16),
                 IconButton(
                   onPressed: () => _loadDecorations(),
-                  icon: Icon(Icons.refresh, color: Colors.grey.shade600, size: 22),
+                  icon: Icon(
+                    Icons.refresh,
+                    color: Colors.grey.shade600,
+                    size: 22,
+                  ),
                   tooltip: 'Refresh',
                 ),
               ],
@@ -304,7 +356,7 @@ class _DecorationsContentState extends State<_DecorationsContent> {
           BlocBuilder<EventTypeBloc, EventTypeState>(
             builder: (context, state) {
               if (state is EventTypesListLoaded) {
-                 return Wrap(
+                return Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
@@ -313,20 +365,22 @@ class _DecorationsContentState extends State<_DecorationsContent> {
                       isSelected: _selectedEventTypeId == null,
                       onTap: () => _onEventTypeSelected(null),
                     ),
-                    ...state.content.map((type) => _FilterChip(
-                      label: type.name,
-                      isSelected: _selectedEventTypeId == type.id,
-                      onTap: () => _onEventTypeSelected(type.id),
-                    )),
+                    ...state.content.map(
+                      (type) => _FilterChip(
+                        label: type.name,
+                        isSelected: _selectedEventTypeId == type.id,
+                        onTap: () => _onEventTypeSelected(type.id),
+                      ),
+                    ),
                   ],
                 );
               }
               // Fallback or loading state for filters filter chips
-               return Wrap(
+              return Wrap(
                 spacing: 8,
                 children: [
-                   _FilterChip(label: 'All', isSelected: true, onTap: () {}),
-                   // Optional: Skeleton or shimmer here
+                  _FilterChip(label: 'All', isSelected: true, onTap: () {}),
+                  // Optional: Skeleton or shimmer here
                 ],
               );
             },
@@ -336,14 +390,17 @@ class _DecorationsContentState extends State<_DecorationsContent> {
     );
   }
 
-  
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(64),
         child: Column(
           children: [
-            Icon(Icons.local_florist_outlined, size: 64, color: Colors.grey.shade300),
+            Icon(
+              Icons.local_florist_outlined,
+              size: 64,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
               'No decorations found',
@@ -380,127 +437,214 @@ class _DecorationDesktopCardState extends State<_DecorationDesktopCard> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
-    final currencyFormatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '₹',
+      decimalDigits: 0,
+    );
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: _isHovered ? const Color(0xFFF9FAFB) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: _isHovered
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-          border: _isHovered
-              ? Border.all(color: Colors.blue.shade200.withOpacity(0.5), width: 1)
-              : Border.all(color: Colors.transparent),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () =>
+            context.push(AppRoutes.adminDecorationsDetailPath(item.id)),
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _isHovered ? const Color(0xFFF9FAFB) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+            border: _isHovered
+                ? Border.all(
+                    color: Colors.blue.shade200.withOpacity(0.5),
+                    width: 1,
+                  )
+                : Border.all(color: Colors.transparent),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.image_outlined,
+                  color: Colors.blue.shade200,
+                  size: 40,
+                ),
               ),
-              child: Icon(Icons.image_outlined, color: Colors.blue.shade200, size: 40),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (item.eventTypeName.isNotEmpty)
+                      Text(
+                        item.eventTypeName.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: Colors.blue.shade600,
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF1A1F36),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    if (item.cityName.isNotEmpty)
+                      Text(
+                        item.cityName,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (item.eventTypeName.isNotEmpty)
-                    Text(
-                      item.eventTypeName.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                        color: Colors.blue.shade600,
-                      ),
-                    ),
-                  const SizedBox(height: 6),
                   Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF1A1F36),
+                    'BASE PRICE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                      color: Colors.grey.shade500,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  if (item.cityName.isNotEmpty)
                   Text(
-                    item.cityName,
+                    currencyFormatter.format(item.basePrice),
                     style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.blue.shade600,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'BASE PRICE',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: Colors.grey.shade500,
-                  ),
+              const SizedBox(width: 24),
+              _StatusBadge(isActive: item.active),
+              const SizedBox(width: 16),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert,
+                  color: Colors.grey.shade600,
+                  size: 22,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  currencyFormatter.format(item.basePrice),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.blue.shade600,
-                  ),
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-            const SizedBox(width: 24),
-            _StatusBadge(isActive: item.active),
-            const SizedBox(width: 16),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: Colors.grey.shade600, size: 22),
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'disable', child: Text('Disable')),
-              ],
-              onSelected: (_) {},
-            ),
-          ],
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(value: 'disable', child: Text('Disable')),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+                onSelected: (value) {
+                  if(value == 'edit') {
+                    context.push(AppRoutes.editDeceoration,extra: widget.item.id);  
+                  }
+                   if (value == 'delete') {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Decoration'),
+                        content: const Text(
+                          'Are you sure you want to delete this decoration?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              context.read<AdminDecorationListBloc>().add(
+                                DeleteAdminDecoration(item.id),
+                              );
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  if (value == 'delete') {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Decoration'),
+                        content: const Text(
+                          'Are you sure you want to delete this decoration?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              context.read<AdminDecorationListBloc>().add(
+                                DeleteAdminDecoration(item.id),
+                              );
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -514,101 +658,122 @@ class _DecorationMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                ),
-                 child: Icon(Icons.image_outlined, color: Colors.blue.shade200, size: 50),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: _StatusBadge(isActive: item.active),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '₹',
+      decimalDigits: 0,
+    );
+    return InkWell(
+      onTap: () => context.push(AppRoutes.adminDecorationsDetailPath(item.id)),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
               children: [
-                if (item.eventTypeName.isNotEmpty)
-                  Text(
-                    item.eventTypeName.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: Colors.blue.shade600,
+                Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(14),
                     ),
                   ),
-                const SizedBox(height: 8),
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Color(0xFF1A1F36),
+                  child: Icon(
+                    Icons.image_outlined,
+                    color: Colors.blue.shade200,
+                    size: 50,
                   ),
                 ),
-                if (item.cityName.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade500),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.cityName,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 13,
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _StatusBadge(isActive: item.active),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item.eventTypeName.isNotEmpty)
+                    Text(
+                      item.eventTypeName.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: Colors.blue.shade600,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1A1F36),
+                    ),
+                  ),
+                  if (item.cityName.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: Colors.grey.shade500,
                         ),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.cityName,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        currencyFormatter.format(item.basePrice),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.blue.shade600,
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey.shade400,
                       ),
                     ],
                   ),
                 ],
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      currencyFormatter.format(item.basePrice),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.blue.shade600,
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey.shade400),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
