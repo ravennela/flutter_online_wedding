@@ -77,7 +77,19 @@ import '../features/admin/bookings/data/datasources/admin_booking_remote_datasou
 import '../features/admin/bookings/data/repositories/admin_booking_repository_impl.dart';
 import '../features/admin/bookings/domain/repositories/admin_booking_repository.dart';
 import '../features/admin/bookings/domain/usecases/get_admin_bookings_usecase.dart';
+import '../features/admin/bookings/domain/usecases/get_admin_booking_detail_usecase.dart';
+import '../features/admin/bookings/domain/usecases/update_booking_status_usecase.dart';
+import '../features/admin/bookings/domain/usecases/admin_cancel_booking_usecase.dart';
+import '../features/admin/bookings/domain/usecases/assign_vendors_usecase.dart';
+import '../features/admin/bookings/domain/usecases/deassign_vendor_usecase.dart';
 import '../features/admin/bookings/presentation/bloc/admin_bookings_bloc.dart';
+import '../features/admin/bookings/presentation/bloc/admin_booking_detail_bloc.dart';
+import '../features/admin/vendors/data/datasources/vendor_remote_datasource.dart';
+import '../features/admin/vendors/data/repositories/vendor_repository_impl.dart';
+import '../features/admin/vendors/domain/repositories/vendor_repository.dart';
+import '../features/admin/vendors/domain/usecases/get_vendors_usecase.dart';
+import '../features/admin/vendors/presentation/bloc/vendor_bloc.dart';
+
 
 final getIt = GetIt.instance;
 
@@ -363,7 +375,49 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<GetAdminBookingsUseCase>(
     () => GetAdminBookingsUseCase(getIt<AdminBookingRepository>()),
   );
+  getIt.registerLazySingleton<GetAdminBookingDetailUseCase>(
+    () => GetAdminBookingDetailUseCase(getIt<AdminBookingRepository>()),
+  );
+  getIt.registerLazySingleton<UpdateBookingStatusUseCase>(
+    () => UpdateBookingStatusUseCase(getIt<AdminBookingRepository>()),
+  );
+  getIt.registerLazySingleton<AdminCancelBookingUseCase>(
+    () => AdminCancelBookingUseCase(getIt<AdminBookingRepository>()),
+  );
+  getIt.registerLazySingleton<AssignVendorsUseCase>(
+    () => AssignVendorsUseCase(getIt<AdminBookingRepository>()),
+  );
+  getIt.registerLazySingleton<DeAssignVendorUseCase>(
+    () => DeAssignVendorUseCase(getIt<AdminBookingRepository>()),
+  );
   getIt.registerFactory<AdminBookingsBloc>(
-    () => AdminBookingsBloc(getAdminBookingsUseCase: getIt<GetAdminBookingsUseCase>()),
+    () => AdminBookingsBloc(
+      getAdminBookingsUseCase: getIt<GetAdminBookingsUseCase>(),
+      updateBookingStatusUseCase: getIt<UpdateBookingStatusUseCase>(),
+      adminCancelBookingUseCase: getIt<AdminCancelBookingUseCase>(),
+    ),
+  );
+  getIt.registerFactory<AdminBookingDetailBloc>(
+    () => AdminBookingDetailBloc(
+      getAdminBookingDetailUseCase: getIt<GetAdminBookingDetailUseCase>(),
+      updateBookingStatusUseCase: getIt<UpdateBookingStatusUseCase>(),
+      adminCancelBookingUseCase: getIt<AdminCancelBookingUseCase>(),
+      assignVendorsUseCase: getIt<AssignVendorsUseCase>(),
+      deAssignVendorUseCase: getIt<DeAssignVendorUseCase>(),
+    ),
+  );
+
+  // Admin Vendors
+  getIt.registerLazySingleton<VendorRemoteDataSource>(
+    () => VendorRemoteDataSourceImpl(apiClient: getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<VendorRepository>(
+    () => VendorRepositoryImpl(remoteDataSource: getIt<VendorRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<GetVendorsUseCase>(
+    () => GetVendorsUseCase(repository: getIt<VendorRepository>()),
+  );
+  getIt.registerFactory<VendorBloc>(
+    () => VendorBloc(getVendorsUseCase: getIt<GetVendorsUseCase>()),
   );
 }

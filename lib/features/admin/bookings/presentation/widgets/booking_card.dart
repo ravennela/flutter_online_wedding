@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_online/features/admin/bookings/domain/entities/admin_booking_entity.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_online/core/routes/app_routes.dart';
 
 import 'status_badge.dart';
 import 'booking_action_menu.dart';
@@ -25,88 +27,95 @@ class BookingCard extends StatelessWidget {
 
     final isCancelled = booking.status.toUpperCase() == 'CANCELLED';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCancelled ? Colors.grey.shade50 : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return InkWell(
+      onTap: () => context.push(
+        AppRoutes.adminBookingDetail,
+        extra: booking.bookingId,
       ),
-      child: Opacity(
-        opacity: isCancelled ? 0.6 : 1.0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '#${booking.bookingId.substring(0, 8).toUpperCase()}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      booking.userName ?? 'System User',
-                      style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-                BookingActionMenu(booking: booking),
-              ],
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isCancelled ? Colors.grey.shade50 : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
             ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem('Event', booking.eventType, Icons.event),
-                ),
-                Expanded(
-                  child: _buildInfoItem('Date', eventDate != null ? dateFormat.format(eventDate) : booking.eventDate, Icons.calendar_today),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem('Location', booking.city, Icons.location_on),
-                ),
-                Expanded(
-                  child: Column(
+          ],
+        ),
+        child: Opacity(
+          opacity: isCancelled ? 0.6 : 1.0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Amount', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        '#${booking.bookingId.substring(0, 8).toUpperCase()}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        currencyFormat.format(booking.totalAmount),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blue),
+                        booking.userName ?? 'System User',
+                        style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _getStatusBadge(booking.status),
-                _getPaymentBadge(booking.paymentStatus),
-              ],
-            ),
-          ],
+                  BookingActionMenu(booking: booking),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoItem('Event', booking.eventType, Icons.event),
+                  ),
+                  Expanded(
+                    child: _buildInfoItem('Date', eventDate != null ? dateFormat.format(eventDate) : booking.eventDate, Icons.calendar_today),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoItem('Location', booking.city, Icons.location_on),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Amount', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text(
+                          currencyFormat.format(booking.totalAmount),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blue),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _getStatusBadge(booking.status),
+                  _getPaymentBadge(booking.paymentStatus),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

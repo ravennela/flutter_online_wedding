@@ -2,11 +2,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/admin_booking_entity.dart';
 import '../../domain/usecases/get_admin_bookings_usecase.dart';
+import '../../domain/usecases/update_booking_status_usecase.dart';
+import '../../domain/usecases/admin_cancel_booking_usecase.dart';
 
-// Events and States remained the same, just adding the Bloc class
+// Events and States
 abstract class AdminBookingsEvent extends Equatable {
   const AdminBookingsEvent();
-
   @override
   List<Object?> get props => [];
 }
@@ -14,7 +15,6 @@ abstract class AdminBookingsEvent extends Equatable {
 class FetchAdminBookings extends AdminBookingsEvent {
   final bool isRefresh;
   const FetchAdminBookings({this.isRefresh = false});
-
   @override
   List<Object?> get props => [isRefresh];
 }
@@ -24,9 +24,7 @@ class UpdateFilters extends AdminBookingsEvent {
   final String? city;
   final String? paymentStatus;
   final String? query;
-
   const UpdateFilters({this.status, this.city, this.paymentStatus, this.query});
-
   @override
   List<Object?> get props => [status, city, paymentStatus, query];
 }
@@ -34,7 +32,6 @@ class UpdateFilters extends AdminBookingsEvent {
 class ChangePage extends AdminBookingsEvent {
   final int page;
   const ChangePage(this.page);
-
   @override
   List<Object?> get props => [page];
 }
@@ -42,12 +39,27 @@ class ChangePage extends AdminBookingsEvent {
 class ChangePageSize extends AdminBookingsEvent {
   final int pageSize;
   const ChangePageSize(this.pageSize);
-
   @override
   List<Object?> get props => [pageSize];
 }
 
-enum AdminBookingsStatus { initial, loading, success, failure }
+class UpdateBookingStatusInList extends AdminBookingsEvent {
+  final String id;
+  final String status;
+  const UpdateBookingStatusInList(this.id, this.status);
+  @override
+  List<Object?> get props => [id, status];
+}
+
+class AdminCancelBookingInList extends AdminBookingsEvent {
+  final String id;
+  final String reason;
+  const AdminCancelBookingInList(this.id, this.reason);
+  @override
+  List<Object?> get props => [id, reason];
+}
+
+enum AdminBookingsStatus { initial, loading, success, failure, updating, updateSuccess, updateFailure, cancelling, cancelSuccess, cancelFailure }
 
 class AdminBookingsState extends Equatable {
   final AdminBookingsStatus status;
@@ -122,13 +134,20 @@ class AdminBookingsState extends Equatable {
 
 class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
   final GetAdminBookingsUseCase getAdminBookingsUseCase;
+  final UpdateBookingStatusUseCase updateBookingStatusUseCase;
+  final AdminCancelBookingUseCase adminCancelBookingUseCase;
 
-  AdminBookingsBloc({required this.getAdminBookingsUseCase})
-      : super(const AdminBookingsState()) {
+  AdminBookingsBloc({
+    required this.getAdminBookingsUseCase,
+    required this.updateBookingStatusUseCase,
+    required this.adminCancelBookingUseCase,
+  }) : super(const AdminBookingsState()) {
     on<FetchAdminBookings>(_onFetchAdminBookings);
     on<UpdateFilters>(_onUpdateFilters);
     on<ChangePage>(_onChangePage);
     on<ChangePageSize>(_onChangePageSize);
+    on<UpdateBookingStatusInList>(_onUpdateBookingStatus);
+    on<AdminCancelBookingInList>(_onAdminCancelBooking);
   }
 
   Future<void> _onFetchAdminBookings(
@@ -148,7 +167,7 @@ class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
     result.fold(
       (failure) => emit(state.copyWith(
         status: AdminBookingsStatus.failure,
-        errorMessage: failure!.message??"",
+        errorMessage: failure.message,
       )),
       (data) => emit(state.copyWith(
         status: AdminBookingsStatus.success,
@@ -168,7 +187,7 @@ class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
       selectedCity: event.city ?? state.selectedCity,
       selectedPaymentStatus: event.paymentStatus ?? state.selectedPaymentStatus,
       searchQuery: event.query ?? state.searchQuery,
-      currentPage: 0, // Reset to first page on filter change
+      currentPage: 0,
     ));
     add(const FetchAdminBookings());
   }
@@ -187,5 +206,45 @@ class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
   ) async {
     emit(state.copyWith(pageSize: event.pageSize, currentPage: 0));
     add(const FetchAdminBookings());
+  }
+
+  Future<void> _onUpdateBookingStatus(
+    UpdateBookingStatusInList event,
+    Emitter<AdminBookingsState> emit,
+  ) async {
+    emit(state.copyWith(status: AdminBookingsStatus.updating));
+
+    final result = await updateBookingStatusUseCase(event.id, event.status);
+
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminBookingsStatus.updateFailure,
+        errorMessage: failure.message,
+      )),
+      (_) {
+        emit(state.copyWith(status: AdminBookingsStatus.updateSuccess));
+        add(const FetchAdminBookings());
+      },
+    );
+  }
+
+  Future<void> _onAdminCancelBooking(
+    AdminCancelBookingInList event,
+    Emitter<AdminBookingsState> emit,
+  ) async {
+    emit(state.copyWith(status: AdminBookingsStatus.cancelling));
+
+    final result = await adminCancelBookingUseCase(event.id, event.reason);
+
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminBookingsStatus.cancelFailure,
+        errorMessage: failure.message,
+      )),
+      (_) {
+        emit(state.copyWith(status: AdminBookingsStatus.cancelSuccess));
+        add(const FetchAdminBookings());
+      },
+    );
   }
 }

@@ -1,7 +1,34 @@
 import 'package:flutter/material.dart';
 
 class LoadingSkeleton extends StatelessWidget {
-  const LoadingSkeleton({super.key});
+  final double? height;
+  final double? width;
+  final double borderRadius;
+  final Color? color;
+
+  const LoadingSkeleton({
+    super.key,
+    this.height,
+    this.width,
+    this.borderRadius = 8.0,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: color ?? Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+  }
+}
+
+class BookingListSkeleton extends StatelessWidget {
+  const BookingListSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,38 +45,24 @@ class LoadingSkeleton extends StatelessWidget {
 
   Widget _buildStatsSkeleton() {
     return Row(
-      children: List.generate(4, (index) => Expanded(
-        child: Container(
-          height: 120,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(16),
-          ),
+      children: List.generate(4, (index) => const Expanded(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: LoadingSkeleton(height: 120, borderRadius: 16),
         ),
       )),
     );
   }
 
   Widget _buildFilterSkeleton() {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
+    return const LoadingSkeleton(height: 60, borderRadius: 12);
   }
 
   Widget _buildListSkeleton() {
     return Column(
-      children: List.generate(5, (index) => Container(
-        height: 80,
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
+      children: List.generate(5, (index) => const Padding(
+        padding: EdgeInsets.only(bottom: 12),
+        child: LoadingSkeleton(height: 80, borderRadius: 12),
       )),
     );
   }

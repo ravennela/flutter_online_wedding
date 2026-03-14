@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_online/features/admin/bookings/domain/entities/admin_booking_entity.dart';
-
+import 'package:flutter_online/features/admin/bookings/models/vendor_model.dart';
+import 'package:flutter_online/core/routes/app_routes.dart';
+import '../bloc/admin_bookings_bloc.dart';
+import '../utils/booking_status_helper.dart';
 
 class BookingActionMenu extends StatelessWidget {
   final AdminBookingEntity booking;
@@ -76,41 +81,103 @@ class BookingActionMenu extends StatelessWidget {
   }
 
   void _handleAction(BuildContext context, String action) {
-    final displayId = booking.bookingId.substring(0, 8).toUpperCase();
     switch (action) {
       case 'view':
-        // Navigator.pushNamed(context, '/admin/bookings/details');
+        context.push(
+          AppRoutes.adminBookingDetail,
+          extra: booking.bookingId,
+        );
+        break;
+      case 'status':
+        _showStatusDialog(context);
+        break;
+      case 'vendor':
+        context.push(
+          AppRoutes.adminSelectVendor,
+          extra: SelectVendorArgs(
+            bookingId: booking.bookingId,
+            bookingCode: booking.bookingId.substring(0, 8).toUpperCase(),
+            eventCategory: booking.eventType,
+            city: booking.city,
+          ),
+        );
         break;
       case 'cancel':
-        _showCancelConfirmation(context);
+        _showCancelDialog(context);
         break;
       default:
+        final displayId = booking.bookingId.substring(0, 8).toUpperCase();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Action "$action" triggered for #$displayId')),
         );
     }
   }
 
-  void _showCancelConfirmation(BuildContext context) {
+  void _showStatusDialog(BuildContext context) {
+    BookingStatusHelper.showStatusDialog(
+      context: context,
+      currentStatus: booking.status,
+      onStatusSelected: (status) {
+        if (status.toUpperCase() == 'CANCELLED') {
+          _showCancelDialog(context);
+        } else {
+          context.read<AdminBookingsBloc>().add(UpdateBookingStatusInList(booking.bookingId, status));
+        }
+      },
+    );
+  }
+
+  void _showCancelDialog(BuildContext context) {
     final displayId = booking.bookingId.substring(0, 8).toUpperCase();
+    final TextEditingController reasonController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: Text('Are you sure you want to cancel booking #$displayId? This action cannot be undone.'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Cancel Booking #$displayId'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Are you sure you want to cancel this booking? This action cannot be undone.'),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: reasonController,
+                decoration: const InputDecoration(
+                  labelText: 'Cancellation Reason',
+                  hintText: 'Enter reason for cancellation',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a reason for cancellation';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Go Back'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Booking cancelled successfully')),
-              );
+              if (formKey.currentState!.validate()) {
+                final reason = reasonController.text.trim();
+                Navigator.pop(dialogContext);
+                context.read<AdminBookingsBloc>().add(AdminCancelBookingInList(booking.bookingId, reason));
+              }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Confirm Cancellation'),
           ),
         ],

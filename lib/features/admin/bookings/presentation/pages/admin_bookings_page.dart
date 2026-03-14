@@ -18,7 +18,8 @@ class AdminBookingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<AdminBookingsBloc>()..add(const FetchAdminBookings()),
+      create: (context) =>
+          getIt<AdminBookingsBloc>()..add(const FetchAdminBookings()),
       child: const AdminBookingsView(),
     );
   }
@@ -35,58 +36,116 @@ class AdminBookingsView extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 600;
-          final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1024;
+          final isTablet =
+              constraints.maxWidth >= 600 && constraints.maxWidth < 1024;
           final padding = isMobile ? 16.0 : 32.0;
 
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<AdminBookingsBloc>().add(const FetchAdminBookings(isRefresh: true));
+              context.read<AdminBookingsBloc>().add(
+                const FetchAdminBookings(isRefresh: true),
+              );
             },
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(padding),
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: BlocBuilder<AdminBookingsBloc, AdminBookingsState>(
-                builder: (context, state) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context),
-                      const SizedBox(height: 32),
-                      
-                      BookingStatsRow(stats: _getMockStats()),
-                      const SizedBox(height: 32),
-                      const BookingFilterBar(),
-                      const SizedBox(height: 24),
+            child: BlocListener<AdminBookingsBloc, AdminBookingsState>(
+              listener: (context, state) {
+                if (state.status == AdminBookingsStatus.updateSuccess ||
+                    state.status == AdminBookingsStatus.cancelSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        state.status == AdminBookingsStatus.cancelSuccess
+                            ? 'Booking cancelled successfully!'
+                            : 'Booking status updated successfully!',
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+                if (state.status == AdminBookingsStatus.updateFailure ||
+                    state.status == AdminBookingsStatus.cancelFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        state.errorMessage ?? 'Failed to process request',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(padding),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: BlocBuilder<AdminBookingsBloc, AdminBookingsState>(
+                  builder: (context, state) {
+                    return Stack(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(context),
+                            const SizedBox(height: 32),
 
-                      if (state.status == AdminBookingsStatus.loading && state.bookings.isEmpty)
-                        const LoadingSkeleton()
-                      else if (state.status == AdminBookingsStatus.failure)
-                        EmptyStateWidget(
-                          title: 'Error Loading Bookings',
-                          subtitle: state.errorMessage ?? 'Please check your connection.',
-                          icon: Icons.error_outline,
-                          onAction: () => context.read<AdminBookingsBloc>().add(const FetchAdminBookings()),
-                          actionLabel: 'Retry',
-                        )
-                      else ...[
-                        _buildBookingList(context, state, isMobile, isTablet),
-                        const SizedBox(height: 24),
-                        if (state.bookings.isNotEmpty)
-                          PaginationWidget(
-                            currentPage: state.currentPage + 1,
-                            totalPages: state.totalPages,
-                            pageSize: state.pageSize,
-                            totalItems: state.totalItems,
-                            onPageChanged: (page) => 
-                                context.read<AdminBookingsBloc>().add(ChangePage(page - 1)),
-                            onPageSizeChanged: (size) => 
-                                context.read<AdminBookingsBloc>().add(ChangePageSize(size)),
+                            BookingStatsRow(stats: _getMockStats()),
+                            const SizedBox(height: 32),
+                            const BookingFilterBar(),
+                            const SizedBox(height: 24),
+
+                            if (state.status == AdminBookingsStatus.loading &&
+                                state.bookings.isEmpty)
+                              const BookingListSkeleton()
+                            else if (state.status ==
+                                AdminBookingsStatus.failure)
+                              EmptyStateWidget(
+                                title: 'Error Loading Bookings',
+                                subtitle:
+                                    state.errorMessage ??
+                                    'Please check your connection.',
+                                icon: Icons.error_outline,
+                                onAction: () => context
+                                    .read<AdminBookingsBloc>()
+                                    .add(const FetchAdminBookings()),
+                                actionLabel: 'Retry',
+                              )
+                            else ...[
+                              _buildBookingList(
+                                context,
+                                state,
+                                isMobile,
+                                isTablet,
+                              ),
+                              const SizedBox(height: 24),
+                              if (state.bookings.isNotEmpty)
+                                PaginationWidget(
+                                  currentPage: state.currentPage + 1,
+                                  totalPages: state.totalPages,
+                                  pageSize: state.pageSize,
+                                  totalItems: state.totalItems,
+                                  onPageChanged: (page) => context
+                                      .read<AdminBookingsBloc>()
+                                      .add(ChangePage(page - 1)),
+                                  onPageSizeChanged: (size) => context
+                                      .read<AdminBookingsBloc>()
+                                      .add(ChangePageSize(size)),
+                                ),
+                            ],
+                            const SizedBox(height: 48),
+                          ],
+                        ),
+                        if (state.status == AdminBookingsStatus.updating ||
+                            state.status == AdminBookingsStatus.cancelling)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black12,
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
                           ),
                       ],
-                      const SizedBox(height: 48),
-                    ],
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           );
@@ -115,11 +174,17 @@ class AdminBookingsView extends StatelessWidget {
     );
   }
 
-  Widget _buildBookingList(BuildContext context, AdminBookingsState state, bool isMobile, bool isTablet) {
+  Widget _buildBookingList(
+    BuildContext context,
+    AdminBookingsState state,
+    bool isMobile,
+    bool isTablet,
+  ) {
     if (state.status == AdminBookingsStatus.success && state.bookings.isEmpty) {
       return const EmptyStateWidget(
         title: 'No bookings found',
-        subtitle: 'Try adjusting your filters or search terms to find what you are looking for.',
+        subtitle:
+            'Try adjusting your filters or search terms to find what you are looking for.',
       );
     }
 
@@ -128,7 +193,8 @@ class AdminBookingsView extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: state.bookings.length,
-        itemBuilder: (context, index) => BookingCard(booking: state.bookings[index]),
+        itemBuilder: (context, index) =>
+            BookingCard(booking: state.bookings[index]),
       );
     }
 

@@ -14,8 +14,11 @@ class AppRoutes {
   static const String booking = '/booking';
   static const String profile = '/profile';
   static const String adminDashboard = '/admin';
-  static const String adminBookings = '/admin/bookings';
-  static const String adminEventTypes = '/admin/event-types';
+   static const String adminBookings = '/admin/bookings';
+   static const String adminBookingDetail = '/admin/bookings/details';
+   static const String adminEventTypes = '/admin/event-types';
+   static const String adminVendors = '/admin/vendors';
+
 
   static const String adminEventTypesCreate = '/admin/event-types/create';
   static const String adminDecorations = '/admin/decorations';
@@ -30,6 +33,7 @@ class AppRoutes {
   static const String selectEventDate = '/booking/select-date';
   static const String paymentMethod = '/booking/payment';
   static const String bookingSuccess = '/booking/success';
+  static const String adminSelectVendor = '/admin/bookings/select-vendor';
 
 
   // Route paths with parameters

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_online/features/admin/bookings/domain/entities/admin_booking_entity.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_online/core/routes/app_routes.dart';
 
 import 'status_badge.dart';
 import 'booking_action_menu.dart';
@@ -61,6 +63,14 @@ class BookingTable extends StatelessWidget {
     } catch (_) {}
 
     return DataRow(
+      onSelectChanged: (selected) {
+        if (selected != null && selected) {
+          context.push(
+            AppRoutes.adminBookingDetail,
+            extra: booking.bookingId,
+          );
+        }
+      },
       cells: [
         DataCell(Text('#${booking.bookingId.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold))),
         DataCell(

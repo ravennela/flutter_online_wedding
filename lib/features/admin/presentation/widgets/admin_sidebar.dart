@@ -98,6 +98,8 @@ class _AdminSidebarState extends State<AdminSidebar> {
                       context.go(AppRoutes.adminDecorations);
                     } else if (item['label'] == 'Bookings') {
                       context.go(AppRoutes.adminBookings);
+                    } else if (item['label'] == 'Vendors') {
+                      context.go(AppRoutes.adminVendors);
                     }
                   },
                 );

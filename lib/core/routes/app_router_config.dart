@@ -31,6 +31,11 @@ import 'package:flutter_online/features/admin/presentation/pages/event_type_deta
 import 'package:flutter_online/features/admin/presentation/pages/decoration_detail_page.dart'
     as admin_decoration_detail;
 import 'package:flutter_online/features/admin/bookings/presentation/pages/admin_bookings_page.dart';
+import 'package:flutter_online/features/admin/bookings/presentation/pages/admin_booking_detail_page.dart';
+import 'package:flutter_online/features/admin/bookings/presentation/pages/select_vendor_screen.dart';
+import 'package:flutter_online/features/admin/vendors/presentation/pages/admin_vendors_page.dart';
+
+import 'package:flutter_online/features/admin/bookings/models/vendor_model.dart';
 import 'package:flutter_online/features/cities/presentation/cubit/city_cubit.dart';
 import 'package:flutter_online/features/cities/presentation/pages/city_selection_page.dart';
 import 'package:flutter_online/features/decorations/presentation/bloc/events/create_decoration_event.dart';
@@ -102,6 +107,21 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const AdminBookingsPage(),
     ),
     GoRoute(
+      path: AppRoutes.adminBookingDetail,
+      builder: (context, state) {
+        final bookingId = state.extra as String? ?? 
+                         (state.pathParameters['id']);
+        return AdminBookingDetailPage(bookingId: bookingId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.adminSelectVendor,
+      builder: (context, state) {
+        final args = state.extra as SelectVendorArgs;
+        return SelectVendorScreen(args: args);
+      },
+    ),
+    GoRoute(
       path: AppRoutes.adminEventTypes,
       builder: (context, state) => BlocProvider(
         create: (_) =>
@@ -136,7 +156,11 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.adminDecorations,
-      builder: (context, state) => AdminDecorationsPage(),
+      builder: (context, state) => const AdminDecorationsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminVendors,
+      builder: (context, state) => const AdminVendorsPage(),
     ),
 
     GoRoute(

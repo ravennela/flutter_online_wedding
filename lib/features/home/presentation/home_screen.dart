@@ -86,7 +86,8 @@ class _PublicHomePageState extends State<PublicHomePage>
           controller: _scrollController,
           slivers: [
             SliverToBoxAdapter(
-                child: _HeroHeaderSection(hero: data.hero, isWeb: isWeb)),
+              child: _HeroHeaderSection(hero: data.hero, isWeb: isWeb),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(
@@ -137,6 +138,7 @@ class _PublicHomePageState extends State<PublicHomePage>
                       'Trending Decorations',
                       isWeb,
                       showViewAll: true,
+                      onViewAll: () => context.push(AppRoutes.eventList),
                     ),
                     const SizedBox(height: 24),
                     _TrendingGrid(
@@ -165,9 +167,7 @@ class _PublicHomePageState extends State<PublicHomePage>
       preferredSize: const Size.fromHeight(70),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        color: _isScrolled
-            ? AppColors.surface
-            : Colors.black.withOpacity(0.2),
+        color: _isScrolled ? AppColors.surface : Colors.black.withOpacity(0.2),
 
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SafeArea(
@@ -422,12 +422,18 @@ class _PublicHomePageState extends State<PublicHomePage>
                     const CircleAvatar(
                       backgroundColor: Colors.white,
                       radius: 30,
-                      child: Icon(Icons.person, size: 30, color: AppColors.primary),
+                      child: Icon(
+                        Icons.person,
+                        size: 30,
+                        color: AppColors.primary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Welcome, $userName',
-                      style: AppTextStyles.headingM.copyWith(color: Colors.white),
+                      style: AppTextStyles.headingM.copyWith(
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
@@ -442,41 +448,91 @@ class _PublicHomePageState extends State<PublicHomePage>
               ),
               if (isLoggedIn) ...[
                 ListTile(
-                  leading: const Icon(Icons.calendar_today, color: AppColors.primary),
-                  title: const Text('My Bookings'),
+                  leading: const Icon(
+                    Icons.calendar_today,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text(
+                    'My Bookings',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     context.go(AppRoutes.myBookings);
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.person_outline),
-                  title: const Text('Profile'),
+                  leading: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text(
+                    'Profile',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
+                    context.push(AppRoutes.profile);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.redAccent),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.read<AuthCubit>().logout();
+                    context.go(AppRoutes.home);
                   },
                 ),
               ],
               ListTile(
-                leading: const Icon(Icons.event),
-                title: const Text('My Events'),
+                leading: const Icon(Icons.event, color: AppColors.primary),
+                title: const Text(
+                  'All Events',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 onTap: () {
                   Navigator.pop(context);
+                  context.push(AppRoutes.eventList);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.favorite),
-                title: const Text('Wishlist'),
+                leading: const Icon(
+                  Icons.favorite_border,
+                  color: AppColors.primary,
+                ),
+                title: const Text(
+                  'Wishlist',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 onTap: () {
                   Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Wishlist coming soon!')),
+                  );
                 },
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.support_agent),
-                title: const Text('Help Center'),
+                leading: const Icon(
+                  Icons.support_agent,
+                  color: AppColors.primary,
+                ),
+                title: const Text(
+                  'Help Center',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 onTap: () {
                   Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Help Center coming soon!')),
+                  );
                 },
               ),
             ],
@@ -490,6 +546,7 @@ class _PublicHomePageState extends State<PublicHomePage>
     String title,
     bool isWeb, {
     bool showViewAll = false,
+    VoidCallback? onViewAll,
   }) {
     return Row(
       mainAxisAlignment: isWeb
@@ -520,7 +577,7 @@ class _PublicHomePageState extends State<PublicHomePage>
         ),
         if (showViewAll && !isWeb)
           TextButton(
-            onPressed: () {},
+            onPressed: onViewAll ?? () {},
             child: const Text(
               'View All',
               style: TextStyle(color: AppColors.textSecondary),
@@ -653,33 +710,11 @@ class _HeroHeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double heroHeight = isWeb ? 600 : 500;
-    const double searchOverlap = 30;
 
     return SizedBox(
-      height: heroHeight + searchOverlap + 20,
-      child: Stack(
-        alignment: Alignment.topCenter,
-        clipBehavior: Clip.none,
-        children: [
-          SizedBox(
-            height: heroHeight,
-            width: double.infinity,
-            child: _HeroCarousel(hero: hero),
-          ),
-          Positioned(
-            top: heroHeight - 30,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                constraints: BoxConstraints(maxWidth: isWeb ? 800 : 500),
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                child: _SearchCard(isWeb: isWeb),
-              ),
-            ),
-          ),
-        ],
-      ),
+      height: heroHeight,
+      width: double.infinity,
+      child: _HeroCarousel(hero: hero),
     );
   }
 }
@@ -715,8 +750,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   }
 
   List<String> _getImages() {
-    if (widget.hero.imageUrl != null &&
-        widget.hero.imageUrl!.isNotEmpty) {
+    if (widget.hero.imageUrl != null && widget.hero.imageUrl!.isNotEmpty) {
       return [widget.hero.imageUrl!];
     }
     return _defaultImages;
@@ -741,9 +775,8 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             key: ValueKey<String>(images[_currentIndex]),
             fit: BoxFit.cover,
             width: double.infinity,
-            errorBuilder: (_, __, ___) => Container(
-              color: AppColors.primary.withOpacity(0.2),
-            ),
+            errorBuilder: (_, __, ___) =>
+                Container(color: AppColors.primary.withOpacity(0.2)),
           ),
         ),
         Container(
@@ -801,75 +834,6 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   }
 }
 
-class _SearchCard extends StatelessWidget {
-  final bool isWeb;
-  const _SearchCard({required this.isWeb});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64, // Slightly taller for better touch targets
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(32), // More pill-shaped
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 16),
-          const Icon(Icons.search, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: isWeb
-                    ? 'Search specific themes, venues...'
-                    : 'Search events...',
-                hintStyle: AppTextStyles.bodyM.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                minimumSize: const Size(
-                  0,
-                  44,
-                ), // Ensure reasonable target size but minimal width constraints
-              ),
-              child: const Text(
-                'Search',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-    );
-  }
-}
-
 IconData _categoryIconFromString(String icon) {
   switch (icon.toLowerCase()) {
     case 'wedding':
@@ -904,7 +868,12 @@ class _CategoryRail extends StatelessWidget {
           itemCount: categories.length,
           separatorBuilder: (_, __) => const SizedBox(width: 32),
           itemBuilder: (context, index) {
-            return _HoverScale(child: _buildItem(categories[index]));
+            return _HoverScale(
+              child: GestureDetector(
+                onTap: () => context.push(AppRoutes.eventList),
+                child: _buildItem(categories[index]),
+              ),
+            );
           },
         ),
       ),
@@ -1008,11 +977,13 @@ class _ServicesSection extends StatelessWidget {
           runSpacing: 32,
           alignment: WrapAlignment.center,
           children: services
-              .map((s) => _buildServiceCard(
-                    _serviceIconFromString(s.icon),
-                    s.title,
-                    s.description,
-                  ))
+              .map(
+                (s) => _buildServiceCard(
+                  _serviceIconFromString(s.icon),
+                  s.title,
+                  s.description,
+                ),
+              )
               .toList(),
         ),
       ],
@@ -1082,9 +1053,10 @@ class _FeaturedCollections extends StatelessWidget {
             subtitle: featuredEvents[i].subtitle.isNotEmpty
                 ? featuredEvents[i].subtitle
                 : (i == 0
-                    ? "Elegant Palaces & Premium Decor"
-                    : "Fun Themes for Kids & Adults"),
-            imageUrl: featuredEvents[i].imageUrl ??
+                      ? "Elegant Palaces & Premium Decor"
+                      : "Fun Themes for Kids & Adults"),
+            imageUrl:
+                featuredEvents[i].imageUrl ??
                 (i == 0 ? _defaultFeaturedImage1 : _defaultFeaturedImage2),
             alignLeft: i.isEven,
           ),
@@ -1123,22 +1095,26 @@ class _FeaturedCollections extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Text(
-              'EXPLORE NOW',
-              style: AppTextStyles.buttonPrimary.copyWith(
-                color: isWeb ? AppColors.primary : Colors.white,
-                fontSize: 14,
+        InkWell(
+          onTap: () => context.push(AppRoutes.eventList),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'EXPLORE NOW',
+                style: AppTextStyles.buttonPrimary.copyWith(
+                  color: isWeb ? AppColors.primary : Colors.white,
+                  fontSize: 14,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward,
-              size: 16,
-              color: isWeb ? AppColors.primary : Colors.white,
-            ),
-          ],
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward,
+                size: 16,
+                color: isWeb ? AppColors.primary : Colors.white,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1302,10 +1278,7 @@ const String _defaultDecorationImage =
 class _TrendingGrid extends StatelessWidget {
   final List<AdminHomeTrendingDecorationModel> trendingDecorations;
   final bool isWeb;
-  const _TrendingGrid({
-    required this.trendingDecorations,
-    required this.isWeb,
-  });
+  const _TrendingGrid({required this.trendingDecorations, required this.isWeb});
 
   @override
   Widget build(BuildContext context) {
@@ -1332,7 +1305,7 @@ class _TrendingGrid extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             return _HoverScale(
-              child: _buildCard(trendingDecorations[index],context),
+              child: _buildCard(trendingDecorations[index], context),
             );
           },
         );
@@ -1340,11 +1313,14 @@ class _TrendingGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(AdminHomeTrendingDecorationModel item,BuildContext context) {
+  Widget _buildCard(
+    AdminHomeTrendingDecorationModel item,
+    BuildContext context,
+  ) {
     final imageUrl = item.imageUrl ?? _defaultDecorationImage;
     return GestureDetector(
       onTap: () {
-        context.push('/decoration/${item.id}');
+        context.push(AppRoutes.decorationDetailPath(item.id));
       },
       child: Container(
         decoration: BoxDecoration(

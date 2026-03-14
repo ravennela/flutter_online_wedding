@@ -12,6 +12,12 @@ abstract class AdminBookingRemoteDataSource {
     String? city,
     String? paymentStatus,
   });
+
+  Future<AdminBookingDetailModel> getAdminBookingDetail(String id);
+  Future<void> updateBookingStatus(String id, String status);
+  Future<void> adminCancelBooking(String id, String reason);
+  Future<void> assignVendors(String bookingId, List<String> vendorIds);
+  Future<void> deAssignVendor(String bookingId, String vendorId);
 }
 
 class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
@@ -54,4 +60,71 @@ class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
       rethrow;
     }
   }
-}
+
+  @override
+  Future<AdminBookingDetailModel> getAdminBookingDetail(String id) async {
+    try {
+      final response = await apiClient.get(
+        ApiConstants.adminBookingDetail.replaceFirst('{id}', id),
+      );
+
+      return AdminBookingDetailModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } catch (e) {
+      log("Error fetching admin booking detail: $e");
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateBookingStatus(String id, String status) async {
+    try {
+      await apiClient.patch(
+        ApiConstants.updateBookingStatus.replaceFirst('{id}', id),
+        data: {'status': status},
+      );
+    } catch (e) {
+      log("Error updating booking status: $e");
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> adminCancelBooking(String id, String reason) async {
+    try {
+      await apiClient.patch(
+        ApiConstants.cancelBooking.replaceFirst('{id}', id),
+        data: {'reason': reason},
+      );
+    } catch (e) {
+      log("Error cancelling booking as admin: $e");
+      rethrow;
+    }
+  }
+    @override
+    Future<void> assignVendors(String bookingId, List<String> vendorIds) async {
+      try {
+        await apiClient.post(
+          ApiConstants.assignVendors.replaceFirst('{id}', bookingId),
+          data: {'vendorIds': vendorIds},
+        );
+      } catch (e) {
+        log("Error assigning vendors: $e");
+        rethrow;
+      }
+    }
+
+    @override
+    Future<void> deAssignVendor(String bookingId, String vendorId) async {
+      try {
+        await apiClient.delete(
+          ApiConstants.deAssignVendor.replaceFirst('{id}', bookingId).replaceFirst('{vendorId}', vendorId),
+        );
+      } catch (e) {
+        log("Error de-assigning vendor: $e");
+        rethrow;
+      }
+    }
+  }
+

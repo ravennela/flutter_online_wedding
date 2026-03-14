@@ -6,9 +6,8 @@ import 'package:flutter_online/features/home/presentation/bloc/admin_home_state.
 class AdminHomeBloc extends Bloc<AdminHomeEvent, AdminHomeState> {
   final GetAdminHomeUsecase getAdminHomeUsecase;
 
-  AdminHomeBloc({
-    required this.getAdminHomeUsecase,
-  }) : super(const AdminHomeInitial()) {
+  AdminHomeBloc({required this.getAdminHomeUsecase})
+    : super(const AdminHomeInitial()) {
     on<FetchAdminHome>(_onFetchAdminHome);
   }
 
