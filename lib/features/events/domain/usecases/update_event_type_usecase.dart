@@ -13,6 +13,7 @@ class UpdateEventTypeUseCase {
     required String name,
     required String? description,
     required String? iconUrl,
+    String? iconPublicId,
     required int? sortOrder,
   }) async {
     final Map<String, dynamic> data = {
@@ -21,8 +22,8 @@ class UpdateEventTypeUseCase {
       "description": description,
       "active": active,
       "iconUrl": iconUrl,
+      "iconPublicId": iconPublicId,
       "sortOrder": sortOrder,
-      // "createdAt": createdAt // typically not sent for update
     };
 
     return await repository.updateEventTypeRepo(id, data);

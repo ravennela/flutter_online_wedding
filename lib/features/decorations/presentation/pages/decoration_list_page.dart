@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/core/routes/app_routes.dart';
 import 'package:flutter_online/core/theme/app_colors.dart';
 import 'package:flutter_online/core/theme/app_text_styles.dart';
+import 'package:flutter_online/core/widgets/app_drawer.dart';
 import 'package:flutter_online/di/service_locator.dart';
 import 'package:flutter_online/features/cities/presentation/cubit/city_cubit.dart';
 import 'package:flutter_online/features/cities/presentation/widgets/city_selector_widget.dart';
@@ -135,6 +136,7 @@ class _DecorationListViewState extends State<_DecorationListView> {
   Widget _buildDecorationList(BuildContext context, String cityId) {
     return Scaffold(
       backgroundColor: Colors.white,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Text(
           'Decorations',
@@ -143,9 +145,11 @@ class _DecorationListViewState extends State<_DecorationListView> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.black),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
         ),
         actions: [
           Padding(
@@ -269,6 +273,8 @@ class _DecorationListViewState extends State<_DecorationListView> {
                       int crossAxisCount =
                           width > 900 ? 3 : (width > 600 ? 2 : 1);
                       double padding = 16;
+                      // Shorter cards so image height doesn't cause excessive scrolling (was 0.75)
+                      double aspectRatio = width < 600 ? 1.15 : 0.92;
 
                       return AnimationLimiter(
                         child: GridView.builder(
@@ -278,7 +284,7 @@ class _DecorationListViewState extends State<_DecorationListView> {
                             crossAxisCount: crossAxisCount,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            childAspectRatio: width < 600 ? 1.2 : 0.75,
+                            childAspectRatio: aspectRatio,
                           ),
                           itemCount: state.decorations.length,
                           itemBuilder: (context, index) {

@@ -283,7 +283,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
                     Text(
-                      '75% complete',
+                      'PROGRESS',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -291,7 +291,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                       ),
                     ),
                     Text(
-                      'Almost there',
+                      '75%',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -401,7 +401,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                     const SizedBox(height: 24),
                     _buildCTA(),
                     const SizedBox(height: 16),
-                    _buildSecurityMicrocopy(),
+                  
                   ],
                 ),
               ),
@@ -654,8 +654,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                 if (isDesktop) ...[
                   const SizedBox(height: 32),
                   _buildCTA(),
-                  const SizedBox(height: 12),
-                  _buildSecurityMicrocopy(),
+                  
+                
                 ],
               ],
             ),
@@ -717,7 +717,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
         children: [
           _buildCTA(),
           const SizedBox(height: 12),
-          _buildSecurityMicrocopy(),
+         
         ],
       ),
     );
@@ -732,7 +732,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
             return SizedBox(
               width: double.infinity,
-              height: 60,
+              height: 40,
               child: ElevatedButton(
                 onPressed: isLoading ? null : _proceedWithBooking,
                 style: ElevatedButton.styleFrom(
@@ -752,10 +752,10 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                         children: [
                           Text(
                             _isOnlinePayment ? 'Proceed to Secure Payment' : 'Confirm Booking',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 12),
-                          const Icon(Icons.arrow_forward_rounded, size: 22),
+                          const Icon(Icons.arrow_forward_rounded, size: 18),
                         ],
                       ),
               ),
@@ -766,22 +766,5 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     );
   }
 
-  Widget _buildSecurityMicrocopy() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
-        Icon(Icons.lock_outline, size: 12, color: Color(0xFF94A3B8)),
-        SizedBox(width: 4),
-        Text(
-          '256-BIT SSL ENCRYPTED CONNECTION',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF94A3B8),
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
+  
 }

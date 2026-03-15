@@ -13,6 +13,7 @@ class CreateEventTypeModel {
     bool active;
     String? description;
     String? iconUrl;
+    String? iconPublicId;
     String id;
     String name;
     int? sortOrder;
@@ -21,6 +22,7 @@ class CreateEventTypeModel {
         required this.active,
         this.description,
         this.iconUrl,
+        this.iconPublicId,
         required this.id,
         required this.name,
         this.sortOrder,
@@ -30,6 +32,7 @@ class CreateEventTypeModel {
         active: json["active"] ?? false,
         description: json["description"],
         iconUrl: json["iconUrl"],
+        iconPublicId: json["iconPublicId"],
         id: json["id"] ?? "",
         name: json["name"] ?? "",
         sortOrder: json["sortOrder"],
@@ -39,6 +42,7 @@ class CreateEventTypeModel {
         "active": active,
         "description": description,
         "iconUrl": iconUrl,
+        "iconPublicId": iconPublicId,
         "id": id,
         "name": name,
         "sortOrder": sortOrder,

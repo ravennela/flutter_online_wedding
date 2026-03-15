@@ -5,6 +5,7 @@ class EventTypeListItem {
   final String? description;
   final bool active;
   final String? iconUrl;
+  final String? iconPublicId;
   final int? sortOrder;
   final String createdAt;
 
@@ -14,19 +15,27 @@ class EventTypeListItem {
     this.description,
     required this.active,
     this.iconUrl,
+    this.iconPublicId,
     this.sortOrder,
     required this.createdAt,
   });
 
   factory EventTypeListItem.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final rawName = json['name'];
+    final rawIconUrl = json['iconUrl'];
+    final iconStr = rawIconUrl is String ? rawIconUrl.trim() : null;
+    final rawPublicId = json['iconPublicId'] ?? json['icon_public_id'];
+    final publicIdStr = rawPublicId is String ? rawPublicId.trim() : null;
     return EventTypeListItem(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String?,
-      active: json['active'] as bool? ?? true,
-      iconUrl: json['iconUrl'] as String?,
-      sortOrder: json['sortOrder'] as int?,
-      createdAt: json['createdAt'] as String? ?? '',
+      id: rawId?.toString() ?? '',
+      name: rawName?.toString() ?? '',
+      description: json['description']?.toString(),
+      active: json['active'] == true,
+      iconUrl: (iconStr == null || iconStr.isEmpty) ? null : iconStr,
+      iconPublicId: (publicIdStr == null || publicIdStr.isEmpty) ? null : publicIdStr,
+      sortOrder: json['sortOrder'] is int ? json['sortOrder'] as int : (json['sortOrder'] is num ? (json['sortOrder'] as num).toInt() : null),
+      createdAt: json['createdAt']?.toString() ?? json['updatedAt']?.toString() ?? '',
     );
   }
 
@@ -36,6 +45,7 @@ class EventTypeListItem {
     String? description,
     bool? active,
     String? iconUrl,
+    String? iconPublicId,
     int? sortOrder,
     String? createdAt,
   }) {
@@ -45,6 +55,7 @@ class EventTypeListItem {
       description: description ?? this.description,
       active: active ?? this.active,
       iconUrl: iconUrl ?? this.iconUrl,
+      iconPublicId: iconPublicId ?? this.iconPublicId,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -57,8 +68,8 @@ class EventTypeListItem {
       'description': description,
       'active': active,
       'iconUrl': iconUrl,
+      'iconPublicId': iconPublicId,
       'sortOrder': sortOrder,
-      // 'createdAt': createdAt, // specific to requirement, usually not needed for update
     };
   }
 }

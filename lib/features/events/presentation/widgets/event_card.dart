@@ -6,18 +6,21 @@ import '../../domain/models/event_type.dart';
 class EventCard extends StatefulWidget {
   final EventType event;
   final VoidCallback onTap;
+  final bool isHorizontal;
 
   const EventCard({
     super.key,
     required this.event,
     required this.onTap,
+    this.isHorizontal = false,
   });
 
   @override
   State<EventCard> createState() => _EventCardState();
 }
 
-class _EventCardState extends State<EventCard> with SingleTickerProviderStateMixin {
+class _EventCardState extends State<EventCard>
+    with SingleTickerProviderStateMixin {
   bool _isHovered = false;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -26,16 +29,218 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _controller = AnimationController(
-        duration: const Duration(milliseconds: 200), vsync: this);
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
     );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Widget _buildBadge({bool small = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: small ? 8 : 12,
+        vertical: small ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        widget.event.categoryTag.toUpperCase(),
+        style: TextStyle(
+          fontSize: small ? 8 : 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primary,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeart() {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.favorite, color: Colors.white, size: 16),
+    );
+  }
+
+  Widget _buildContent({bool isMobile = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.event.name,
+              style: AppTextStyles.headingS.copyWith(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Serif',
+                fontSize: isMobile ? 14 : 16,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              widget.event.subtitle ?? 'Elegant celebration',
+              style: AppTextStyles.caption.copyWith(
+                color: Colors.grey[500],
+                fontFamily: 'Serif',
+                fontStyle: FontStyle.italic,
+                fontSize: isMobile ? 11 : 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+        if (!isMobile) const SizedBox(height: 16),
+        // Bottom Row (Price & Button)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "FROM",
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[400],
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.event.price != null
+                      ? '\$${widget.event.price!.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]},")}'
+                      : '\$5,000',
+                  style: TextStyle(
+                    fontFamily: 'Serif',
+                    fontWeight: FontWeight.bold,
+                    fontSize: isMobile ? 14 : 16,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            ElevatedButton(
+              onPressed: widget.onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFDFBF4),
+                elevation: 0,
+                minimumSize: const Size(0, 28),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 12 : 16,
+                  vertical: 8,
+                ),
+              ),
+              child: Text(
+                isMobile ? 'View' : 'View Details',
+                style: TextStyle(
+                  fontSize: isMobile ? 10 : 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalLayout() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Image Section with Badge & Heart
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+                child: Image.network(
+                  widget.event.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Container(color: Colors.grey[200]),
+                ),
+              ),
+              Positioned(top: 12, left: 12, child: _buildBadge()),
+              Positioned(top: 12, right: 12, child: _buildHeart()),
+            ],
+          ),
+        ),
+
+        // Content Section
+        Padding(padding: const EdgeInsets.all(16.0), child: _buildContent()),
+      ],
+    );
+  }
+
+  Widget _buildHorizontalLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Image Section
+        Expanded(
+          flex: 4,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                ),
+                child: Image.network(
+                  widget.event.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Container(color: Colors.grey[200]),
+                ),
+              ),
+              Positioned(top: 8, left: 8, child: _buildBadge(small: true)),
+              Positioned(top: 8, right: 8, child: _buildHeart()),
+            ],
+          ),
+        ),
+        // Content Section
+        Expanded(
+          flex: 6,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: _buildContent(isMobile: true),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -68,129 +273,9 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Image Section with Badge
-                    Expanded(
-                      flex: 6, // Approx 60% image
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(16),
-                              topRight: Radius.circular(16),
-                            ),
-                            child: Image.network(
-                              widget.event.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(color: Colors.grey[200]),
-                            ),
-                          ),
-                          // Badge
-                          Positioned(
-                            top: 12,
-                            left: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                widget.event.categoryTag.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // Content Section
-                    Expanded(
-                      flex: 5, // Approx 40% content
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.event.name,
-                                  style: AppTextStyles.headingS.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Serif', // Match screenshot serif
-                                    fontSize: 16,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  widget.event.dateText,
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(Icons.video_camera_front_outlined, size: 12, color: Colors.grey[500]),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      "Virtual Event",
-                                      style: AppTextStyles.caption.copyWith(
-                                        fontSize: 10,
-                                        color: Colors.grey[500],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                            
-                            // Yellow Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: widget.onTap,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFC107), // Gold/Yellow from screenshot
-                                  foregroundColor: Colors.black, // Dark text
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                ),
-                                child: const Text(
-                                  'View Details',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: widget.isHorizontal
+                    ? _buildHorizontalLayout()
+                    : _buildVerticalLayout(),
               ),
             );
           },

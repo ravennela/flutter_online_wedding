@@ -8,13 +8,15 @@ import 'package:flutter_online/features/public_events/presentation/bloc/public_e
 import 'package:flutter_online/features/public_events/presentation/bloc/public_events_event.dart';
 import 'package:flutter_online/features/public_events/presentation/bloc/public_events_state.dart';
 import 'package:flutter_online/shared/widgets/error_widget.dart' as app_error;
+import '../../../../core/widgets/app_drawer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/models/event_type.dart';
 import '../widgets/event_card.dart';
 
+// Default: beautiful wedding/celebration image when event has no image
 const String _defaultEventImage =
-    'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=80';
+    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80';
 
 /// Converts PublicEventItem to EventType for EventCard display.
 EventType _toEventType(PublicEventItem item) {
@@ -50,6 +52,7 @@ class _EventListViewState extends State<_EventListView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
+      drawer: const AppDrawer(),
       body: BlocBuilder<PublicEventsBloc, PublicEventsState>(
         builder: (context, state) {
           final categories = _buildCategories(state);
@@ -65,7 +68,7 @@ class _EventListViewState extends State<_EventListView> {
                 elevation: 0,
                 leading: IconButton(
                   icon: const Icon(Icons.menu, color: Colors.black),
-                  onPressed: () {},
+                  onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
                 title: Text(
                   'Elegant Events',
@@ -83,10 +86,6 @@ class _EventListViewState extends State<_EventListView> {
                       child: CitySelectorWidget(isScrolled: true),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.search, color: Colors.black),
-                    onPressed: () {},
-                  )
                 ],
                 bottom: PreferredSize(
                   preferredSize: const Size.fromHeight(60),

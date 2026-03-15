@@ -13,17 +13,19 @@ class SubmitCreateEventType extends EventTypeEvent {
   final String name;
   final String? description;
   final String? iconUrl;
+  final String? iconPublicId;
   final int? sortOrder;
 
   const SubmitCreateEventType({
     required this.name,
     this.description,
     this.iconUrl,
+    this.iconPublicId,
     this.sortOrder,
   });
 
   @override
-  List<Object?> get props => [name, description, iconUrl, sortOrder];
+  List<Object?> get props => [name, description, iconUrl, iconPublicId, sortOrder];
 }
 
 /// 📄 Fetch event types list (with search, pagination, status filter)
@@ -71,6 +73,7 @@ class UpdateEventType extends EventTypeEvent {
   final String name;
   final String? description;
   final String? iconUrl;
+  final String? iconPublicId;
   final bool active;
   final int? sortOrder;
 
@@ -79,10 +82,11 @@ class UpdateEventType extends EventTypeEvent {
     required this.name,
     this.description,
     this.iconUrl,
+    this.iconPublicId,
     required this.active,
     this.sortOrder,
   });
 
   @override
-  List<Object?> get props => [id, name, description, iconUrl, active, sortOrder];
+  List<Object?> get props => [id, name, description, iconUrl, iconPublicId, active, sortOrder];
 }

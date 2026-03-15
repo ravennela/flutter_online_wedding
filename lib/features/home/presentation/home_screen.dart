@@ -14,6 +14,7 @@ import 'package:flutter_online/shared/widgets/loading_widget.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
 class PublicHomePage extends StatefulWidget {
   const PublicHomePage({super.key});
@@ -52,28 +53,31 @@ class _PublicHomePageState extends State<PublicHomePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(context),
-      drawer: _buildDrawer(context),
-      body: BlocBuilder<AdminHomeBloc, AdminHomeState>(
-        builder: (context, state) {
-          if (state is AdminHomeLoading) {
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(context),
+        drawer: const AppDrawer(),
+        body: BlocBuilder<AdminHomeBloc, AdminHomeState>(
+          builder: (context, state) {
+            if (state is AdminHomeLoading) {
+              return const LoadingWidget(message: 'Loading...');
+            }
+            if (state is AdminHomeFailure) {
+              return app_error.ErrorWidget(
+                message: state.message,
+                onRetry: () =>
+                    context.read<AdminHomeBloc>().add(const FetchAdminHome()),
+              );
+            }
+            if (state is AdminHomeLoaded) {
+              return _buildContent(context, state.data);
+            }
             return const LoadingWidget(message: 'Loading...');
-          }
-          if (state is AdminHomeFailure) {
-            return app_error.ErrorWidget(
-              message: state.message,
-              onRetry: () =>
-                  context.read<AdminHomeBloc>().add(const FetchAdminHome()),
-            );
-          }
-          if (state is AdminHomeLoaded) {
-            return _buildContent(context, state.data);
-          }
-          return const LoadingWidget(message: 'Loading...');
-        },
+          },
+        ),
       ),
     );
   }
@@ -221,7 +225,7 @@ class _PublicHomePageState extends State<PublicHomePage>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'LuxeEvents',
+                  'Elegant Events',
                   style: AppTextStyles.headingM.copyWith(
                     color: isScrolled ? AppColors.textPrimary : Colors.white,
                     fontWeight: FontWeight.bold,
@@ -291,11 +295,11 @@ class _PublicHomePageState extends State<PublicHomePage>
         ),
         const SizedBox(width: 12),
         Text(
-          'LuxeEvents',
+          'Elegant Events',
           style: AppTextStyles.headingM.copyWith(
             color: isScrolled ? AppColors.textPrimary : Colors.white,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+            letterSpacing: 1.2,
           ),
         ),
         const Spacer(),
@@ -352,11 +356,11 @@ class _PublicHomePageState extends State<PublicHomePage>
         ),
         const SizedBox(width: 12),
         Text(
-          'LuxeEvents',
+          'Elegant Events',
           style: AppTextStyles.headingM.copyWith(
             color: isScrolled ? AppColors.textPrimary : Colors.white,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+            letterSpacing: 1.2,
           ),
         ),
         const Spacer(),
@@ -391,155 +395,7 @@ class _PublicHomePageState extends State<PublicHomePage>
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, authState) {
-        final isLoggedIn = authState is AuthAuthenticated;
-        final userName = isLoggedIn && authState is AuthAuthenticated
-            ? (authState.user.name.isNotEmpty ? authState.user.name : 'User')
-            : 'Guest';
-
-        return Drawer(
-          backgroundColor: AppColors.surface,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  image: DecorationImage(
-                    image: NetworkImage(
-                      'https://images.pexels.com/photos/2072181/pexels-photo-2072181.jpeg?auto=compress&cs=tinysrgb&w=800',
-                    ),
-                    fit: BoxFit.cover,
-                    opacity: 0.5,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 30,
-                      child: Icon(
-                        Icons.person,
-                        size: 30,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Welcome, $userName',
-                      style: AppTextStyles.headingM.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home),
-                title: const Text('Home'),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.go(AppRoutes.home);
-                },
-              ),
-              if (isLoggedIn) ...[
-                ListTile(
-                  leading: const Icon(
-                    Icons.calendar_today,
-                    color: AppColors.primary,
-                  ),
-                  title: const Text(
-                    'My Bookings',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.go(AppRoutes.myBookings);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.primary,
-                  ),
-                  title: const Text(
-                    'Profile',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push(AppRoutes.profile);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.redAccent),
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.read<AuthCubit>().logout();
-                    context.go(AppRoutes.home);
-                  },
-                ),
-              ],
-              ListTile(
-                leading: const Icon(Icons.event, color: AppColors.primary),
-                title: const Text(
-                  'All Events',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push(AppRoutes.eventList);
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.favorite_border,
-                  color: AppColors.primary,
-                ),
-                title: const Text(
-                  'Wishlist',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Wishlist coming soon!')),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(
-                  Icons.support_agent,
-                  color: AppColors.primary,
-                ),
-                title: const Text(
-                  'Help Center',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Help Center coming soon!')),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+      
   }
 
   Widget _buildSectionHeader(
@@ -600,8 +456,11 @@ class _PublicHomePageState extends State<PublicHomePage>
           ),
           const SizedBox(height: 16),
           Text(
-            'LuxeEvents',
-            style: AppTextStyles.headingL.copyWith(color: Colors.white),
+            'Elegant Events',
+            style: AppTextStyles.headingL.copyWith(
+              color: Colors.white,
+              letterSpacing: 1.5,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -610,14 +469,13 @@ class _PublicHomePageState extends State<PublicHomePage>
           ),
           const SizedBox(height: 32),
           Text(
-            '© 2026 LuxeEvents. All rights reserved.',
+            '© 2026 Elegant Events. All rights reserved.',
             style: AppTextStyles.bodyS.copyWith(color: Colors.white24),
           ),
         ],
       ),
     );
   }
-}
 
 /* =================================================================
    SUB-WIDGETS 
@@ -709,7 +567,7 @@ class _HeroHeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double heroHeight = isWeb ? 600 : 500;
+    final double heroHeight = isWeb ? 520 : 420;
 
     return SizedBox(
       height: heroHeight,
@@ -799,24 +657,26 @@ class _HeroCarouselState extends State<_HeroCarousel> {
               Text(
                 widget.hero.subtitle.isNotEmpty
                     ? widget.hero.subtitle
-                    : 'Create Timeless Memories',
-                style: AppTextStyles.headingM.copyWith(
-                  color: Colors.white70,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.w300,
+                    : 'Discover decorations and event themes for every occasion',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyL.copyWith(
+                  color: Colors.white.withOpacity(0.9),
+                  letterSpacing: 1,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 widget.hero.title.isNotEmpty
                     ? widget.hero.title
-                    : 'Elegance in \nEvery Detail',
+                    : 'Plan Your Perfect\nCelebration',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.headingXL.copyWith(
                   color: Colors.white,
                   fontSize: 48,
-                  height: 1.1,
+                  height: 1.2,
                   fontFamily: 'Serif',
+                  fontWeight: FontWeight.w600,
                   shadows: [
                     const Shadow(
                       offset: Offset(0, 4),
@@ -885,27 +745,30 @@ class _CategoryRail extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 70,
-          height: 70,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.1),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.08),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+              ? ClipOval(
                   child: Image.network(
                     item.imageUrl!,
                     fit: BoxFit.cover,
-                    width: 70,
-                    height: 70,
+                    width: 72,
+                    height: 72,
                     errorBuilder: (_, __, ___) => Icon(
                       _categoryIconFromString(item.name),
                       color: AppColors.primary,
@@ -993,11 +856,18 @@ class _ServicesSection extends StatelessWidget {
   Widget _buildServiceCard(IconData icon, String title, String desc) {
     return Container(
       width: 260,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.divider.withOpacity(0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1095,26 +965,22 @@ class _FeaturedCollections extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        InkWell(
-          onTap: () => context.push(AppRoutes.eventList),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'EXPLORE NOW',
-                style: AppTextStyles.buttonPrimary.copyWith(
-                  color: isWeb ? AppColors.primary : Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward,
-                size: 16,
+        Row(
+          children: [
+            Text(
+              'EXPLORE NOW',
+              style: AppTextStyles.buttonPrimary.copyWith(
                 color: isWeb ? AppColors.primary : Colors.white,
+                fontSize: 14,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.arrow_forward,
+              size: 16,
+              color: isWeb ? AppColors.primary : Colors.white,
+            ),
+          ],
         ),
       ],
     );
@@ -1123,17 +989,33 @@ class _FeaturedCollections extends StatelessWidget {
       return Container(
         height: 350,
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 2),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(imageUrl, fit: BoxFit.cover),
-            Container(color: Colors.black.withOpacity(0.4)),
-            Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Align(alignment: Alignment.bottomLeft, child: textContent),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(imageUrl, fit: BoxFit.cover),
+              Container(color: Colors.black.withOpacity(0.4)),
+              Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: textContent,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -1237,15 +1119,27 @@ class _RealEventsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.divider,
-                  child: const Icon(Icons.image_not_supported, size: 48),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.divider,
+                    child: const Icon(Icons.image_not_supported, size: 48),
+                  ),
                 ),
               ),
             ),
@@ -1253,11 +1147,21 @@ class _RealEventsSection extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: AppTextStyles.bodyL.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyL.copyWith(
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
           ),
+          const SizedBox(height: 2),
           Text(
-            type,
-            style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+            type.toUpperCase(),
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.primary,
+              letterSpacing: 1,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -1325,12 +1229,12 @@ class _TrendingGrid extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -1340,7 +1244,7 @@ class _TrendingGrid extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+                  top: Radius.circular(20),
                 ),
                 child: Image.network(
                   imageUrl,
@@ -1363,13 +1267,15 @@ class _TrendingGrid extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodyL.copyWith(
                       fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     _formatPrice(item.price),
                     style: AppTextStyles.labelL.copyWith(
                       color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],

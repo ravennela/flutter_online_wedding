@@ -29,6 +29,7 @@ class EventCubit extends Cubit<EventState> {
     await Future.delayed(const Duration(milliseconds: 1000));
 
     try {
+      // Beautiful wedding & celebration images (Unsplash)
       final List<EventType> mockEvents = [
         EventType(
           id: '1',
@@ -36,7 +37,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Oct 24 • 6:00 PM',
           categoryTag: 'TRADITIONAL',
           imageUrl:
-              'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '2',
@@ -44,7 +45,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Nov 12 • 7:30 PM',
           categoryTag: 'BIRTHDAY',
           imageUrl:
-              'https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '3',
@@ -52,7 +53,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Dec 05 • 8:00 PM',
           categoryTag: 'ANNIVERSARY',
           imageUrl:
-              'https://images.unsplash.com/photo-1529634891934-2d1dc06c1d9c?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1478146896981-6b80fe463330?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '4',
@@ -60,7 +61,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Jan 10 • 10:30 AM',
           categoryTag: 'TRADITIONAL',
           imageUrl:
-              'https://images.unsplash.com/photo-1594631661960-34762327295a?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1583939003579-730e3918a945?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '5',
@@ -68,7 +69,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Feb 18 • 5:00 PM',
           categoryTag: 'BIRTHDAY',
           imageUrl:
-              'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '6',
@@ -76,7 +77,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Mar 03 • 6:30 PM',
           categoryTag: 'ENGAGEMENT',
           imageUrl:
-              'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '7',
@@ -84,7 +85,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'Apr 22 • 9:00 AM',
           categoryTag: 'CORPORATE',
           imageUrl:
-              'https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=900&q=80',
         ),
         EventType(
           id: '8',
@@ -92,7 +93,7 @@ class EventCubit extends Cubit<EventState> {
           dateText: 'May 14 • 7:00 PM',
           categoryTag: 'WEDDING',
           imageUrl:
-              'https://images.unsplash.com/photo-1545232979-8bf68ee9b1af?auto=format&fit=crop&w=900&q=80',
+              'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80',
         ),
       ];
 

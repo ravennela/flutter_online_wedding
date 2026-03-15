@@ -177,8 +177,22 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         final extra = state.extra;
         if (extra is! OtpScreenArgs) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
+          // Extra lost (e.g. refresh). Navigate after a short delay so we leave loading
+          // but avoid didPopNext (navigation runs after route lifecycle has settled).
+          final currentAuthState = authCubit.state;
+          Future.delayed(const Duration(milliseconds: 350), () {
+            if (!context.mounted) return;
+            if (currentAuthState is AuthAuthenticated) {
+              final pending = LoginRedirectData.pending;
+              if (pending != null) {
+                LoginRedirectData.pending = null;
+                GoRouter.of(context).go(pending.nextRoute, extra: pending.extra);
+              } else {
+                final role = (currentAuthState as AuthAuthenticated).user.role;
+                final isAdmin = role.toUpperCase() == 'ADMIN';
+                GoRouter.of(context).go(isAdmin ? AppRoutes.adminDashboard : AppRoutes.splash);
+              }
+            } else if (currentAuthState is! AuthLoading) {
               GoRouter.of(context).go(AppRoutes.login);
             }
           });
@@ -189,16 +203,7 @@ final GoRouter router = GoRouter(
         return OtpScreen(args: extra);
       },
     ),
-    GoRoute(
-      path: AppRoutes.booking,
-      builder: (context, state) {
-        final decorationId = state.extra;
-        if (decorationId is! String) {
-          return _buildSessionExpiredFallback(context);
-        }
-        return BookingPage(decorationId: decorationId);
-      },
-    ),
+    // Static /booking/... routes MUST come before /booking/:id so they are not matched as decoration id.
     GoRoute(
       path: AppRoutes.selectEventDate,
       builder: (context, state) {
@@ -234,6 +239,25 @@ final GoRouter router = GoRouter(
           amount: extras['amount'],
           date: extras['date'],
         );
+      },
+    ),
+    // Path-based /booking/:id (address step) — after static routes so /booking/select-date etc. don't match here.
+    GoRoute(
+      path: '/booking/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
+        if (id.isEmpty) return _buildSessionExpiredFallback(context);
+        return BookingPage(decorationId: id);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.booking,
+      builder: (context, state) {
+        final decorationId = state.extra;
+        if (decorationId is! String) {
+          return _buildSessionExpiredFallback(context);
+        }
+        return BookingPage(decorationId: decorationId);
       },
     ),
 
@@ -316,14 +340,16 @@ final GoRouter router = GoRouter(
       return AppRoutes.citySelection;
     }
 
-    // 1b. OTP route requires OtpScreenArgs (e.g. refresh loses extra)
-    if (isOtp && state.extra is! OtpScreenArgs) {
-      return AppRoutes.login;
-    }
-
-    // 2. 🔄 While checking auth → stay put
+    // 1b. 🔄 While checking auth → stay put (MUST be before OTP check below,
+    //     otherwise AuthLoading during OTP verification would trigger redirect
+    //     to login before AuthAuthenticated has a chance to fire).
     if (authState is AuthLoading) {
       return null;
+    }
+
+    // 1c. OTP: if not authenticated and args missing, go to login.
+    if (isOtp && authState is! AuthAuthenticated && state.extra is! OtpScreenArgs) {
+      return AppRoutes.login;
     }
 
     // 3. 🔓 Not logged in (guest mode - allow browsing public routes)
@@ -332,6 +358,7 @@ final GoRouter router = GoRouter(
       // Redirect to home when on protected routes (admin, booking, my bookings)
       if (location.startsWith('/admin') ||
           location == AppRoutes.booking ||
+          location.startsWith('/booking/') ||
           location == AppRoutes.myBookings ||
           location.startsWith('${AppRoutes.myBookings}/')) {
         return AppRoutes.splash;
@@ -342,16 +369,25 @@ final GoRouter router = GoRouter(
     // 4. 🔐 Logged in
     if (authState is AuthAuthenticated) {
       final role = authState.user.role;
+      final isAdmin = role.toUpperCase() == 'ADMIN';
 
-      // When at OTP: do NOT redirect - let BlocListener's onLoginSuccess handle
-      // navigation (preserves redirectData for Book Now, etc.)
-      if (isOtp) return null;
-
-      if (isLogin) {
-        return role == 'ADMIN' ? AppRoutes.adminDashboard : AppRoutes.splash;
+      // OTP → post-login: let redirect do the navigation (path-based) so we never
+      // call context.go() from OTP BlocListener — avoids didPopNext after dispose().
+      if (isOtp) {
+        final pending = LoginRedirectData.pending;
+        if (pending != null) {
+          LoginRedirectData.pending = null;
+          return pending.nextRoute;
+        }
+        // No pending redirect: send to appropriate home by role (admin → dashboard, customer → splash).
+        return isAdmin ? AppRoutes.adminDashboard : AppRoutes.splash;
       }
 
-      if (location.startsWith('/admin') && role != 'ADMIN') {
+      if (isLogin) {
+        return isAdmin ? AppRoutes.adminDashboard : AppRoutes.splash;
+      }
+
+      if (location.startsWith('/admin') && !isAdmin) {
         return AppRoutes.splash;
       }
     }
@@ -407,7 +443,7 @@ Widget _buildSessionExpiredFallback(BuildContext context) {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.home),
+                  onPressed: () => context.go(AppRoutes.splash),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,

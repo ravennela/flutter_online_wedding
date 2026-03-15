@@ -44,7 +44,11 @@ class _BookingPageState extends State<BookingPage> {
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                onPressed: () => context.pop(),
+                onPressed: () {
+                  // Always use go() to avoid pop() revealing a disposed route (didPopNext crash
+                  // after login redirect). Back goes to decoration detail for this booking.
+                  context.go('/decoration/${widget.decorationId}');
+                },
               ),
               title: const Text(
                 'Select Event Location',
@@ -122,7 +126,7 @@ class _BookingPageState extends State<BookingPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _BookingProgressBar(currentStep: 1, totalSteps: 3),
+                const _BookingProgressBar(currentStep: 1, totalSteps: 4),
                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -193,7 +197,7 @@ class _BookingPageState extends State<BookingPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _BookingProgressBar(currentStep: 1, totalSteps: 3),
+                    const _BookingProgressBar(currentStep: 1, totalSteps: 4),
                     const SizedBox(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -270,7 +274,7 @@ class _BookingPageState extends State<BookingPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _BookingProgressBar(currentStep: 1, totalSteps: 3),
+                      const _BookingProgressBar(currentStep: 1, totalSteps: 4),
                       const SizedBox(height: 48),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -319,7 +323,7 @@ class _BookingPageState extends State<BookingPage> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 40,
                       child: ElevatedButton(
                         onPressed: selectedAddressId == null
                             ? null
@@ -347,7 +351,7 @@ class _BookingPageState extends State<BookingPage> {
                         ),
                         child: const Text(
                           'Continue',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -443,6 +447,7 @@ class _BookingProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final percent = (currentStep / totalSteps * 100).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,10 +457,10 @@ class _BookingProgressBar extends StatelessWidget {
             Text(
               'STEP $currentStep OF $totalSteps',
               style: const TextStyle(
-                color: Color(0xFF2563EB),
+                color: Color(0xFF64748B),
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                letterSpacing: 1.2,
+                letterSpacing: 1,
               ),
             ),
             const Text(
@@ -467,13 +472,35 @@ class _BookingProgressBar extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'PROGRESS',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2563EB),
+              ),
+            ),
+            Text(
+              '$percent%',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
             value: currentStep / totalSteps,
-            backgroundColor: const Color(0xFFF3F4F6),
-            color: const Color(0xFF2563EB),
+            backgroundColor: const Color(0xFFF1F5F9),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
             minHeight: 6,
           ),
         ),

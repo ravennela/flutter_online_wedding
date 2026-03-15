@@ -34,7 +34,10 @@ class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
     String? paymentStatus,
   }) async {
     try {
-      Map<String, String> queryParams = {};
+      Map<String, dynamic> queryParams = {
+        'page': page,
+        'size': size,
+      };
 
       if (status != null && status != 'All') {
         queryParams['status'] = status.toUpperCase();

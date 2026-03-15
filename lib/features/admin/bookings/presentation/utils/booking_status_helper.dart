@@ -4,9 +4,7 @@ class BookingStatusHelper {
   static List<String> getAvailableTransitions(String current) {
     switch (current.toUpperCase()) {
       case 'REQUESTED':
-        return ['APPROVED', 'CANCELLED'];
-      case 'APPROVED':
-        return ['VENDOR_ASSIGNED', 'CANCELLED'];
+        return [ 'CANCELLED'];
       case 'VENDOR_ASSIGNED':
         return ['CONFIRMED', 'CANCELLED'];
       case 'CONFIRMED':

@@ -12,12 +12,14 @@ class CreateEventTypeUsecase {
     required String name,
     String? description,
     String? iconUrl,
+    String? iconPublicId,
     int? sortOrder,
   }) async {
     final Map<String, dynamic> data = {
       "name": name,
       "description": description ?? "",
       "iconUrl": iconUrl ?? "",
+      "iconPublicId": iconPublicId ?? "",
       "sortOrder": sortOrder ?? 1,
     };
 

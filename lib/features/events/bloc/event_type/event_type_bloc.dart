@@ -35,6 +35,7 @@ class EventTypeBloc extends Bloc<EventTypeEvent, EventTypeState> {
       name: event.name,
       description: event.description,
       iconUrl: event.iconUrl,
+      iconPublicId: event.iconPublicId,
       sortOrder: event.sortOrder,
     );
 
@@ -120,6 +121,7 @@ class EventTypeBloc extends Bloc<EventTypeEvent, EventTypeState> {
       name: event.name,
       description: event.description,
       iconUrl: event.iconUrl,
+      iconPublicId: event.iconPublicId,
       active: event.active,
       sortOrder: event.sortOrder,
     );

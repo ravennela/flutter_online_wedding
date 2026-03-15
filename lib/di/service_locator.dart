@@ -23,6 +23,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/network/api_client.dart';
 import '../core/network/network_info.dart';
+import '../core/upload/file_upload_data_source.dart';
 import '../features/auth/data/sources/auth_remote_source.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
 import '../features/events/data/sources/event_remote_source.dart';
@@ -107,6 +108,9 @@ Future<void> setupServiceLocator() async {
         tokenStorage: getIt<TokenStorage>(),
         unauthorizedNotifier: getIt<UnauthorizedNotifier>(),
       ));
+  getIt.registerLazySingleton<FileUploadDataSource>(
+    () => FileUploadDataSourceImpl(getIt<ApiClient>()),
+  );
   getIt.registerLazySingleton<NetworkInfo>(
     () => NetworkInfoImpl(Connectivity()),
   );

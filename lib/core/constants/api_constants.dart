@@ -35,6 +35,9 @@ class ApiConstants {
   static const String updateDecoration = '$baseUrl/api/admin/decorations/{id}';
   static const String deleteDecoration = '$baseUrl/api/admin/decorations/{id}';
 
+  // Catalog upload (Cloudinary via backend) – multipart: file + folder
+  static const String catalogUpload = '$baseUrl/catalog/upload';
+
   // Cities endpoints (Admin - for dropdowns)
   static const String fetchCities = '$baseUrl/catalog/cities';
 

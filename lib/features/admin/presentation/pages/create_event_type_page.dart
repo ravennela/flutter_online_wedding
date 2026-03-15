@@ -8,6 +8,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/upload/file_upload_data_source.dart';
+import '../../../../core/upload/upload_folder.dart';
+import '../../../../di/service_locator.dart';
 import '../../../events/bloc/event_type/event_type_bloc.dart';
 import '../widgets/admin_sidebar.dart';
 import '../widgets/admin_top_bar.dart';
@@ -27,7 +30,9 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
 
   bool _statusActive = true; // Active (default) / Inactive
   Uint8List? _coverImageBytes;
-  String? _coverImageUrl; // URL after upload (if API supports upload)
+  String? _coverImageUrl; // URL from catalog upload (Cloudinary)
+  String? _coverImagePublicId; // publicId from catalog upload, stored in DB
+  bool _isUploadingImage = false;
 
   static const double _formMaxWidth = 720;
 
@@ -53,13 +58,36 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
       maxWidth: 1200,
       imageQuality: 85,
     );
-    if (xFile != null) {
-      final bytes = await xFile.readAsBytes();
-      setState(() {
-        _coverImageBytes = bytes;
-        // TODO: If API has image upload endpoint, upload here and set _coverImageUrl
-        _coverImageUrl = null;
-      });
+    if (xFile == null) return;
+    final bytes = await xFile.readAsBytes();
+    setState(() {
+      _coverImageBytes = bytes;
+      _isUploadingImage = true;
+    });
+    try {
+      final uploadDataSource = getIt<FileUploadDataSource>();
+      final result = await uploadDataSource.upload(
+        fileBytes: bytes,
+        filename: xFile.name,
+        folder: UploadFolder.events,
+      );
+      if (mounted) {
+        setState(() {
+          _coverImageUrl = result.url;
+          _coverImagePublicId = result.publicId;
+          _isUploadingImage = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image upload failed: ${e.toString()}'),
+            backgroundColor: Colors.red.shade600,
+          ),
+        );
+      }
     }
   }
 
@@ -67,6 +95,7 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
     setState(() {
       _coverImageBytes = null;
       _coverImageUrl = null;
+      _coverImagePublicId = null;
     });
   }
 
@@ -77,8 +106,8 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
     final description = _descriptionController.text.trim().isEmpty
         ? null
         : _descriptionController.text.trim();
-    // Use URL if available (from upload); otherwise empty string
-    final iconUrl = _coverImageUrl ?? '';
+    final iconUrl = _coverImageUrl?.trim().isEmpty ?? true ? null : _coverImageUrl;
+    final iconPublicId = _coverImagePublicId?.trim().isEmpty ?? true ? null : _coverImagePublicId;
 
     if (widget.id != null) {
       context.read<EventTypeBloc>().add(
@@ -86,7 +115,8 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
               id: widget.id!,
               name: name,
               description: description,
-              iconUrl: iconUrl.isEmpty ? null : iconUrl,
+              iconUrl: iconUrl,
+              iconPublicId: iconPublicId,
               active: _statusActive,
               sortOrder: 1,
             ),
@@ -96,8 +126,8 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
             SubmitCreateEventType(
               name: name,
               description: description,
-              iconUrl: iconUrl.isEmpty ? null : iconUrl,
-              //active: _statusActive,
+              iconUrl: iconUrl,
+              iconPublicId: iconPublicId,
               sortOrder: 1,
             ),
           );
@@ -158,6 +188,7 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
           setState(() {
             _statusActive = state.eventType.active;
             _coverImageUrl = state.eventType.iconUrl;
+            _coverImagePublicId = state.eventType.iconPublicId;
           });
         }
       },
@@ -210,6 +241,7 @@ class _CreateEventTypePageState extends State<CreateEventTypePage> {
                                       setState(() => _statusActive = active),
                                   coverImageBytes: _coverImageBytes,
                                   coverImageUrl: _coverImageUrl,
+                                  isUploadingImage: _isUploadingImage,
                                   onPickCoverImage: _pickCoverImage,
                                   onRemoveCoverImage: _removeCoverImage,
                                   onCancel: () =>
@@ -303,6 +335,7 @@ class _EventTypeDetailsCard extends StatelessWidget {
   final ValueChanged<bool> onStatusChanged;
   final Uint8List? coverImageBytes;
   final String? coverImageUrl;
+  final bool isUploadingImage;
   final VoidCallback onPickCoverImage;
   final VoidCallback onRemoveCoverImage;
   final VoidCallback onCancel;
@@ -318,6 +351,7 @@ class _EventTypeDetailsCard extends StatelessWidget {
     required this.onStatusChanged,
     required this.coverImageBytes,
     this.coverImageUrl,
+    this.isUploadingImage = false,
     required this.onPickCoverImage,
     required this.onRemoveCoverImage,
     required this.onCancel,
@@ -460,6 +494,7 @@ class _EventTypeDetailsCard extends StatelessWidget {
               _CoverImageUpload(
                 coverImageBytes: coverImageBytes,
                 coverImageUrl: coverImageUrl,
+                isUploadingImage: isUploadingImage,
                 onPick: onPickCoverImage,
                 onRemove: onRemoveCoverImage,
               ),
@@ -584,12 +619,14 @@ class _EventTypeDetailsCard extends StatelessWidget {
 class _CoverImageUpload extends StatelessWidget {
   final Uint8List? coverImageBytes;
   final String? coverImageUrl;
+  final bool isUploadingImage;
   final VoidCallback onPick;
   final VoidCallback onRemove;
 
   const _CoverImageUpload({
     required this.coverImageBytes,
     this.coverImageUrl,
+    this.isUploadingImage = false,
     required this.onPick,
     required this.onRemove,
   });
@@ -602,13 +639,13 @@ class _CoverImageUpload extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: coverImageUrl != null 
+            child: coverImageUrl != null
                 ? Image.network(
                     coverImageUrl!,
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                  ) 
+                  )
                 : Image.memory(
                     coverImageBytes!,
                     height: 200,
@@ -616,6 +653,18 @@ class _CoverImageUpload extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
           ),
+          if (isUploadingImage)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black38,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+            ),
           Positioned(
             top: 12,
             right: 12,
@@ -623,7 +672,7 @@ class _CoverImageUpload extends StatelessWidget {
               color: Colors.black54,
               borderRadius: BorderRadius.circular(8),
               child: IconButton(
-                onPressed: onRemove,
+                onPressed: isUploadingImage ? null : onRemove,
                 icon: const Icon(Icons.close, color: Colors.white, size: 20),
                 style: IconButton.styleFrom(
                   padding: const EdgeInsets.all(8),

@@ -19,7 +19,7 @@ class BookingStatsRow extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: stats.map((stat) => Padding(
-                padding: const EdgeInsets.only(right: 16.0),
+                padding: const EdgeInsets.only(right: 12.0),
                 child: SizedBox(
                   width: 200,
                   child: BookingStatCard(stat: stat),
@@ -80,7 +80,7 @@ class BookingStatCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
                 decoration: BoxDecoration(
                   color: (stat.isIncrease ? Colors.green : Colors.red).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),

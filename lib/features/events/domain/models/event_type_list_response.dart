@@ -19,16 +19,17 @@ class EventTypeListResponse {
   });
 
   factory EventTypeListResponse.fromJson(Map<String, dynamic> json) {
-    final contentList = json['content'] as List<dynamic>? ?? [];
+    final contentRaw = json['content'];
+    final contentList = contentRaw is List ? contentRaw : <dynamic>[];
     return EventTypeListResponse(
       content: contentList
-          .map((e) => EventTypeListItem.fromJson(e as Map<String, dynamic>))
+          .map((e) => EventTypeListItem.fromJson(e is Map<String, dynamic> ? e : <String, dynamic>{}))
           .toList(),
-      last: json['last'] as bool? ?? true,
-      page: json['page'] as int? ?? 0,
-      size: json['size'] as int? ?? 10,
-      totalElements: json['totalElements'] as int? ?? 0,
-      totalPages: json['totalPages'] as int? ?? 0,
+      last: json['last'] == true,
+      page: json['page'] is int ? json['page'] as int : (json['page'] is num ? (json['page'] as num).toInt() : 0),
+      size: json['size'] is int ? json['size'] as int : (json['size'] is num ? (json['size'] as num).toInt() : 10),
+      totalElements: json['totalElements'] is int ? json['totalElements'] as int : (json['totalElements'] is num ? (json['totalElements'] as num).toInt() : 0),
+      totalPages: json['totalPages'] is int ? json['totalPages'] as int : (json['totalPages'] is num ? (json['totalPages'] as num).toInt() : 0),
     );
   }
 }
