@@ -13,6 +13,7 @@ import 'package:flutter_online/features/events/bloc/event_type/event_type_event.
 import 'package:go_router/go_router.dart';
 import 'package:flutter_online/di/service_locator.dart';
 import 'package:flutter_online/features/events/bloc/event_type/event_type_bloc.dart';
+import 'package:flutter_online/features/events/domain/models/event_type_list_item.dart';
 import 'package:flutter_online/features/home/presentation/bloc/admin_home_bloc.dart';
 import 'package:flutter_online/features/home/presentation/bloc/admin_home_event.dart';
 import 'package:flutter_online/features/home/presentation/home_screen.dart';
@@ -52,6 +53,7 @@ import 'package:flutter_online/features/booking/presentation/pages/my_bookings_p
 import 'package:flutter_online/features/booking/presentation/pages/booking_detail_page.dart';
 import 'package:flutter_online/features/booking/bloc/booking_bloc.dart';
 import 'package:flutter_online/features/payment/bloc/payment_bloc.dart';
+import 'package:flutter_online/features/profile/presentation/pages/complete_profile_page.dart';
 import 'app_routes.dart';
 
 final AuthCubit authCubit = getIt<AuthCubit>();
@@ -148,9 +150,13 @@ final GoRouter router = GoRouter(
       path: '${AppRoutes.adminEventTypesEdit}/:id',
       builder: (context, state) {
         final id = state.pathParameters['id'];
+        final extra = state.extra;
         return BlocProvider(
           create: (_) => getIt<EventTypeBloc>(),
-          child: CreateEventTypePage(id: id),
+          child: CreateEventTypePage(
+            id: id,
+            initialData: extra is EventTypeListItem ? extra : null,
+          ),
         );
       },
     ),
@@ -207,9 +213,12 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: AppRoutes.selectEventDate,
       builder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
         final args = state.extra;
         if (args is! BookingArgs) {
-          return _buildSessionExpiredFallback(context);
+          // If extra is lost (refresh), backtrack to step 1 which only needs ID.
+          if (id.isEmpty) return _buildSessionExpiredFallback(context);
+          return BookingPage(decorationId: id);
         }
         return SelectEventDatePage(args: args);
       },
@@ -217,9 +226,11 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: AppRoutes.paymentMethod,
       builder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
         final args = state.extra;
         if (args is! BookingArgs) {
-          return _buildSessionExpiredFallback(context);
+           if (id.isEmpty) return _buildSessionExpiredFallback(context);
+           return BookingPage(decorationId: id);
         }
         return MultiBlocProvider(
           providers: [
@@ -233,7 +244,8 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: AppRoutes.bookingSuccess,
       builder: (context, state) {
-        final extras = state.extra as Map<String, dynamic>;
+        final extras = state.extra as Map<String, dynamic>?;
+        if (extras == null) return _buildSessionExpiredFallback(context);
         return BookingSuccessPage(
           bookingId: extras['bookingId'],
           amount: extras['amount'],
@@ -241,23 +253,12 @@ final GoRouter router = GoRouter(
         );
       },
     ),
-    // Path-based /booking/:id (address step) — after static routes so /booking/select-date etc. don't match here.
     GoRoute(
       path: '/booking/:id',
       builder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
         if (id.isEmpty) return _buildSessionExpiredFallback(context);
         return BookingPage(decorationId: id);
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.booking,
-      builder: (context, state) {
-        final decorationId = state.extra;
-        if (decorationId is! String) {
-          return _buildSessionExpiredFallback(context);
-        }
-        return BookingPage(decorationId: decorationId);
       },
     ),
 
@@ -270,17 +271,17 @@ final GoRouter router = GoRouter(
       ),
     ),
     GoRoute(
-      path: AppRoutes.adminDecorationsDetail,
+      path: '${AppRoutes.adminDecorationsDetail}/:id',
       builder: (context, state) {
-        final decorationId = state.extra as String;
-        return DecorationDetailPage(decorationId: decorationId);
+        final decorationId = state.pathParameters['id'] ?? state.extra as String? ?? '';
+        return DecorationDetailPage( decorationId: decorationId,);
       },
     ),
 
     GoRoute(
-      path: AppRoutes.editDeceoration,
+      path: '${AppRoutes.editDeceoration}/:id',
       builder: (context, state) {
-        final decorationId = state.extra as String;
+        final decorationId = state.pathParameters['id'] ?? state.extra as String? ?? '';
         return MultiBlocProvider(
           providers: [
             BlocProvider(
@@ -317,6 +318,10 @@ final GoRouter router = GoRouter(
         final id = state.pathParameters['id'] ?? '';
         return BookingDetailPage(bookingId: id.isNotEmpty ? id : null);
       },
+    ),
+    GoRoute(
+      path: AppRoutes.profile,
+      builder: (context, state) => const CompleteProfilePage(),
     ),
   ],
   redirect: (context, state) {

@@ -405,7 +405,7 @@ class _DetailContent extends StatelessWidget {
                 return ElevatedButton.icon(
                   onPressed: () {
                     if (isLoggedIn) {
-                      context.push('/booking', extra: decorationId);
+                      context.push('/booking/$decorationId');
                     } else {
                       // Flipkart-style: after login user lands on booking. Use path-based
                       // nextRoute so GoRouter redirect can navigate without context.go() from OTP.

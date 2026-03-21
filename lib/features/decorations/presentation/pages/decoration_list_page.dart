@@ -138,182 +138,191 @@ class _DecorationListViewState extends State<_DecorationListView> {
       backgroundColor: Colors.white,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        title: Text(
-          'Decorations',
-          style: AppTextStyles.headingM.copyWith(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'The Atelier',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+        ),
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
+            icon: const Icon(Icons.menu, color: Colors.black, size: 20),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: CitySelectorWidget(isScrolled: true),
-            ),
-          ),
           IconButton(
-            icon: const Icon(Icons.tune, color: Colors.black),
+            icon: const Icon(Icons.search, color: Colors.black, size: 20),
             onPressed: () {},
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Container(
-            height: 60,
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
-            ),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              scrollDirection: Axis.horizontal,
-              itemCount: _filters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final filter = _filters[index];
-                final isSelected = filter == _selectedFilter;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = filter),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFF1565C0)
-                          : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(20),
+      ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'CURATION GALLERY',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.grey[400],
+                      letterSpacing: 2.0,
                     ),
-                    child: Text(
-                      filter,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey[700],
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Marriage\nDecorations',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'An exclusive collection of curated, prestigious event themes. Each design is a testament to bespoke craftsmanship and the art of atmosphere.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.6,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: _filters.map((filter) {
+                    final isSelected = filter == _selectedFilter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedFilter = filter),
+                        borderRadius: BorderRadius.circular(30),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.black : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Text(
+                            filter,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black87,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 11,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
                       ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: Divider(color: Color(0xFFF1F1F1)),
+            ),
+          ),
+          BlocBuilder<DecorationListCubit, DecorationListState>(
+            builder: (context, state) {
+              if (state is DecorationListLoading) {
+                return const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (state is DecorationListError) {
+                return SliverFillRemaining(
+                  child: app_error.ErrorWidget(
+                    message: state.message,
+                    onRetry: () => context.read<DecorationListCubit>().loadDecorations(
+                      cityId: cityId,
+                      eventTypeId: widget.eventId.isEmpty ? null : widget.eventId,
                     ),
                   ),
                 );
-              },
-            ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Available Decorations',
-                  style: AppTextStyles.headingM,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Explore our curated selection of premium decor themes.',
-                  style: AppTextStyles.bodyS.copyWith(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: BlocBuilder<DecorationListCubit, DecorationListState>(
-              builder: (context, state) {
-                if (state is DecorationListLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state is DecorationListError) {
-                  return app_error.ErrorWidget(
-                    message: state.message,
-                    onRetry: () => context.read<DecorationListCubit>().loadDecorations(
-                          cityId: cityId,
-                          eventTypeId:
-                              widget.eventId.isEmpty ? null : widget.eventId,
-                        ),
-                  );
-                }
-                if (state is DecorationListEmpty) {
-                  return Center(
+              }
+              if (state is DecorationListEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.deck_outlined,
-                          size: 64,
-                          color: AppColors.textSecondary,
-                        ),
+                        Icon(Icons.auto_awesome_mosaic_outlined, size: 48, color: Colors.grey[300]),
                         const SizedBox(height: 16),
-                        Text(
-                          'No decorations found',
-                          style: AppTextStyles.bodyL,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Try changing your city or event type',
-                          style: AppTextStyles.bodyS.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                        const Text('No collections available'),
                       ],
                     ),
-                  );
-                }
-                if (state is DecorationListLoaded) {
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      double width = MediaQuery.of(context).size.width;
-                      int crossAxisCount =
-                          width > 900 ? 3 : (width > 600 ? 2 : 1);
-                      double padding = 16;
-                      // Shorter cards so image height doesn't cause excessive scrolling (was 0.75)
-                      double aspectRatio = width < 600 ? 1.15 : 0.92;
-
-                      return AnimationLimiter(
-                        child: GridView.builder(
-                          padding: EdgeInsets.all(padding),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: aspectRatio,
-                          ),
-                          itemCount: state.decorations.length,
-                          itemBuilder: (context, index) {
-                            final item = state.decorations[index];
-                            return AnimationConfiguration.staggeredGrid(
-                              position: index,
-                              duration: const Duration(milliseconds: 500),
-                              columnCount: crossAxisCount,
-                              child: ScaleAnimation(
-                                child: FadeInAnimation(
-                                  child: DecorationCard(
-                                    item: DecorationItem.fromPublic(item),
-                                    onTap: () => context.push(
-                                      '/decoration/${item.id}',
-                                    ),
-                                  ),
+                  ),
+                );
+              }
+              if (state is DecorationListLoaded) {
+                final width = MediaQuery.of(context).size.width;
+                final crossAxisCount = width > 1200 ? 3 : (width > 750 ? 2 : 1);
+                
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 32,
+                      mainAxisSpacing: 40,
+                      childAspectRatio: crossAxisCount == 1 ? 0.85 : 0.76,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final item = state.decorations[index];
+                        return AnimationConfiguration.staggeredGrid(
+                          position: index,
+                          duration: const Duration(milliseconds: 600),
+                          columnCount: crossAxisCount,
+                          child: FadeInAnimation(
+                            child: SlideAnimation(
+                              verticalOffset: 50.0,
+                              child: DecorationCard(
+                                item: DecorationItem.fromPublic(item),
+                                onTap: () => context.push(
+                                  '/decoration/${item.id}',
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+                            ),
+                          ),
+                        );
+                      },
+                      childCount: state.decorations.length,
+                    ),
+                  ),
+                );
+              }
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            },
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );

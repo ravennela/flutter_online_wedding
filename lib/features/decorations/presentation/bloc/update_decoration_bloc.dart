@@ -28,6 +28,7 @@ class UpdateDecorationBloc
       inclusions: event.inclusions,
       exclusions: event.exclusions,
       basePrice: event.basePrice,
+      images: event.images,
       active: event.active,
     );
 

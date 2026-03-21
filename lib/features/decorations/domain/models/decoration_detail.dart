@@ -40,10 +40,25 @@ class DecorationDetail {
   List<String> get imageUrls => images; // Getter for compatibility
 
   factory DecorationDetail.fromJson(Map<String, dynamic> json) {
+    List<String> urls = [];
     final imageUrlsRaw = json['imageUrls'];
-    final List<String> urls = imageUrlsRaw is List
-        ? (imageUrlsRaw).map((e) => e.toString()).toList()
-        : [];
+    if (imageUrlsRaw is List) {
+      urls = imageUrlsRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+    }
+    if (urls.isEmpty) {
+      final imgs = json['images'];
+      if (imgs is List) {
+        urls = imgs
+            .map((e) {
+              if (e is Map) {
+                return (e['imageUrl'] ?? e['url'] ?? e['image_url'])?.toString() ?? '';
+              }
+              return e.toString();
+            })
+            .where((s) => s.isNotEmpty)
+            .toList();
+      }
+    }
 
     return DecorationDetail(
       id: json['id'] as String? ?? '',
@@ -53,12 +68,10 @@ class DecorationDetail {
       title: json['name'] as String? ?? '',
       eventTypeId: json['eventTypeId'] as String? ?? '',
       providerName: json['cityName'] as String? ?? 'Premium Decorators',
-      providerImage: 'https://via.placeholder.com/150', // Placeholder
+      providerImage: urls.isNotEmpty ? urls.first : 'https://via.placeholder.com/150',
       price: '₹${(((json['basePrice'] as num?) ?? 0) / 100).toStringAsFixed(2)}',
       rating: 4.5, // Placeholder
-      images: urls.isNotEmpty 
-          ? urls 
-          : ['https://placehold.co/600x400?text=No+Image'],
+      images: urls,
       tags: [
         if (json['eventTypeName'] != null) json['eventTypeName'] as String,
         if (json['cityName'] != null) json['cityName'] as String,

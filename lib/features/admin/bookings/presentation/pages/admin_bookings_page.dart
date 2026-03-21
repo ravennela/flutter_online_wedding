@@ -84,11 +84,11 @@ class AdminBookingsView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildHeader(context),
-                            const SizedBox(height: 32),
+                            //const SizedBox(height: 32),
 
-                            BookingStatsRow(stats: _getMockStats()),
-                            const SizedBox(height: 32),
-                            const BookingFilterBar(),
+                           // BookingStatsRow(stats: _getMockStats()),
+                           // const SizedBox(height: 32),
+                            //const BookingFilterBar(),
                             const SizedBox(height: 24),
 
                             if (state.status == AdminBookingsStatus.loading &&

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter_online/features/decorations/domain/models/decoration_image_payload.dart';
 
 abstract class UpdateDecorationEvent extends Equatable {
   const UpdateDecorationEvent();
@@ -17,6 +18,7 @@ class SubmitUpdateDecoration extends UpdateDecorationEvent {
   final String? inclusions;
   final String? exclusions;
   final int basePrice;
+  final List<DecorationImagePayload> images;
   final bool active;
 
   const SubmitUpdateDecoration({
@@ -28,6 +30,7 @@ class SubmitUpdateDecoration extends UpdateDecorationEvent {
     this.inclusions,
     this.exclusions,
     required this.basePrice,
+    this.images = const [],
     this.active = true,
   });
 
@@ -41,6 +44,7 @@ class SubmitUpdateDecoration extends UpdateDecorationEvent {
         inclusions,
         exclusions,
         basePrice,
+        images,
         active,
       ];
 }

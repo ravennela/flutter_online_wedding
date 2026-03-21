@@ -63,7 +63,7 @@ class CreateDecorationBloc
       inclusions: event.inclusions,
       exclusions: event.exclusions,
       basePrice: event.basePrice,
-      imageUrls: event.imageUrls,
+      images: event.images,
       active: event.active,
     );
 

@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/core/routes/app_routes.dart';
 import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_online/features/auth/presentation/cubit/auth_state.dart';
+import 'package:flutter_online/features/cities/presentation/cubit/city_cubit.dart';
 import 'package:flutter_online/features/cities/presentation/widgets/city_selector_widget.dart';
+import 'package:flutter_online/features/decorations/presentation/cubit/decoration_list_cubit.dart';
 import 'package:flutter_online/features/home/domain/models/admin_home_model.dart';
 import 'package:flutter_online/features/home/presentation/bloc/admin_home_bloc.dart';
 import 'package:flutter_online/features/home/presentation/bloc/admin_home_event.dart';
@@ -60,23 +62,57 @@ class _PublicHomePageState extends State<PublicHomePage>
         extendBodyBehindAppBar: true,
         appBar: _buildAppBar(context),
         drawer: const AppDrawer(),
-        body: BlocBuilder<AdminHomeBloc, AdminHomeState>(
-          builder: (context, state) {
-            if (state is AdminHomeLoading) {
+        body: MultiBlocListener(
+          listeners: [
+            BlocListener<CityCubit, CityState>(
+              listener: (context, state) {
+                String? cityId;
+                if (state is CitySelected) {
+                  cityId = state.cityId;
+                } else if (state is CityListLoaded) {
+                  cityId = state.cityId;
+                }
+                if (cityId != null && cityId.isNotEmpty) {
+                  context.read<DecorationListCubit>().loadDecorations(
+                        cityId: cityId,
+                        size: 4,
+                      );
+                }
+              },
+            ),
+          ],
+          child: BlocBuilder<AdminHomeBloc, AdminHomeState>(
+            builder: (context, state) {
+              if (state is AdminHomeLoading) {
+                return const LoadingWidget(message: 'Loading...');
+              }
+              if (state is AdminHomeFailure) {
+                return app_error.ErrorWidget(
+                  message: state.message,
+                  onRetry: () =>
+                      context.read<AdminHomeBloc>().add(const FetchAdminHome()),
+                );
+              }
+              if (state is AdminHomeLoaded) {
+                // Also trigger initial load if city is already selected
+                final cityState = context.read<CityCubit>().state;
+                String? initialCityId;
+                if (cityState is CitySelected) initialCityId = cityState.cityId;
+                if (cityState is CityListLoaded) initialCityId = cityState.cityId;
+                
+                if (initialCityId != null && 
+                    context.read<DecorationListCubit>().state is DecorationListInitial) {
+                   context.read<DecorationListCubit>().loadDecorations(
+                        cityId: initialCityId,
+                        size: 4,
+                      );
+                }
+
+                return _buildContent(context, state.data);
+              }
               return const LoadingWidget(message: 'Loading...');
-            }
-            if (state is AdminHomeFailure) {
-              return app_error.ErrorWidget(
-                message: state.message,
-                onRetry: () =>
-                    context.read<AdminHomeBloc>().add(const FetchAdminHome()),
-              );
-            }
-            if (state is AdminHomeLoaded) {
-              return _buildContent(context, state.data);
-            }
-            return const LoadingWidget(message: 'Loading...');
-          },
+            },
+          ),
         ),
       ),
     );
@@ -145,9 +181,23 @@ class _PublicHomePageState extends State<PublicHomePage>
                       onViewAll: () => context.push(AppRoutes.eventList),
                     ),
                     const SizedBox(height: 24),
-                    _TrendingGrid(
-                      trendingDecorations: data.trendingDecorations,
-                      isWeb: isWeb,
+                    BlocBuilder<DecorationListCubit, DecorationListState>(
+                      builder: (context, state) {
+                        if (state is DecorationListLoaded) {
+                          return _TrendingGrid(
+                            trendingDecorations: state.decorations.take(4).map((d) {
+                              return AdminHomeTrendingDecorationModel(
+                                id: d.id,
+                                name: d.name,
+                                price: d.price,
+                                imageUrl: d.thumbnailUrl,
+                              );
+                            }).toList(),
+                            isWeb: isWeb,
+                          );
+                        }
+                        return const Center(child: CircularProgressIndicator());
+                      },
                     ),
                   ],
                 ),
@@ -845,6 +895,7 @@ class _ServicesSection extends StatelessWidget {
                   _serviceIconFromString(s.icon),
                   s.title,
                   s.description,
+                  context
                 ),
               )
               .toList(),
@@ -853,45 +904,77 @@ class _ServicesSection extends StatelessWidget {
     );
   }
 
-  Widget _buildServiceCard(IconData icon, String title, String desc) {
-    return Container(
-      width: 260,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.divider.withOpacity(0.6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
+  Widget _buildServiceCard(IconData icon, String title, String desc,BuildContext context) {
+    bool isComingSoon = title != 'Custom Decor';
+    
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: isComingSoon?null:(){
+             context.push(AppRoutes.eventList);
+          },
+          child: Container(
+            width: 260,
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.divider.withOpacity(0.6)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: Icon(icon, color: AppColors.primary, size: 28),
-          ),
-          const SizedBox(height: 16),
-          Text(title, style: AppTextStyles.headingS),
-          const SizedBox(height: 8),
-          Text(
-            desc,
-            style: AppTextStyles.bodyS.copyWith(
-              color: AppColors.textSecondary,
-              height: 1.5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppColors.primary, size: 28),
+                ),
+                const SizedBox(height: 16),
+                Text(title, style: AppTextStyles.headingS),
+                const SizedBox(height: 8),
+                Text(
+                  desc,
+                  style: AppTextStyles.bodyS.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+        if (isComingSoon)
+          Positioned(
+            top: 14,
+            right: 14,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'COMING SOON',
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -5,9 +5,13 @@ import 'package:flutter_online/features/decorations/presentation/bloc/admin_deco
 import 'package:flutter_online/features/decorations/presentation/bloc/events/create_decoration_event.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/upload/file_upload_data_source.dart';
+import '../../../../core/upload/upload_folder.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../decorations/domain/models/city_list_item.dart';
 import '../../../decorations/domain/models/decoration_detail.dart';
+import '../../../decorations/domain/models/decoration_image_payload.dart';
 import '../../../decorations/presentation/bloc/create_decoration_bloc.dart';
 import '../../../decorations/presentation/bloc/decoration_detail_bloc.dart';
 import '../../../decorations/presentation/bloc/events/update_decoration_event.dart';
@@ -41,9 +45,8 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
   String? _selectedEventTypeName;
   String? _selectedCityId;
   String? _selectedCityName;
-  final List<TextEditingController> _imageUrlControllers = [
-    TextEditingController(),
-  ];
+  final List<DecorationImagePayload> _uploadedImages = [];
+  bool _isUploadingImage = false;
   bool _isActive = true;
   bool _hasPopulatedFromDetail = false;
 
@@ -54,21 +57,52 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
     _descriptionController.dispose();
     _inclusionsController.dispose();
     _exclusionsController.dispose();
-    for (final c in _imageUrlControllers) {
-      c.dispose();
-    }
     super.dispose();
   }
 
-  void _addImageUrl() {
-    if (_imageUrlControllers.length >= _maxImages) return;
-    setState(() => _imageUrlControllers.add(TextEditingController()));
+  Future<void> _pickAndUploadImages() async {
+    if (_uploadedImages.length >= _maxImages) return;
+    final picker = ImagePicker();
+    final xFiles = await picker.pickMultiImage(
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
+    if (xFiles.isEmpty) return;
+    setState(() => _isUploadingImage = true);
+    final uploadDataSource = getIt<FileUploadDataSource>();
+    for (final xFile in xFiles) {
+      if (_uploadedImages.length >= _maxImages) break;
+      try {
+        final bytes = await xFile.readAsBytes();
+        final result = await uploadDataSource.upload(
+          fileBytes: bytes,
+          filename: xFile.name,
+          folder: UploadFolder.decorations,
+        );
+        if (mounted) {
+          setState(() {
+            _uploadedImages.add(DecorationImagePayload(
+              url: result.url,
+              publicId: result.publicId,
+            ));
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Upload failed: ${e.toString()}'),
+              backgroundColor: Colors.red.shade600,
+            ),
+          );
+        }
+      }
+    }
+    if (mounted) setState(() => _isUploadingImage = false);
   }
 
-  void _removeImageUrl(int index) {
-    if (_imageUrlControllers.length <= 1) return;
-    _imageUrlControllers[index].dispose();
-    setState(() => _imageUrlControllers.removeAt(index));
+  void _removeImage(int index) {
+    setState(() => _uploadedImages.removeAt(index));
   }
 
   void _populateFromDetail(DecorationDetail detail, List<EventTypeListItem> eventTypes, List<CityListItem> cities) {
@@ -94,16 +128,12 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
     _selectedCityId = detail.cityId;
     _selectedCityName = detail.providerName;
 
-    for (final c in _imageUrlControllers) {
-      c.dispose();
-    }
-    _imageUrlControllers.clear();
-    final urls = detail.images.where((u) => u.isNotEmpty).toList();
-    if (urls.isEmpty) {
-      _imageUrlControllers.add(TextEditingController());
-    } else {
-      for (final url in urls) {
-        _imageUrlControllers.add(TextEditingController(text: url));
+    _uploadedImages.clear();
+    // Assuming DecorationDetail has images with publicIds, otherwise we might need a mapping
+    // But common DecorationDetail has List<String> images.
+    for (final url in detail.images) {
+      if (url.isNotEmpty) {
+        _uploadedImages.add(DecorationImagePayload(url: url, publicId: ''));
       }
     }
     setState(() {});
@@ -173,6 +203,7 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
                 ? null
                 : _exclusionsController.text.trim(),
             basePrice: basePrice,
+            images: _uploadedImages,
             active: _isActive,
           ),
         );
@@ -383,9 +414,10 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
                         descriptionController: _descriptionController,
                         inclusionsController: _inclusionsController,
                         exclusionsController: _exclusionsController,
-                        imageUrlControllers: _imageUrlControllers,
-                        onAddImage: _addImageUrl,
-                        onRemoveImage: _removeImageUrl,
+                        uploadedImages: _uploadedImages,
+                        isUploadingImage: _isUploadingImage,
+                        onAddImage: _pickAndUploadImages,
+                        onRemoveImage: _removeImage,
                         isActive: _isActive,
                         onActiveChanged: (v) => setState(() => _isActive = v),
                         onCancel: _onCancel,
@@ -438,9 +470,10 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
                 descriptionController: _descriptionController,
                 inclusionsController: _inclusionsController,
                 exclusionsController: _exclusionsController,
-                imageUrlControllers: _imageUrlControllers,
-                onAddImage: _addImageUrl,
-                onRemoveImage: _removeImageUrl,
+                uploadedImages: _uploadedImages,
+                isUploadingImage: _isUploadingImage,
+                onAddImage: _pickAndUploadImages,
+                onRemoveImage: _removeImage,
                 isActive: _isActive,
                 onActiveChanged: (v) => setState(() => _isActive = v),
                 onCancel: _onCancel,
@@ -590,7 +623,8 @@ class _EditDecorationForm extends StatelessWidget {
   final TextEditingController descriptionController;
   final TextEditingController inclusionsController;
   final TextEditingController exclusionsController;
-  final List<TextEditingController> imageUrlControllers;
+  final List<DecorationImagePayload> uploadedImages;
+  final bool isUploadingImage;
   final VoidCallback onAddImage;
   final void Function(int) onRemoveImage;
   final bool isActive;
@@ -616,7 +650,8 @@ class _EditDecorationForm extends StatelessWidget {
     required this.descriptionController,
     required this.inclusionsController,
     required this.exclusionsController,
-    required this.imageUrlControllers,
+    required this.uploadedImages,
+    this.isUploadingImage = false,
     required this.onAddImage,
     required this.onRemoveImage,
     required this.isActive,
@@ -751,15 +786,15 @@ class _EditDecorationForm extends StatelessWidget {
           const SizedBox(height: 24),
           _EditSectionCard(
             title: 'Visual Gallery',
-            subtitle: 'Add external links to high-resolution images',
-            trailing: Container(
+            subtitle: 'Recommended size: 1200x800px. Max $_maxImages images.',
+             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'max $_maxImages images',
+                '${uploadedImages.length} / $_maxImages',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -768,47 +803,31 @@ class _EditDecorationForm extends StatelessWidget {
               ),
             ),
             children: [
-              ...List.generate(imageUrlControllers.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _EditImageThumbnail(controller: imageUrlControllers[index]),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: imageUrlControllers[index],
-                          decoration: _inputDecoration('https://image-url.com/photo'),
-                          validator: (v) => null,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: imageUrlControllers.length > 1
-                            ? () => onRemoveImage(index)
-                            : null,
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: imageUrlControllers.length > 1
-                              ? Colors.grey.shade600
-                              : Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              TextButton.icon(
-                onPressed: imageUrlControllers.length >= _maxImages ? null : onAddImage,
-                icon: Icon(Icons.add, color: Colors.blue.shade600, size: 20),
-                label: Text(
-                  'Add another image',
-                  style: TextStyle(
-                    color: Colors.blue.shade600,
-                    fontWeight: FontWeight.w600,
-                  ),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: isMobile ? 3 : 4,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1,
                 ),
+                itemCount: (uploadedImages.length < _maxImages)
+                    ? uploadedImages.length + 1
+                    : uploadedImages.length,
+                itemBuilder: (context, index) {
+                  if (index < uploadedImages.length) {
+                    return _DecorationImageChip(
+                      payload: uploadedImages[index],
+                      onRemove: () => onRemoveImage(index),
+                    );
+                  } else {
+                    return _AddImageSlot(
+                      onTap: onAddImage,
+                      isUploading: isUploadingImage,
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -1062,55 +1081,114 @@ class _EditSectionCard extends StatelessWidget {
   }
 }
 
-class _EditImageThumbnail extends StatefulWidget {
-  final TextEditingController controller;
+class _AddImageSlot extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isUploading;
 
-  const _EditImageThumbnail({required this.controller});
-
-  @override
-  State<_EditImageThumbnail> createState() => _EditImageThumbnailState();
-}
-
-class _EditImageThumbnailState extends State<_EditImageThumbnail> {
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onChanged);
-    super.dispose();
-  }
-
-  void _onChanged() => setState(() {});
+  const _AddImageSlot({required this.onTap, required this.isUploading});
 
   @override
   Widget build(BuildContext context) {
-    final url = widget.controller.text.trim();
-    return Container(
-      width: 72,
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: url.isEmpty
-            ? Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 32)
-            : Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.grey.shade400,
-                  size: 32,
+    return InkWell(
+      onTap: isUploading ? null : onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0),
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isUploading)
+              const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else ...[
+              const Icon(Icons.add_a_photo_outlined, color: Color(0xFF64748B), size: 28),
+              const SizedBox(height: 8),
+              const Text(
+                'Add Image',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                 ),
               ),
+            ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _DecorationImageChip extends StatelessWidget {
+  final DecorationImagePayload payload;
+  final VoidCallback onRemove;
+
+  const _DecorationImageChip({
+    required this.payload,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1F36),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: payload.url.isEmpty
+                ? const Center(child: Icon(Icons.image_outlined, color: Color(0xFF94A3B8), size: 32))
+                : Image.network(
+                    payload.url,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image_outlined, color: Color(0xFF94A3B8), size: 32),
+                    ),
+                  ),
+          ),
+        ),
+        Positioned(
+          top: -8,
+          right: -8,
+          child: Material(
+            color: const Color(0xFFF43F5E),
+            elevation: 4,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: onRemove,
+              customBorder: const CircleBorder(),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(Icons.close_rounded, color: Colors.white, size: 16),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

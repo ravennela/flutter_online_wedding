@@ -5,6 +5,7 @@ import 'package:flutter_online/di/service_locator.dart';
 import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_online/features/cities/presentation/cubit/city_cubit.dart';
 import 'package:flutter_online/features/decorations/presentation/bloc/admin_decoration_list_bloc.dart';
+import 'package:flutter_online/features/decorations/presentation/cubit/decoration_list_cubit.dart';
 import 'package:flutter_online/features/events/bloc/event_type/event_type_bloc.dart';
 
 void main() async {
@@ -22,6 +23,7 @@ void main() async {
       providers: [
         BlocProvider.value(value: authCubit),
         BlocProvider(create: (_) => getIt<EventTypeBloc>()),
+        BlocProvider(create:(_)=> getIt<DecorationListCubit>()),
         BlocProvider(create: (_) => getIt<AdminDecorationListBloc>()),
         BlocProvider(create: (_) => cityCubit),
       ],

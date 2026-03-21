@@ -28,10 +28,18 @@ class CreateDecorationModel {
   });
 
   factory CreateDecorationModel.fromJson(Map<String, dynamic> json) {
+    List<String> urls = [];
     final imageUrlsRaw = json['imageUrls'];
-    final List<String> urls = imageUrlsRaw is List
-        ? (imageUrlsRaw).map((e) => e.toString()).toList()
-        : [];
+    if (imageUrlsRaw is List) {
+      urls = imageUrlsRaw.map((e) => e.toString()).toList();
+    }
+    final imagesRaw = json['images'];
+    if (imagesRaw is List && urls.isEmpty) {
+      urls = imagesRaw
+          .map((e) => e is Map ? (e['imageUrl'] ?? e['url'])?.toString() : null)
+          .whereType<String>()
+          .toList();
+    }
 
     return CreateDecorationModel(
       id: json['id'] as String? ?? '',

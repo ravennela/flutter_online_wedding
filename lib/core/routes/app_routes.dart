@@ -4,7 +4,7 @@ class AppRoutes {
   static const String citySelection = '/city-selection';
   static const String login = '/login';
   static const String otp = '/verify-otp';
-  static const String home = '/home';
+  static const String home = '/';
   static const String eventList = '/events';
   static const String eventDetail = '/events/detail';
   static const String decorationDetail = '/decoration/detail';
@@ -30,8 +30,8 @@ class AppRoutes {
   static const String editDeceoration = '/admin/decorations/edit';
   static const String addAddress = '/address/add';
   static const String addressList = '/address/list';
-  static const String selectEventDate = '/booking/select-date';
-  static const String paymentMethod = '/booking/payment';
+  static const String selectEventDate = '/booking/:id/select-date';
+  static const String paymentMethod = '/booking/:id/payment';
   static const String bookingSuccess = '/booking/success';
   static const String adminSelectVendor = '/admin/bookings/select-vendor';
 
@@ -42,5 +42,6 @@ class AppRoutes {
   static String adminEventTypesDetailPath(String id) => '/admin/event_types_detail/$id';
   static String adminEventTypesEditPath(String id) => '/admin/event-types/edit/$id';
   static String adminDecorationsDetailPath(String id) => '/admin/decorations/detail/$id';
+  static String editDeceorationPath(String id) => '/admin/decorations/edit/$id';
   static String bookingDetailPath(String id) => '$bookingDetail/$id';
 }

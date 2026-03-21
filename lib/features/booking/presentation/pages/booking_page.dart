@@ -172,7 +172,7 @@ class _BookingPageState extends State<BookingPage> {
             if (addressState is AddressLoaded && selectedAddressId != null) {
               final address = addressState.addresses.firstWhere((a) => a.id == selectedAddressId);
               context.push(
-                AppRoutes.selectEventDate,
+                AppRoutes.selectEventDate.replaceAll(':id', widget.decorationId),
                 extra: BookingArgs(
                   decorationDetail: detail,
                   address: address,
@@ -243,7 +243,7 @@ class _BookingPageState extends State<BookingPage> {
                 if (addressState is AddressLoaded && selectedAddressId != null) {
                   final address = addressState.addresses.firstWhere((a) => a.id == selectedAddressId);
                   context.push(
-                    AppRoutes.selectEventDate,
+                    AppRoutes.selectEventDate.replaceAll(':id', widget.decorationId),
                     extra: BookingArgs(
                       decorationDetail: detail,
                       address: address,
@@ -317,45 +317,48 @@ class _BookingPageState extends State<BookingPage> {
               // Right side: Sticky Summary
               Expanded(
                 flex: 1,
-                child: Column(
-                  children: [
-                    _BookingSummaryCard(detail: detail),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 40,
-                      child: ElevatedButton(
-                        onPressed: selectedAddressId == null
-                            ? null
-                            : () {
-                                final addressState = context.read<AddressCubit>().state;
-                                if (addressState is AddressLoaded) {
-                                  final address = addressState.addresses
-                                      .firstWhere((a) => a.id == selectedAddressId);
-                                  context.push(
-                                    AppRoutes.selectEventDate,
-                                    extra: BookingArgs(
-                                      decorationDetail: detail,
-                                      address: address,
-                                    ),
-                                  );
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFF3F4F6),
-                          disabledForegroundColor: const Color(0xFF9CA3AF),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _BookingSummaryCard(detail: detail),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: selectedAddressId == null
+                              ? null
+                              : () {
+                                  final addressState = context.read<AddressCubit>().state;
+                                  if (addressState is AddressLoaded) {
+                                    final address = addressState.addresses
+                                        .firstWhere((a) => a.id == selectedAddressId);
+                                    context.push(
+                                      AppRoutes.selectEventDate.replaceAll(':id', widget.decorationId),
+                                      extra: BookingArgs(
+                                        decorationDetail: detail,
+                                        address: address,
+                                      ),
+                                    );
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(0xFFF3F4F6),
+                            disabledForegroundColor: const Color(0xFF9CA3AF),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Continue',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 40), // Bottom padding for summary list
+                    ],
+                  ),
                 ),
               ),
             ],

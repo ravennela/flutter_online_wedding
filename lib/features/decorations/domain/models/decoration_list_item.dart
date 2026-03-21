@@ -10,6 +10,8 @@ class DecorationListItem {
   final String cityName;
   final String eventTypeId;
   final String eventTypeName;
+  /// From API `imageUrls` or `images[].imageUrl`.
+  final List<String> imageUrls;
 
   const DecorationListItem({
     required this.id,
@@ -23,7 +25,31 @@ class DecorationListItem {
     required this.cityName,
     required this.eventTypeId,
     required this.eventTypeName,
+    this.imageUrls = const [],
   });
+
+  String? get thumbnailUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
+
+  static List<String> _parseImageUrls(Map<String, dynamic> json) {
+    final raw = json['imageUrls'];
+    if (raw is List) {
+      final u = raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+      if (u.isNotEmpty) return u;
+    }
+    final imgs = json['images'];
+    if (imgs is List) {
+      return imgs
+          .map((e) {
+            if (e is Map) {
+              return (e['imageUrl'] ?? e['url'] ?? e['image_url'])?.toString() ?? '';
+            }
+            return e.toString();
+          })
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return [];
+  }
 
   factory DecorationListItem.fromJson(Map<String, dynamic> json) {
     return DecorationListItem(
@@ -38,6 +64,7 @@ class DecorationListItem {
       cityName: json['cityName'] as String? ?? '',
       eventTypeId: json['eventTypeId'] as String? ?? '',
       eventTypeName: json['eventTypeName'] as String? ?? '',
+      imageUrls: _parseImageUrls(json),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter_online/features/decorations/domain/models/decoration_image_payload.dart';
 
 abstract class CreateDecorationEvent extends Equatable {
   const CreateDecorationEvent();
@@ -13,6 +14,7 @@ class LoadEventTypesAndCities extends CreateDecorationEvent {
 }
 
 /// Submit create decoration form.
+/// [images] = list of { url, publicId } from Cloudinary upload for decoration_images.
 class SubmitCreateDecoration extends CreateDecorationEvent {
   final String eventTypeId;
   final String cityId;
@@ -21,7 +23,7 @@ class SubmitCreateDecoration extends CreateDecorationEvent {
   final String? inclusions;
   final String? exclusions;
   final int basePrice;
-  final List<String> imageUrls;
+  final List<DecorationImagePayload> images;
   final bool active;
 
   const SubmitCreateDecoration({
@@ -32,7 +34,7 @@ class SubmitCreateDecoration extends CreateDecorationEvent {
     this.inclusions,
     this.exclusions,
     required this.basePrice,
-    this.imageUrls = const [],
+    this.images = const [],
     this.active = true,
   });
 
@@ -45,7 +47,7 @@ class SubmitCreateDecoration extends CreateDecorationEvent {
         inclusions,
         exclusions,
         basePrice,
-        imageUrls,
+        images,
         active,
       ];
 }

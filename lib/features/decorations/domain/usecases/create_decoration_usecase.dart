@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_online/features/decorations/domain/models/create_decoration_model.dart';
+import 'package:flutter_online/features/decorations/domain/models/decoration_image_payload.dart';
 import 'package:flutter_online/features/decorations/domain/repositories/decoration_repository.dart';
 
 class CreateDecorationUsecase {
@@ -15,7 +16,7 @@ class CreateDecorationUsecase {
     String? inclusions,
     String? exclusions,
     required int basePrice,
-    List<String>? imageUrls,
+    List<DecorationImagePayload>? images,
     bool active = true,
   }) async {
     final data = <String, dynamic>{
@@ -26,7 +27,7 @@ class CreateDecorationUsecase {
       'inclusions': inclusions ?? '',
       'exclusions': exclusions ?? '',
       'basePrice': basePrice,
-      'imageUrls': imageUrls ?? [],
+      'images': (images ?? []).map((e) => e.toApiMap()).toList(),
       'active': active,
     };
     return repository.createDecoration(data);

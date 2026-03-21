@@ -650,7 +650,7 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
       child: ElevatedButton(
         onPressed: _selectedDay == null ? null : () {
           context.push(
-            AppRoutes.paymentMethod,
+            AppRoutes.paymentMethod.replaceAll(':id', widget.args.decorationDetail.id),
             extra: widget.args.copyWith(selectedDate: _selectedDay),
           );
         },

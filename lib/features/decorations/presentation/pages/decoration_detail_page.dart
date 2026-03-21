@@ -70,7 +70,14 @@ class _DecorationDetailView extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(detail.images.first, fit: BoxFit.cover),
+                detail.images.isNotEmpty
+                    ? Image.network(detail.images.first, fit: BoxFit.cover)
+                    : Container(
+                        color: Colors.grey.shade900,
+                        alignment: Alignment.center,
+                        child: Icon(Icons.image_not_supported_outlined,
+                            size: 80, color: Colors.white24),
+                      ),
                 // Overlay Gradient
                 Container(decoration: BoxDecoration(color: Colors.black.withOpacity(0.2))),
                 // Back Button
@@ -146,7 +153,14 @@ class _DecorationDetailView extends StatelessWidget {
                  background: Stack(
                    fit: StackFit.expand,
                    children: [
-                     Image.network(detail.images.first, fit: BoxFit.cover),
+                     detail.images.isNotEmpty
+                         ? Image.network(detail.images.first, fit: BoxFit.cover)
+                         : Container(
+                             color: Colors.grey.shade900,
+                             alignment: Alignment.center,
+                             child: Icon(Icons.image_not_supported_outlined,
+                                 size: 64, color: Colors.white24),
+                           ),
                      Container(
                        decoration: const BoxDecoration(
                          gradient: LinearGradient(

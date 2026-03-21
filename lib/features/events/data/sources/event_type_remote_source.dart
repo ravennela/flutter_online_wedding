@@ -108,9 +108,6 @@ class EventTypeRemoteDatasourceImpl implements EventTypeRemoteDatasource {
     try {
       final String url = ApiConstants.updateEventType.replaceAll('{id}', id);
 
-     
-
-
       final response = await dioClient.put(url, data: data);
 
       return response.data;
@@ -122,7 +119,7 @@ class EventTypeRemoteDatasourceImpl implements EventTypeRemoteDatasource {
   @override
   Future<Map<String, dynamic>> getEventTypeById(String id) async {
     try {
-      final String url = "${ApiConstants.fetchEventTypes}/$id";
+      final String url = "${ApiConstants.createEventType}/$id";
 
       final response = await dioClient.get(url);
       return response.data as Map<String, dynamic>;

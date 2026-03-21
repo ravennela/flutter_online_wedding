@@ -23,7 +23,7 @@ class EventTypeListItem {
   factory EventTypeListItem.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
     final rawName = json['name'];
-    final rawIconUrl = json['iconUrl'];
+    final rawIconUrl = json['iconUrl'] ?? json['icon_url'];
     final iconStr = rawIconUrl is String ? rawIconUrl.trim() : null;
     final rawPublicId = json['iconPublicId'] ?? json['icon_public_id'];
     final publicIdStr = rawPublicId is String ? rawPublicId.trim() : null;
