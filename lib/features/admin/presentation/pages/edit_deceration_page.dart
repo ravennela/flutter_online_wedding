@@ -111,7 +111,7 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
 
     _decorationNameController.text = detail.title;
     _basePriceController.text = detail.basePriceRaw != null
-        ? (detail.basePriceRaw! / 100).toStringAsFixed(2)
+        ? detail.basePriceRaw!.toString()
         : _parsePriceForDisplay(detail.price);
     _descriptionController.text = detail.description;
     _inclusionsController.text = detail.inclusions;
@@ -143,7 +143,7 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
     final match = RegExp(r'[\d.]+').firstMatch(price);
     if (match == null) return '0.00';
     final numPart = double.tryParse(match.group(0) ?? '0') ?? 0;
-    return numPart >= 10000 ? (numPart / 100).toStringAsFixed(2) : numPart.toStringAsFixed(2);
+    return numPart.toStringAsFixed(2);
   }
 
   void _onCancel() {
@@ -185,7 +185,8 @@ class _EditDecerationPageState extends State<EditDecerationPage> {
       );
       return;
     }
-    final basePrice = (basePriceDouble * 100).round();
+    // API expects basePrice in Rupees directly
+    final basePrice = basePriceDouble.round();
 
     context.read<UpdateDecorationBloc>().add(
           SubmitUpdateDecoration(

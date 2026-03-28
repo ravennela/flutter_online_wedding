@@ -10,11 +10,18 @@ abstract class AdminBookingRepository {
     String? status,
     String? city,
     String? paymentStatus,
+    String? search,
+    String? startDate,
+    String? endDate,
+    String? eventTypeId,
   });
+
+
 
   Future<Either<Failure, AdminBookingDetailEntity>> getAdminBookingDetail(String id);
   Future<Either<Failure, void>> updateBookingStatus(String id, String status);
   Future<Either<Failure, void>> adminCancelBooking(String id, String reason);
   Future<Either<Failure, void>> assignVendors(String bookingId, List<String> vendorIds);
   Future<Either<Failure, void>> deAssignVendor(String bookingId, String vendorId);
+  Future<Either<Failure, void>> updateBookingDetail(String id, Map<String, dynamic> data);
 }

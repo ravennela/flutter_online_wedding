@@ -83,6 +83,7 @@ import '../features/admin/bookings/domain/usecases/update_booking_status_usecase
 import '../features/admin/bookings/domain/usecases/admin_cancel_booking_usecase.dart';
 import '../features/admin/bookings/domain/usecases/assign_vendors_usecase.dart';
 import '../features/admin/bookings/domain/usecases/deassign_vendor_usecase.dart';
+import '../features/admin/bookings/domain/usecases/update_booking_detail_usecase.dart';
 import '../features/admin/bookings/presentation/bloc/admin_bookings_bloc.dart';
 import '../features/admin/bookings/presentation/bloc/admin_booking_detail_bloc.dart';
 import '../features/admin/vendors/data/datasources/vendor_remote_datasource.dart';
@@ -90,6 +91,18 @@ import '../features/admin/vendors/data/repositories/vendor_repository_impl.dart'
 import '../features/admin/vendors/domain/repositories/vendor_repository.dart';
 import '../features/admin/vendors/domain/usecases/get_vendors_usecase.dart';
 import '../features/admin/vendors/presentation/bloc/vendor_bloc.dart';
+import '../features/profile/data/datasources/profile_remote_datasource.dart';
+import '../features/profile/data/repository/profile_repository_impl.dart';
+import '../features/profile/domain/repository/profile_repository.dart';
+import '../features/profile/domain/usecase/get_profile_usecase.dart';
+import '../features/profile/domain/usecase/update_profile_usecase.dart';
+import '../features/profile/presentation/bloc/profile_bloc.dart';
+import '../features/admin/dashboard/data/sources/admin_dashboard_remote_source.dart';
+import '../features/admin/dashboard/data/repositories/admin_dashboard_repository_impl.dart';
+import '../features/admin/dashboard/domain/repositories/admin_dashboard_repository.dart';
+import '../features/admin/dashboard/domain/usecases/get_dashboard_data_usecase.dart';
+import '../features/admin/dashboard/presentation/bloc/admin_dashboard_bloc.dart';
+
 
 
 final getIt = GetIt.instance;
@@ -394,13 +407,18 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<DeAssignVendorUseCase>(
     () => DeAssignVendorUseCase(getIt<AdminBookingRepository>()),
   );
+  getIt.registerLazySingleton<UpdateBookingDetailUseCase>(
+    () => UpdateBookingDetailUseCase(getIt<AdminBookingRepository>()),
+  );
   getIt.registerFactory<AdminBookingsBloc>(
     () => AdminBookingsBloc(
       getAdminBookingsUseCase: getIt<GetAdminBookingsUseCase>(),
       updateBookingStatusUseCase: getIt<UpdateBookingStatusUseCase>(),
       adminCancelBookingUseCase: getIt<AdminCancelBookingUseCase>(),
+      fetchEventTypesUsecase: getIt<FetchEventTypesUsecase>(),
     ),
   );
+
   getIt.registerFactory<AdminBookingDetailBloc>(
     () => AdminBookingDetailBloc(
       getAdminBookingDetailUseCase: getIt<GetAdminBookingDetailUseCase>(),
@@ -408,6 +426,7 @@ Future<void> setupServiceLocator() async {
       adminCancelBookingUseCase: getIt<AdminCancelBookingUseCase>(),
       assignVendorsUseCase: getIt<AssignVendorsUseCase>(),
       deAssignVendorUseCase: getIt<DeAssignVendorUseCase>(),
+      updateBookingDetailUseCase: getIt<UpdateBookingDetailUseCase>(),
     ),
   );
 
@@ -424,4 +443,45 @@ Future<void> setupServiceLocator() async {
   getIt.registerFactory<VendorBloc>(
     () => VendorBloc(getVendorsUseCase: getIt<GetVendorsUseCase>()),
   );
+
+  // Profile
+  getIt.registerLazySingleton<ProfileRemoteDataSource>(
+    () => ProfileRemoteDataSourceImpl(apiClient: getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(remoteDataSource: getIt<ProfileRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<GetProfileUseCase>(
+    () => GetProfileUseCase(repository: getIt<ProfileRepository>()),
+  );
+  getIt.registerLazySingleton<UpdateProfileUseCase>(
+    () => UpdateProfileUseCase(repository: getIt<ProfileRepository>()),
+  );
+  getIt.registerFactory<ProfileBloc>(
+    () => ProfileBloc(
+      getProfileUseCase: getIt<GetProfileUseCase>(),
+      updateProfileUseCase: getIt<UpdateProfileUseCase>(),
+    ),
+  );
+
+  // Admin Dashboard
+  getIt.registerLazySingleton<AdminDashboardRemoteSource>(
+    () => AdminDashboardRemoteSourceImpl(apiClient: getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<AdminDashboardRepository>(
+    () => AdminDashboardRepositoryImpl(
+      remoteSource: getIt<AdminDashboardRemoteSource>(),
+    ),
+  );
+  getIt.registerLazySingleton<GetAdminDashboardDataUseCase>(
+    () => GetAdminDashboardDataUseCase(
+      repository: getIt<AdminDashboardRepository>(),
+    ),
+  );
+  getIt.registerFactory<AdminDashboardBloc>(
+    () => AdminDashboardBloc(
+      getAdminDashboardDataUseCase: getIt<GetAdminDashboardDataUseCase>(),
+    ),
+  );
 }
+

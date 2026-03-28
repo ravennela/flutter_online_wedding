@@ -53,6 +53,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
           'bookingId': _createdBooking?.bookingId ?? _createdBookingId,
           'amount': widget.args.decorationDetail.formattedPrice,
           'date': DateFormat('MMMM dd, yyyy').format(_createdBooking?.eventDate ?? widget.args.selectedDate!),
+          'time': _createdBooking?.eventTime ?? widget.args.selectedTime?.format(context),
         },
       );
     }
@@ -90,8 +91,10 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       'decorationId': detail.id,
       'addressId': address.id,
       'eventDate': DateFormat('yyyy-MM-dd').format(selectedDate),
+      'eventTime': widget.args.selectedTime != null
+          ? '${widget.args.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.args.selectedTime!.minute.toString().padLeft(2, '0')}:00'
+          : null,
       'paymentMode': _isOnlinePayment ? 'ONLINE' : 'PAY_AT_VENUE',
-      // 'totalAmount': detail.price,
     };
 
     if (_isOnlinePayment) {
@@ -167,6 +170,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                       'bookingId': state.booking.bookingId,
                       'amount': widget.args.decorationDetail.formattedPrice,
                       'date': DateFormat('MMMM dd, yyyy').format(state.booking.eventDate),
+                      'time': state.booking.eventTime ?? widget.args.selectedTime?.format(context),
                     },
                   );
                 }
@@ -625,6 +629,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                 _buildSummaryRow(Icons.celebration_outlined, 'Event', detail.eventTypeName),
                 const SizedBox(height: 16),
                 _buildSummaryRow(Icons.calendar_month_outlined, 'Date', DateFormat('MMMM dd, yyyy').format(selectedDate)),
+                const SizedBox(height: 16),
+                _buildSummaryRow(Icons.access_time_outlined, 'Time', widget.args.selectedTime?.format(context) ?? 'Not Selected'),
                 const SizedBox(height: 16),
                 _buildSummaryRow(Icons.location_on_outlined, 'Location', '${address.area}, ${address.city}'),
                 const SizedBox(height: 24),

@@ -63,6 +63,7 @@ class AdminBookingDetailEntity extends Equatable {
   final String customerPhone;
   final String eventType;
   final String decoration;
+  final String? decorationId;
   final String eventDate;
   final String city;
   final String addressLine;
@@ -75,6 +76,7 @@ class AdminBookingDetailEntity extends Equatable {
   final String? vendorId;
   final String? customerNote;
   final String createdAt;
+  final List<Map<String, String>> assignedVendors;
 
   const AdminBookingDetailEntity({
     required this.bookingId,
@@ -84,6 +86,7 @@ class AdminBookingDetailEntity extends Equatable {
     required this.customerPhone,
     required this.eventType,
     required this.decoration,
+    this.decorationId,
     required this.eventDate,
     required this.city,
     required this.addressLine,
@@ -96,6 +99,7 @@ class AdminBookingDetailEntity extends Equatable {
     this.vendorId,
     this.customerNote,
     required this.createdAt,
+    required this.assignedVendors,
   });
 
   @override
@@ -107,6 +111,7 @@ class AdminBookingDetailEntity extends Equatable {
         customerPhone,
         eventType,
         decoration,
+        decorationId,
         eventDate,
         city,
         addressLine,
@@ -119,5 +124,6 @@ class AdminBookingDetailEntity extends Equatable {
         vendorId,
         customerNote,
         createdAt,
+        assignedVendors,
       ];
 }

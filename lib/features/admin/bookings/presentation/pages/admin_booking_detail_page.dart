@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/di/service_locator.dart';
+import 'package:flutter_online/features/admin/bookings/domain/entities/admin_booking_entity.dart';
 import 'package:flutter_online/features/admin/presentation/widgets/admin_scaffold.dart';
 import 'package:intl/intl.dart';
 
@@ -333,9 +334,18 @@ class AdminBookingDetailPage extends StatelessWidget {
     );
   }
 
-  List<VendorModel> _getVendorsFromEntity(dynamic entity) {
-    // If API provides vendors, map them. Otherwise return mock/empty.
-    if (entity.vendorName != null && entity.vendorName != 'Not Assigned') {
+  List<VendorModel> _getVendorsFromEntity(AdminBookingDetailEntity entity) {
+    if (entity.assignedVendors.isNotEmpty) {
+      return entity.assignedVendors.map((v) => VendorModel(
+        id: v['id'] ?? '',
+        name: v['name'] ?? 'Unknown',
+        category: 'Assigned Vendor',
+        status: 'Active',
+      )).toList();
+    }
+    
+    // Fallback for single vendor if list is empty (for backward compatibility)
+    if (entity.vendorName != 'Not Assigned') {
       return [
         VendorModel(
           id: entity.vendorId ?? '',

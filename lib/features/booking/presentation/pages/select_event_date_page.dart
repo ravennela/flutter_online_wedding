@@ -17,6 +17,17 @@ class SelectEventDatePage extends StatefulWidget {
 class _SelectEventDatePageState extends State<SelectEventDatePage> {
   DateTime _focusedDay = DateTime(2026, 3, 1);
   DateTime? _selectedDay = DateTime(2026, 3, 20);
+  TimeOfDay? _selectedTime;
+
+  // Selected time slots for demonstration
+  final List<TimeOfDay> _timeSlots = [
+    const TimeOfDay(hour: 9, minute: 0),
+    const TimeOfDay(hour: 11, minute: 0),
+    const TimeOfDay(hour: 13, minute: 0),
+    const TimeOfDay(hour: 15, minute: 0),
+    const TimeOfDay(hour: 17, minute: 0),
+    const TimeOfDay(hour: 19, minute: 0),
+  ];
 
   // For demonstration: Assume some dates are booked
   final List<int> _bookedDays = [5, 12, 18, 25];
@@ -211,13 +222,15 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
               const SizedBox(width: 24),
               Expanded(
                 flex: 4,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildBookingSummaryCard(isCompact: true),
-                    const SizedBox(height: 10),
-                    _buildCTA(),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildBookingSummaryCard(isCompact: true),
+                      const SizedBox(height: 10),
+                      _buildCTA(),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -253,7 +266,9 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
               const SizedBox(width: 40),
               Expanded(
                 flex: 2,
-                child: _buildBookingSummaryCard(isDesktop: true),
+                child: SingleChildScrollView(
+                  child: _buildBookingSummaryCard(isDesktop: true),
+                ),
               ),
             ],
           ),
@@ -281,14 +296,86 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildCalendarHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildCalendarGrid(),
+          const SizedBox(height: 14),
+          _buildLegend(),
           const SizedBox(height: 20),
           Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 16),
-          _buildLegend(),
+          const SizedBox(height: 20),
+          _buildTimePickerSection(),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimePickerSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Select Event Time',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontFamily: 'Serif',
+              ),
+            ),
+            if (_selectedTime != null)
+              Text(
+                _selectedTime!.format(context),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 42,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _timeSlots.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final time = _timeSlots[index];
+              final isSelected = _selectedTime == time;
+
+              return GestureDetector(
+                onTap: () => setState(() => _selectedTime = time),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.divider,
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      time.format(context),
+                      style: TextStyle(
+                        color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -353,7 +440,8 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
   Widget _buildCalendarGrid() {
     final daysInMonth = DateUtils.getDaysInMonth(_focusedDay.year, _focusedDay.month);
     final firstDayOffset = DateTime(_focusedDay.year, _focusedDay.month, 1).weekday % 7;
-    final totalCells = ((daysInMonth + firstDayOffset) / 7).ceil() * 7;
+    final rows = ((daysInMonth + firstDayOffset) / 7).ceil();
+    final totalCells = rows * 7;
     const double rowHeight = 48;
 
     return Column(
@@ -376,9 +464,9 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
                   ))
               .toList(),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         SizedBox(
-          height: 6 * (rowHeight + 8) - 8,
+          height: rows * (rowHeight + 8) - 8,
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -409,7 +497,7 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOut,
-                  margin: const EdgeInsets.all(2),
+                  margin: const EdgeInsets.all(1),
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primary : Colors.transparent,
                     shape: BoxShape.circle,
@@ -518,14 +606,17 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
             child: Column(
               children: [
                 _buildSummaryRow(Icons.celebration_outlined, 'Event Type', detail.eventTypeName),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _buildSummaryRow(Icons.palette_outlined, 'Decoration', detail.name),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _buildSummaryRow(Icons.location_on_outlined, 'Location', '${address.area}, ${address.city}'),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 _buildSummaryRow(Icons.calendar_month_outlined, 'Date',
                     _selectedDay != null ? DateFormat('MMMM dd, yyyy').format(_selectedDay!) : 'Not Selected'),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
+                _buildSummaryRow(Icons.access_time_outlined, 'Time',
+                    _selectedTime != null ? _selectedTime!.format(context) : 'Not Selected'),
+                const SizedBox(height: 16),
                 Divider(height: 1, color: AppColors.divider),
                 const SizedBox(height: 20),
                 Row(
@@ -534,7 +625,7 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
                     Text(
                       'Total Amount',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
                       ),
@@ -542,7 +633,7 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
                     Text(
                       detail.formattedPrice,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                         fontFamily: 'Serif',
@@ -648,10 +739,13 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: _selectedDay == null ? null : () {
+        onPressed: (_selectedDay == null || _selectedTime == null) ? null : () {
           context.push(
             AppRoutes.paymentMethod.replaceAll(':id', widget.args.decorationDetail.id),
-            extra: widget.args.copyWith(selectedDate: _selectedDay),
+            extra: widget.args.copyWith(
+              selectedDate: _selectedDay,
+              selectedTime: _selectedTime,
+            ),
           );
         },
         style: ElevatedButton.styleFrom(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../dashboard/domain/entities/admin_dashboard_entity.dart';
 
 class UpcomingEventsSection extends StatelessWidget {
-  const UpcomingEventsSection({super.key});
+  final List<AdminUpcomingEventEntity> events;
+  const UpcomingEventsSection({super.key, required this.events});
 
   @override
   Widget build(BuildContext context) {
@@ -17,36 +19,31 @@ class UpcomingEventsSection extends StatelessWidget {
         children: [
           const Text(
             "Upcoming Events",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1F36)),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1F36)),
           ),
           const SizedBox(height: 24),
-          _EventItem(
-            name: "Johnson Wedding Reception",
-            date: "Oct 24, 2025 • 2:00 PM",
-            vendor: "Floral Dreams Co.",
-            status: "Ready",
-          ),
-          const SizedBox(height: 16),
-          _EventItem(
-            name: "Tech Corp Annual Gala",
-            date: "Oct 26, 2025 • 6:00 PM",
-            vendor: "Elite Catering",
-            status: "Prep",
-          ),
-          const SizedBox(height: 16),
-          _EventItem(
-            name: "Sarah's 30th Birthday",
-            date: "Oct 28, 2025 • 7:00 PM",
-            vendor: "Party Makers",
-            status: "Ready",
-          ),
-          const SizedBox(height: 16),
-           _EventItem(
-            name: "Global Summit 2025",
-            date: "Nov 02, 2025 • 9:00 AM",
-            vendor: "Convention Pros",
-            status: "Prep",
-          ),
+          if (events.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text("No upcoming events"),
+              ),
+            )
+          else
+            ...events.map((event) => Column(
+                  children: [
+                    _EventItem(
+                      name: event.title,
+                      date: "${event.date}${event.time != null ? ' • ${event.time}' : ''}",
+                      vendor: event.vendorName,
+                      status: event.status,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                )),
         ],
       ),
     );

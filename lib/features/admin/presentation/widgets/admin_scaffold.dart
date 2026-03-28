@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_online/di/service_locator.dart';
+import 'package:flutter_online/features/admin/presentation/widgets/admin_profile_popup.dart';
 import 'package:flutter_online/features/admin/presentation/widgets/admin_sidebar.dart';
 import 'package:flutter_online/features/admin/presentation/widgets/admin_top_bar.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_event.dart';
 
 class AdminScaffold extends StatelessWidget {
   final Widget body;
@@ -66,6 +71,10 @@ class AdminScaffold extends StatelessWidget {
           ),
         ),
         actions: [
+          BlocProvider(
+            create: (context) => getIt<ProfileBloc>()..add(GetProfileEvent()),
+            child: const AdminProfilePopup(isMobile: true),
+          ),
           IconButton(
             onPressed: () {}, 
             icon: const Icon(Icons.notifications_none_outlined),

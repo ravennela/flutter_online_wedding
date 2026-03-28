@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../dashboard/domain/entities/admin_dashboard_entity.dart';
+
 
 class RecentBookingsTable extends StatelessWidget {
-  const RecentBookingsTable({super.key});
+  final List<AdminRecentBookingEntity> bookings;
+  const RecentBookingsTable({super.key, required this.bookings});
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +38,12 @@ class RecentBookingsTable extends StatelessWidget {
                 },
                 children: [
                   _headerRow(),
-                  _dataRow("BK001", "Ramesh", "Wedding", "Active"),
-                  _dataRow("BK002", "Suresh", "Birthday", "Inactive"),
+                  ...bookings.map((booking) => _dataRow(
+                        booking.bookingId ?? 'N/A',
+                        booking.customerName,
+                        booking.eventType,
+                        booking.status,
+                      )),
                 ],
               ),
             ),

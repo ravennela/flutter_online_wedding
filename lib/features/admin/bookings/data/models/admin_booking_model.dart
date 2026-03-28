@@ -59,6 +59,7 @@ class AdminBookingDetailModel extends AdminBookingDetailEntity {
     required super.customerPhone,
     required super.eventType,
     required super.decoration,
+    super.decorationId,
     required super.eventDate,
     required super.city,
     required super.addressLine,
@@ -71,6 +72,7 @@ class AdminBookingDetailModel extends AdminBookingDetailEntity {
     super.vendorId,
     super.customerNote,
     required super.createdAt,
+    required super.assignedVendors,
   });
 
   factory AdminBookingDetailModel.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,7 @@ class AdminBookingDetailModel extends AdminBookingDetailEntity {
       customerPhone: json['customerPhone'] as String? ?? '',
       eventType: json['eventType'] as String? ?? '',
       decoration: json['decoration'] as String? ?? '',
+      decorationId: json['decorationId'] as String?,
       eventDate: json['eventDate'] as String? ?? '',
       city: json['city'] as String? ?? '',
       addressLine: json['addressLine'] as String? ?? '',
@@ -94,6 +97,13 @@ class AdminBookingDetailModel extends AdminBookingDetailEntity {
       vendorId: json['vendorId'] as String?,
       customerNote: json['customerNote'] as String?,
       createdAt: json['createdAt'] as String? ?? '',
+      assignedVendors: (json['assignedVendors'] as List<dynamic>?)
+              ?.map((e) => Map<String, String>.from({
+                    'id': (e['id'] as String? ?? '').toString(),
+                    'name': (e['name'] as String? ?? '').toString(),
+                  }))
+              .toList() ??
+          [],
     );
   }
 }

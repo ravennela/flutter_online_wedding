@@ -558,8 +558,7 @@ class _SortDropdownState extends State<_SortDropdown> {
   }
 }
 
-String _formatPriceRupee(double basePriceMinor) {
-  final rupees = basePriceMinor / 100.0;
+String _formatPriceRupee(double rupees) {
   if (rupees >= 100000) {
     return '₹${NumberFormat.compactCurrency(symbol: '', decimalDigits: 0).format(rupees)}';
   }

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+import '../../dashboard/domain/entities/admin_dashboard_entity.dart';
 
 class AnalyticsSection extends StatelessWidget {
-  const AnalyticsSection({super.key});
+  final List<BookingOverviewEntity> overview;
+  final AdminBookingStatusEntity status;
+
+  const AnalyticsSection({
+    super.key,
+    required this.overview,
+    required this.status,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -9,12 +18,12 @@ class AnalyticsSection extends StatelessWidget {
       children: [
         Expanded(
           flex: 2,
-          child: _BookingOverviewChart(),
+          child: _BookingOverviewChart(overview: overview),
         ),
         const SizedBox(width: 24),
         Expanded(
           flex: 1,
-          child: _BookingStatusChart(),
+          child: _BookingStatusChart(status: status),
         ),
       ],
     );
@@ -22,8 +31,18 @@ class AnalyticsSection extends StatelessWidget {
 }
 
 class _BookingOverviewChart extends StatelessWidget {
+  final List<BookingOverviewEntity> overview;
+
+  const _BookingOverviewChart({required this.overview});
+
   @override
   Widget build(BuildContext context) {
+    final maxCount = overview.isEmpty
+        ? 1
+        : overview
+            .map((e) => e.count)
+            .reduce((value, element) => value > element ? value : element);
+
     return Container(
       padding: const EdgeInsets.all(24),
       height: 350,
@@ -40,14 +59,19 @@ class _BookingOverviewChart extends StatelessWidget {
             children: [
               const Text(
                 "Booking Overview",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1F36)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1F36)),
               ),
               DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: "This Week",
                   items: const [
-                    DropdownMenuItem(value: "This Week", child: Text("This Week")),
-                    DropdownMenuItem(value: "Last Week", child: Text("Last Week")),
+                    DropdownMenuItem(
+                        value: "This Week", child: Text("This Week")),
+                    DropdownMenuItem(
+                        value: "Last Week", child: Text("Last Week")),
                   ],
                   onChanged: (v) {},
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
@@ -58,19 +82,21 @@ class _BookingOverviewChart extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _BarColumn(label: "Mon", heightPkg: 0.4),
-                _BarColumn(label: "Tue", heightPkg: 0.6),
-                _BarColumn(label: "Wed", heightPkg: 0.3),
-                _BarColumn(label: "Thu", heightPkg: 0.8, isActive: true),
-                _BarColumn(label: "Fri", heightPkg: 0.5),
-                _BarColumn(label: "Sat", heightPkg: 0.7),
-                _BarColumn(label: "Sun", heightPkg: 0.4),
-              ],
-            ),
+            child: overview.isEmpty
+                ? const Center(child: Text("No data available"))
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: overview.map((item) {
+                      return _BarColumn(
+                        label: item.day.length > 3
+                            ? item.day.substring(0, 3)
+                            : item.day,
+                        heightPkg: item.count / (maxCount == 0 ? 1 : maxCount),
+                        count: item.count,
+                      );
+                    }).toList(),
+                  ),
           ),
         ],
       ),
@@ -81,25 +107,33 @@ class _BookingOverviewChart extends StatelessWidget {
 class _BarColumn extends StatelessWidget {
   final String label;
   final double heightPkg;
+  final int count;
   final bool isActive;
 
-  const _BarColumn({required this.label, required this.heightPkg, this.isActive = false});
+  const _BarColumn({
+    required this.label,
+    required this.heightPkg,
+    required this.count,
+    this.isActive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        
-        Container(
-          width: 30,
-          height: 180 * heightPkg,
-          decoration: BoxDecoration(
-            color: isActive ? Colors.blue.shade700 : Colors.blue.shade100,
-            borderRadius: BorderRadius.circular(6),
+        Tooltip(
+          message: "$count bookings",
+          child: Container(
+            width: 30,
+            height: (180 * heightPkg).clamp(5.0, 180.0),
+            decoration: BoxDecoration(
+              color: isActive ? Colors.blue.shade700 : Colors.blue.shade100,
+              borderRadius: BorderRadius.circular(6),
+            ),
           ),
         ),
-         const SizedBox(height: 12),
+        const SizedBox(height: 12),
         Text(
           label,
           style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
@@ -110,8 +144,15 @@ class _BarColumn extends StatelessWidget {
 }
 
 class _BookingStatusChart extends StatelessWidget {
+  final AdminBookingStatusEntity status;
+
+  const _BookingStatusChart({required this.status});
+
   @override
   Widget build(BuildContext context) {
+    final total = status.confirmed + status.pending + status.cancelled;
+    final successRate = total == 0 ? 0 : (status.confirmed / total * 100).round();
+
     return Container(
       padding: const EdgeInsets.all(24),
       height: 350,
@@ -125,7 +166,10 @@ class _BookingStatusChart extends StatelessWidget {
         children: [
           const Text(
             "Booking Status",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1F36)),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1F36)),
           ),
           const SizedBox(height: 32),
           Expanded(
@@ -134,16 +178,23 @@ class _BookingStatusChart extends StatelessWidget {
                 width: 160,
                 height: 160,
                 child: CustomPaint(
-                  painter: _DonutChartPainter(),
+                  painter: _DonutChartPainter(
+                    confirmed: status.confirmed.toDouble(),
+                    pending: status.pending.toDouble(),
+                    cancelled: status.cancelled.toDouble(),
+                  ),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "85%",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1F36)),
+                          "$successRate%",
+                          style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1F36)),
                         ),
-                        Text(
+                        const Text(
                           "Success",
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
@@ -156,11 +207,20 @@ class _BookingStatusChart extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           // Legend
-          _LegendItem(color: Colors.blue.shade700, label: "Confirmed", value: "1,054"),
+          _LegendItem(
+              color: Colors.blue.shade700,
+              label: "Confirmed",
+              value: status.confirmed.toString()),
           const SizedBox(height: 8),
-          _LegendItem(color: Colors.orange.shade300, label: "Pending", value: "142"),
+          _LegendItem(
+              color: Colors.orange.shade300,
+              label: "Pending",
+              value: status.pending.toString()),
           const SizedBox(height: 8),
-          _LegendItem(color: Colors.red.shade300, label: "Canceled", value: "44"),
+          _LegendItem(
+              color: Colors.red.shade300,
+              label: "Canceled",
+              value: status.cancelled.toString()),
         ],
       ),
     );
@@ -172,7 +232,8 @@ class _LegendItem extends StatelessWidget {
   final String label;
   final String value;
 
-  const _LegendItem({required this.color, required this.label, required this.value});
+  const _LegendItem(
+      {required this.color, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -184,55 +245,91 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF555555))),
+        Text(label,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF555555))),
         const Spacer(),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1F36))),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1F36))),
       ],
     );
   }
 }
 
 class _DonutChartPainter extends CustomPainter {
+  final double confirmed;
+  final double pending;
+  final double cancelled;
+
+  _DonutChartPainter({
+    required this.confirmed,
+    required this.pending,
+    required this.cancelled,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
+    final total = confirmed + pending + cancelled;
+    if (total == 0) {
+      final paint = Paint()
+        ..color = Colors.grey.shade200
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 20.0;
+      canvas.drawCircle(Offset(size.width / 2, size.height / 2),
+          size.width / 2 - 10, paint);
+      return;
+    }
+
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    final strokeWidth = 20.0;
-    
-    final rect = Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
+    const strokeWidth = 20.0;
 
-    final paint1 = Paint()
+    final rect =
+        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
+
+    final paintConfirmed = Paint()
       ..color = Colors.blue.shade700
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    final paint2 = Paint()
+    final paintPending = Paint()
       ..color = Colors.orange.shade300
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    final paint3 = Paint()
+    final paintCancelled = Paint()
       ..color = Colors.red.shade300
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    // Draw arcs
-    
-    const startAngle = -1.5708; // -90 deg
-    const sweep1 = 4.8; // ~85%
+    const startAngle = -math.pi / 2;
     const gap = 0.1;
-    
-    canvas.drawArc(rect, startAngle, sweep1, false, paint1);
-    
-    canvas.drawArc(rect, startAngle + sweep1 + gap, 0.8, false, paint2);
 
-    canvas.drawArc(rect, startAngle + sweep1 + gap + 0.8 + gap, 0.3, false, paint3);
+    double currentAngle = startAngle;
 
+    final confirmedSweep = (confirmed / total) * (2 * math.pi) - (confirmed > 0 && (pending > 0 || cancelled > 0) ? gap : 0);
+    if (confirmed > 0) {
+      canvas.drawArc(rect, currentAngle, confirmedSweep, false, paintConfirmed);
+      currentAngle += confirmedSweep + (confirmed > 0 && (pending > 0 || cancelled > 0) ? gap : 0);
+    }
+
+    final pendingSweep = (pending / total) * (2 * math.pi) - (pending > 0 && (cancelled > 0 || confirmed > 0) ? gap : 0);
+    if (pending > 0) {
+      canvas.drawArc(rect, currentAngle, pendingSweep, false, paintPending);
+       currentAngle += pendingSweep + (pending > 0 && (cancelled > 0 || confirmed > 0) ? gap : 0);
+    }
+
+    final cancelledSweep = (cancelled / total) * (2 * math.pi) - (cancelled > 0 && (confirmed > 0 || pending > 0) ? gap : 0);
+    if (cancelled > 0) {
+      canvas.drawArc(rect, currentAngle, cancelledSweep, false, paintCancelled);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

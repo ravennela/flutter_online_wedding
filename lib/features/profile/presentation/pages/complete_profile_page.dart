@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/core/theme/app_colors.dart';
 import 'package:flutter_online/core/theme/app_text_styles.dart';
+import 'package:flutter_online/di/service_locator.dart';
+import 'package:flutter_online/features/cities/domain/models/city_item.dart';
+import 'package:flutter_online/features/cities/domain/repositories/city_repository.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_event.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_state.dart';
 import 'package:go_router/go_router.dart';
 
 class CompleteProfilePage extends StatefulWidget {
@@ -14,11 +21,14 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  String? _selectedCity;
-  final List<String> _selectedExperiences = [];
-  bool _isProcessing = false;
+  
+  List<CityItem> _availableCities = [];
+  CityItem? _selectedCityItem;
+  String? _initialCityName;
+  bool _isLoadingCities = false;
 
-  final List<String> _cities = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune'];
+  final List<String> _selectedExperiences = [];
+  
   final List<String> _experienceTypes = [
     'Gala Events',
     'Exhibitions',
@@ -28,6 +38,41 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     'Concierge Travel',
     'Boutique Events',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCities();
+  }
+
+  Future<void> _fetchCities() async {
+    setState(() => _isLoadingCities = true);
+    final result = await getIt<CityRepository>().getCities();
+    if (mounted) {
+      result.fold(
+        (error) => setState(() => _isLoadingCities = false),
+        (cities) {
+          setState(() {
+            _availableCities = cities;
+            _isLoadingCities = false;
+            _tryMatchInitialCity();
+          });
+        },
+      );
+    }
+  }
+
+  void _tryMatchInitialCity() {
+    if (_initialCityName != null && _availableCities.isNotEmpty && _selectedCityItem == null) {
+      try {
+        _selectedCityItem = _availableCities.firstWhere(
+          (c) => c.name.toLowerCase() == _initialCityName!.toLowerCase(),
+        );
+      } catch (_) {
+        // No match found
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -46,97 +91,123 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     });
   }
 
-  Future<void> _handleSave() async {
+  void _handleSave() {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isProcessing = true);
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        context.pop();
-      }
+      context.read<ProfileBloc>().add(UpdateProfileEvent(
+            name: _nameController.text,
+            email: _emailController.text,
+            cityId: _selectedCityItem?.id ?? '',
+          ));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Complete Profile',
-          style: AppTextStyles.headingM.copyWith(
-            fontFamily: 'Serif',
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+    return BlocListener<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileLoaded) {
+          _nameController.text = state.profile.name;
+          _emailController.text = state.profile.email;
+          _initialCityName = state.profile.city;
+          _tryMatchInitialCity();
+        } else if (state is ProfileUpdateSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully!'),
+              backgroundColor: Color(0xFF10B981),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.pop();
+        } else if (state is ProfileError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF9FAFB),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => context.pop(),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildTitleSection(),
-                    const SizedBox(height: 40),
-                    _buildProfileImagePicker(),
-                    const SizedBox(height: 48),
-                    _buildInputLabel('FULL NAME'),
-                    _buildNameField(),
-                    const SizedBox(height: 24),
-                    _buildInputLabel('EMAIL ADDRESS'),
-                    _buildEmailField(),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Optional: For receiving curated event invitations.',
-                      style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 32),
-                    _buildInputLabel('PRIMARY CITY'),
-                    _buildCityDropdown(),
-                    const SizedBox(height: 32),
-                    _buildInputLabel('PREFERRED EXPERIENCE TYPES'),
-                    const SizedBox(height: 12),
-                    _buildExperienceChips(),
-                    const SizedBox(height: 48),
-                    _buildActionButton(),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'STEP 1 OF 3',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF94A3B8),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
+          title: Text(
+            'Complete Profile',
+            style: AppTextStyles.headingM.copyWith(
+              fontFamily: 'Serif',
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
           ),
+          centerTitle: true,
+        ),
+        body: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            if (state is ProfileLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return Center(
+              child: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTitleSection(),
+                          const SizedBox(height: 40),
+                          _buildProfileImagePicker(),
+                          const SizedBox(height: 48),
+                          _buildInputLabel('FULL NAME'),
+                          _buildNameField(),
+                          const SizedBox(height: 24),
+                          _buildInputLabel('EMAIL ADDRESS'),
+                          _buildEmailField(),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Optional: For receiving curated event invitations.',
+                            style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 32),
+                          _buildInputLabel('PRIMARY CITY'),
+                          _buildCityDropdown(),
+                          const SizedBox(height: 32),
+                          _buildInputLabel('PREFERRED EXPERIENCE TYPES'),
+                          const SizedBox(height: 12),
+                          _buildExperienceChips(),
+                          const SizedBox(height: 48),
+                          _buildActionButton(state),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'STEP 1 OF 3',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF94A3B8),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -256,21 +327,21 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.transparent),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedCity,
-          hint: Text('Select your location', style: TextStyle(color: Colors.grey[400])),
+        child: DropdownButton<CityItem>(
+          value: _selectedCityItem,
+          hint: Text(_isLoadingCities ? 'Loading cities...' : 'Select your location',
+              style: TextStyle(color: Colors.grey[400])),
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
-          items: _cities.map((city) {
-            return DropdownMenuItem(
+          items: _availableCities.map((city) {
+            return DropdownMenuItem<CityItem>(
               value: city,
-              child: Text(city),
+              child: Text(city.name),
             );
           }).toList(),
-          onChanged: (value) => setState(() => _selectedCity = value),
+          onChanged: (value) => setState(() => _selectedCityItem = value),
         ),
       ),
     );
@@ -317,21 +388,22 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     );
   }
 
-  Widget _buildActionButton() {
+  Widget _buildActionButton(ProfileState state) {
+    final isUpdating = state is ProfileUpdating;
     return SizedBox(
       height: 60,
       child: ElevatedButton(
-        onPressed: _isProcessing ? null : _handleSave,
+        onPressed: isUpdating ? null : _handleSave,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0F172A), // Premium Black
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 0,
         ),
-        child: _isProcessing
-            ? Row(
+        child: isUpdating
+            ? const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   SizedBox(
                     height: 20,
                     width: 20,

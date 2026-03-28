@@ -137,8 +137,8 @@ class _AdminCreateDecorationPageState extends State<AdminCreateDecorationPage> {
       );
       return;
     }
-    // API expects basePrice in minor units (e.g. paise): 2500.00 -> 250000
-    final basePrice = (basePriceDouble * 100).round();
+    // API expects basePrice in Rupees directly
+    final basePrice = basePriceDouble.round();
 
     context.read<CreateDecorationBloc>().add(
           SubmitCreateDecoration(

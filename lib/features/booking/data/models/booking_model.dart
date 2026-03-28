@@ -4,6 +4,7 @@ class BookingModel {
   final String decorationTitle;
   final String city;
   final DateTime eventDate;
+  final String? eventTime;
   final String status;
   final String? paymentStatus;
   final double totalAmount;
@@ -18,6 +19,7 @@ class BookingModel {
     required this.decorationTitle,
     required this.city,
     required this.eventDate,
+    this.eventTime,
     required this.status,
     this.paymentStatus,
     required this.totalAmount,
@@ -40,6 +42,7 @@ class BookingModel {
               ? DateTime.parse(eventDateStr)
               : DateTime.parse('$eventDateStr'))
           : DateTime.now(),
+      eventTime: json['eventTime'] as String?,
       status: json['status'] as String? ?? 'REQUESTED',
       paymentStatus: json['paymentStatus'] as String?,
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
@@ -57,6 +60,7 @@ class BookingModel {
       'decorationTitle': decorationTitle,
       'city': city,
       'eventDate': eventDate.toIso8601String(),
+      'eventTime': eventTime,
       'status': status,
       'paymentStatus': paymentStatus,
       'totalAmount': totalAmount,

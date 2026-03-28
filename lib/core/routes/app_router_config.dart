@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/core/routes/go_router_refresh_stream.dart';
+import 'package:flutter_online/features/admin/bookings/models/vendor_model.dart';
+import 'package:flutter_online/features/admin/bookings/presentation/bloc/admin_booking_detail_bloc.dart';
 import 'package:flutter_online/features/admin/presentation/pages/edit_deceration_page.dart';
 import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_online/features/auth/presentation/cubit/auth_state.dart';
@@ -33,10 +35,12 @@ import 'package:flutter_online/features/admin/presentation/pages/decoration_deta
     as admin_decoration_detail;
 import 'package:flutter_online/features/admin/bookings/presentation/pages/admin_bookings_page.dart';
 import 'package:flutter_online/features/admin/bookings/presentation/pages/admin_booking_detail_page.dart';
+import 'package:flutter_online/features/admin/bookings/presentation/pages/edit_booking_page.dart';
 import 'package:flutter_online/features/admin/bookings/presentation/pages/select_vendor_screen.dart';
+import 'package:flutter_online/features/admin/vendors/presentation/bloc/vendor_bloc.dart';
+import 'package:flutter_online/features/admin/vendors/presentation/bloc/vendor_event.dart';
 import 'package:flutter_online/features/admin/vendors/presentation/pages/admin_vendors_page.dart';
-
-import 'package:flutter_online/features/admin/bookings/models/vendor_model.dart';
+import 'package:flutter_online/features/decorations/presentation/bloc/admin_decoration_list_bloc.dart';
 import 'package:flutter_online/features/cities/presentation/cubit/city_cubit.dart';
 import 'package:flutter_online/features/cities/presentation/pages/city_selection_page.dart';
 import 'package:flutter_online/features/decorations/presentation/bloc/events/create_decoration_event.dart';
@@ -53,6 +57,8 @@ import 'package:flutter_online/features/booking/presentation/pages/my_bookings_p
 import 'package:flutter_online/features/booking/presentation/pages/booking_detail_page.dart';
 import 'package:flutter_online/features/booking/bloc/booking_bloc.dart';
 import 'package:flutter_online/features/payment/bloc/payment_bloc.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:flutter_online/features/profile/presentation/bloc/profile_event.dart';
 import 'package:flutter_online/features/profile/presentation/pages/complete_profile_page.dart';
 import 'app_routes.dart';
 
@@ -117,9 +123,32 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
+      path: AppRoutes.adminEditBooking,
+      builder: (context, state) {
+        final bookingId = state.extra as String? ?? state.pathParameters['id'];
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) => getIt<AdminBookingDetailBloc>()..add(FetchBookingDetail(bookingId!)),
+            ),
+            BlocProvider(
+              create: (_) => getIt<VendorBloc>(),
+            ),
+            BlocProvider(
+              create: (_) => getIt<AdminDecorationListBloc>()..add(LoadAdminDecorations(size: 100)),
+            ),
+          ],
+          child: EditBookingPage(bookingId: bookingId!),
+        );
+      },
+    ),
+    GoRoute(
       path: AppRoutes.adminSelectVendor,
       builder: (context, state) {
-        final args = state.extra as SelectVendorArgs;
+        final args = state.extra;
+        if (args is! SelectVendorArgs) {
+             return _buildSessionExpiredFallback(context);
+        }
         return SelectVendorScreen(args: args);
       },
     ),
@@ -250,6 +279,7 @@ final GoRouter router = GoRouter(
           bookingId: extras['bookingId'],
           amount: extras['amount'],
           date: extras['date'],
+          time: extras['time'],
         );
       },
     ),
@@ -321,7 +351,10 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.profile,
-      builder: (context, state) => const CompleteProfilePage(),
+      builder: (context, state) => BlocProvider(
+        create: (context) => getIt<ProfileBloc>()..add(GetProfileEvent()),
+        child: const CompleteProfilePage(),
+      ),
     ),
   ],
   redirect: (context, state) {

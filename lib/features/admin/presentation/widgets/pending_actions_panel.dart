@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../dashboard/domain/entities/admin_dashboard_entity.dart';
 
 class PendingActionsPanel extends StatelessWidget {
-  const PendingActionsPanel({super.key});
+  final AdminPendingActionsEntity pendingActions;
+  const PendingActionsPanel({super.key, required this.pendingActions});
 
   @override
   Widget build(BuildContext context) {
@@ -17,41 +19,38 @@ class PendingActionsPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange.shade800, size: 20),
-               const SizedBox(width: 8),
+              Icon(Icons.warning_amber_rounded,
+                  color: Colors.orange.shade800, size: 20),
+              const SizedBox(width: 8),
               const Text(
                 "Pending Actions",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1F36)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1F36)),
               ),
             ],
           ),
           const SizedBox(height: 24),
           _ActionItem(
-             icon: Icons.person_add_alt,
-             title: "Vendor Assignment",
-             desc: "3 events marked pending",
-             action: "Assign",
+            icon: Icons.person_add_alt,
+            title: "Vendor Assignment",
+            desc: "${pendingActions.vendorAssignmentCount} events marked pending",
+            action: "Assign",
           ),
           const SizedBox(height: 16),
           _ActionItem(
-             icon: Icons.payments_outlined,
-             title: "Payment Review",
-             desc: "2 new proofs uploaded",
-             action: "Review",
+            icon: Icons.payments_outlined,
+            title: "Payment Review",
+            desc: "${pendingActions.paymentReviewCount} new proofs uploaded",
+            action: "Review",
           ),
           const SizedBox(height: 16),
-           _ActionItem(
-             icon: Icons.chat_bubble_outline,
-             title: "New Inquiries",
-             desc: "5 unread messages",
-             action: "View",
-          ),
-           const SizedBox(height: 16),
-           _ActionItem(
-             icon: Icons.assignment_late_outlined,
-             title: "Contract Signatures",
-             desc: "1 event waiting for sign",
-             action: "Send",
+          _ActionItem(
+            icon: Icons.chat_bubble_outline,
+            title: "New Inquiries",
+            desc: "0 unread messages",
+            action: "View",
           ),
         ],
       ),

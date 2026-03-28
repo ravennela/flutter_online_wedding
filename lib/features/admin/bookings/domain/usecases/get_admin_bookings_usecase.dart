@@ -17,7 +17,12 @@ class GetAdminBookingsUseCase {
       status: params.status,
       city: params.city,
       paymentStatus: params.paymentStatus,
+      search: params.search,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      eventTypeId: params.eventTypeId,
     );
+
   }
 }
 
@@ -27,6 +32,10 @@ class AdminBookingParams extends Equatable {
   final String? status;
   final String? city;
   final String? paymentStatus;
+  final String? search;
+  final String? startDate;
+  final String? endDate;
+  final String? eventTypeId;
 
   const AdminBookingParams({
     required this.page,
@@ -34,8 +43,25 @@ class AdminBookingParams extends Equatable {
     this.status,
     this.city,
     this.paymentStatus,
+    this.search,
+    this.startDate,
+    this.endDate,
+    this.eventTypeId,
   });
 
+
   @override
-  List<Object?> get props => [page, size, status, city, paymentStatus];
+  List<Object?> get props => [
+        page,
+        size,
+        status,
+        city,
+        paymentStatus,
+        search,
+        startDate,
+        endDate,
+        eventTypeId,
+      ];
+
 }
+

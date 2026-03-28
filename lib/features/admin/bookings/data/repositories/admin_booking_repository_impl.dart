@@ -18,6 +18,10 @@ class AdminBookingRepositoryImpl implements AdminBookingRepository {
     String? status,
     String? city,
     String? paymentStatus,
+    String? search,
+    String? startDate,
+    String? endDate,
+    String? eventTypeId,
   }) async {
     try {
       final result = await remoteDataSource.getAdminBookings(
@@ -26,7 +30,13 @@ class AdminBookingRepositoryImpl implements AdminBookingRepository {
         status: status,
         city: city,
         paymentStatus: paymentStatus,
+        search: search,
+        startDate: startDate,
+        endDate: endDate,
+        eventTypeId: eventTypeId,
       );
+
+
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
@@ -86,6 +96,18 @@ class AdminBookingRepositoryImpl implements AdminBookingRepository {
   Future<Either<Failure, void>> deAssignVendor(String bookingId, String vendorId) async {
     try {
       await remoteDataSource.deAssignVendor(bookingId, vendorId);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateBookingDetail(String id, Map<String, dynamic> data) async {
+    try {
+      await remoteDataSource.updateBookingDetail(id, data);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

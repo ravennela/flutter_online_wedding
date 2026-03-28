@@ -16,6 +16,7 @@ class AppRoutes {
   static const String adminDashboard = '/admin';
    static const String adminBookings = '/admin/bookings';
    static const String adminBookingDetail = '/admin/bookings/details';
+   static const String adminEditBooking = '/admin/bookings/edit';
    static const String adminEventTypes = '/admin/event-types';
    static const String adminVendors = '/admin/vendors';
 

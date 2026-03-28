@@ -45,6 +45,16 @@ class BookingActionMenu extends StatelessWidget {
           ),
         ),
         PopupMenuItem(
+          value: 'edit',
+          enabled: !isCancelled,
+          child: const ListTile(
+            leading: Icon(Icons.edit),
+            title: Text('Edit Booking'),
+            contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        PopupMenuItem(
           value: 'vendor',
           enabled: !isCancelled,
           child: const ListTile(
@@ -85,6 +95,12 @@ class BookingActionMenu extends StatelessWidget {
       case 'view':
         context.push(
           AppRoutes.adminBookingDetail,
+          extra: booking.bookingId,
+        );
+        break;
+      case 'edit':
+        context.push(
+          AppRoutes.adminEditBooking,
           extra: booking.bookingId,
         );
         break;

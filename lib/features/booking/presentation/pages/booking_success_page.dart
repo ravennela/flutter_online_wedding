@@ -6,16 +6,19 @@ class BookingSuccessPage extends StatelessWidget {
   final String bookingId;
   final String amount;
   final String date;
+  final String? time;
 
   const BookingSuccessPage({
     super.key,
     required this.bookingId,
     required this.amount,
     required this.date,
+    this.time,
   });
 
   @override
   Widget build(BuildContext context) {
+    final dateTimeDisplay = time != null ? '$date at $time' : date;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Center(
@@ -41,7 +44,7 @@ class BookingSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   const Text(
-                    'Booking Confirmed!',
+                    'Booking Created!',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -50,7 +53,7 @@ class BookingSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your event is scheduled for $date. We\'ve sent the details to your registered mobile number.',
+                    'Your booking successfully created. A vendor will be assigned soon. Your event is scheduled for $dateTimeDisplay.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 16,
@@ -123,6 +126,7 @@ class BookingSuccessPage extends StatelessWidget {
   Widget _buildInfoRow(String label, String value, {bool isStatus = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
@@ -132,6 +136,7 @@ class BookingSuccessPage extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
+        const SizedBox(width: 12),
         if (isStatus)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -149,12 +154,17 @@ class BookingSuccessPage extends StatelessWidget {
             ),
           )
         else
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F2937),
+              ),
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
       ],

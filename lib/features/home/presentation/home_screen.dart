@@ -183,20 +183,49 @@ class _PublicHomePageState extends State<PublicHomePage>
                     const SizedBox(height: 24),
                     BlocBuilder<DecorationListCubit, DecorationListState>(
                       builder: (context, state) {
-                        if (state is DecorationListLoaded) {
-                          return _TrendingGrid(
-                            trendingDecorations: state.decorations.take(4).map((d) {
-                              return AdminHomeTrendingDecorationModel(
-                                id: d.id,
-                                name: d.name,
-                                price: d.price,
-                                imageUrl: d.thumbnailUrl,
-                              );
-                            }).toList(),
-                            isWeb: isWeb,
+                        // Determine which decorations to show: 
+                        // 1. Preferred: City-specific decorations from DecorationListCubit
+                        // 2. Fallback: Global trending decorations from AdminHomeModel
+                        
+                        List<AdminHomeTrendingDecorationModel> decorationsToShow = [];
+
+                        if (state is DecorationListLoaded && state.decorations.isNotEmpty) {
+                          decorationsToShow = state.decorations.take(4).map((d) {
+                            return AdminHomeTrendingDecorationModel(
+                              id: d.id,
+                              name: d.name,
+                              price: d.price,
+                              imageUrls: d.thumbnailUrl != null ? [d.thumbnailUrl!] : [],
+                            );
+                          }).toList();
+                        } else if (data.trendingDecorations.isNotEmpty) {
+                          decorationsToShow = data.trendingDecorations.take(4).toList();
+                        }
+
+                        if (decorationsToShow.isEmpty) {
+                          if (state is DecorationListLoading || state is DecorationListInitial) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: Text(
+                                'No decorations found',
+                                style: AppTextStyles.bodyM,
+                              ),
+                            ),
                           );
                         }
-                        return const Center(child: CircularProgressIndicator());
+
+                        return _TrendingGrid(
+                          trendingDecorations: decorationsToShow,
+                          isWeb: isWeb,
+                        );
                       },
                     ),
                   ],
@@ -780,7 +809,7 @@ class _CategoryRail extends StatelessWidget {
           itemBuilder: (context, index) {
             return _HoverScale(
               child: GestureDetector(
-                onTap: () => context.push(AppRoutes.eventList),
+                onTap: () => context.push('/events/${categories[index].id}'),
                 child: _buildItem(categories[index]),
               ),
             );
@@ -1304,7 +1333,7 @@ class _TrendingGrid extends StatelessWidget {
     AdminHomeTrendingDecorationModel item,
     BuildContext context,
   ) {
-    final imageUrl = item.imageUrl ?? _defaultDecorationImage;
+    final imageUrl = item.firstImageUrl ?? _defaultDecorationImage;
     return GestureDetector(
       onTap: () {
         context.push(AppRoutes.decorationDetailPath(item.id));

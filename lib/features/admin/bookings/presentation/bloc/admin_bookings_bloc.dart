@@ -4,6 +4,8 @@ import '../../domain/entities/admin_booking_entity.dart';
 import '../../domain/usecases/get_admin_bookings_usecase.dart';
 import '../../domain/usecases/update_booking_status_usecase.dart';
 import '../../domain/usecases/admin_cancel_booking_usecase.dart';
+import 'package:flutter_online/features/events/domain/models/event_type_list_item.dart';
+import 'package:flutter_online/features/events/domain/usecases/fetch_event_types_usecase.dart';
 
 // Events and States
 abstract class AdminBookingsEvent extends Equatable {
@@ -19,15 +21,34 @@ class FetchAdminBookings extends AdminBookingsEvent {
   List<Object?> get props => [isRefresh];
 }
 
+class FetchEventTypes extends AdminBookingsEvent {
+  const FetchEventTypes();
+}
+
+
 class UpdateFilters extends AdminBookingsEvent {
   final String? status;
   final String? city;
   final String? paymentStatus;
   final String? query;
-  const UpdateFilters({this.status, this.city, this.paymentStatus, this.query});
+  final String? startDate;
+  final String? endDate;
+  final String? eventType;
+
+  const UpdateFilters({
+    this.status,
+    this.city,
+    this.paymentStatus,
+    this.query,
+    this.startDate,
+    this.endDate,
+    this.eventType,
+  });
+
   @override
-  List<Object?> get props => [status, city, paymentStatus, query];
+  List<Object?> get props => [status, city, paymentStatus, query, startDate, endDate, eventType];
 }
+
 
 class ChangePage extends AdminBookingsEvent {
   final int page;
@@ -72,6 +93,11 @@ class AdminBookingsState extends Equatable {
   final String? selectedCity;
   final String? selectedPaymentStatus;
   final String? searchQuery;
+  final String? selectedStartDate;
+  final String? selectedEndDate;
+
+  final String? selectedEventType; // This can be name or ID
+  final List<EventTypeListItem> eventTypes;
   final String? errorMessage;
 
   const AdminBookingsState({
@@ -85,8 +111,14 @@ class AdminBookingsState extends Equatable {
     this.selectedCity,
     this.selectedPaymentStatus,
     this.searchQuery,
+    this.selectedStartDate,
+    this.selectedEndDate,
+    this.selectedEventType,
+    this.eventTypes = const [],
     this.errorMessage,
   });
+
+
 
   AdminBookingsState copyWith({
     AdminBookingsStatus? status,
@@ -99,6 +131,10 @@ class AdminBookingsState extends Equatable {
     String? selectedCity,
     String? selectedPaymentStatus,
     String? searchQuery,
+    String? selectedStartDate,
+    String? selectedEndDate,
+    String? selectedEventType,
+    List<EventTypeListItem>? eventTypes,
     String? errorMessage,
   }) {
     return AdminBookingsState(
@@ -112,9 +148,15 @@ class AdminBookingsState extends Equatable {
       selectedCity: selectedCity ?? this.selectedCity,
       selectedPaymentStatus: selectedPaymentStatus ?? this.selectedPaymentStatus,
       searchQuery: searchQuery ?? this.searchQuery,
+      selectedStartDate: selectedStartDate ?? this.selectedStartDate,
+      selectedEndDate: selectedEndDate ?? this.selectedEndDate,
+      selectedEventType: selectedEventType ?? this.selectedEventType,
+      eventTypes: eventTypes ?? this.eventTypes,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
+
+
 
   @override
   List<Object?> get props => [
@@ -128,27 +170,48 @@ class AdminBookingsState extends Equatable {
         selectedCity,
         selectedPaymentStatus,
         searchQuery,
+        selectedStartDate,
+        selectedEndDate,
+        selectedEventType,
+        eventTypes,
         errorMessage,
       ];
+
 }
+
 
 class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
   final GetAdminBookingsUseCase getAdminBookingsUseCase;
   final UpdateBookingStatusUseCase updateBookingStatusUseCase;
   final AdminCancelBookingUseCase adminCancelBookingUseCase;
+  final FetchEventTypesUsecase fetchEventTypesUsecase;
 
   AdminBookingsBloc({
     required this.getAdminBookingsUseCase,
     required this.updateBookingStatusUseCase,
     required this.adminCancelBookingUseCase,
+    required this.fetchEventTypesUsecase,
   }) : super(const AdminBookingsState()) {
     on<FetchAdminBookings>(_onFetchAdminBookings);
+    on<FetchEventTypes>(_onFetchEventTypes);
     on<UpdateFilters>(_onUpdateFilters);
     on<ChangePage>(_onChangePage);
     on<ChangePageSize>(_onChangePageSize);
     on<UpdateBookingStatusInList>(_onUpdateBookingStatus);
     on<AdminCancelBookingInList>(_onAdminCancelBooking);
   }
+
+  Future<void> _onFetchEventTypes(
+    FetchEventTypes event,
+    Emitter<AdminBookingsState> emit,
+  ) async {
+    final result = await fetchEventTypesUsecase(page: 0, size: 100);
+    result.fold(
+      (failure) => null, // Ignore failures for now or log them
+      (response) => emit(state.copyWith(eventTypes: response.content)),
+    );
+  }
+
 
   Future<void> _onFetchAdminBookings(
     FetchAdminBookings event,
@@ -162,7 +225,12 @@ class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
       status: state.selectedStatus,
       city: state.selectedCity,
       paymentStatus: state.selectedPaymentStatus,
+      search: state.searchQuery,
+      startDate: state.selectedStartDate,
+      endDate: state.selectedEndDate,
+      eventTypeId: state.selectedEventType,
     ));
+
 
     result.fold(
       (failure) => emit(state.copyWith(
@@ -187,10 +255,14 @@ class AdminBookingsBloc extends Bloc<AdminBookingsEvent, AdminBookingsState> {
       selectedCity: event.city ?? state.selectedCity,
       selectedPaymentStatus: event.paymentStatus ?? state.selectedPaymentStatus,
       searchQuery: event.query ?? state.searchQuery,
+      selectedStartDate: event.startDate ?? state.selectedStartDate,
+      selectedEndDate: event.endDate ?? state.selectedEndDate,
+      selectedEventType: event.eventType ?? state.selectedEventType,
       currentPage: 0,
     ));
     add(const FetchAdminBookings());
   }
+
 
   Future<void> _onChangePage(
     ChangePage event,

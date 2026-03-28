@@ -11,13 +11,20 @@ abstract class AdminBookingRemoteDataSource {
     String? status,
     String? city,
     String? paymentStatus,
+    String? search,
+    String? startDate,
+    String? endDate,
+    String? eventTypeId,
   });
+
+
 
   Future<AdminBookingDetailModel> getAdminBookingDetail(String id);
   Future<void> updateBookingStatus(String id, String status);
   Future<void> adminCancelBooking(String id, String reason);
   Future<void> assignVendors(String bookingId, List<String> vendorIds);
   Future<void> deAssignVendor(String bookingId, String vendorId);
+  Future<void> updateBookingDetail(String id, Map<String, dynamic> data);
 }
 
 class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
@@ -32,7 +39,12 @@ class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
     String? status,
     String? city,
     String? paymentStatus,
+    String? search,
+    String? startDate,
+    String? endDate,
+    String? eventTypeId,
   }) async {
+
     try {
       Map<String, dynamic> queryParams = {
         'page': page,
@@ -50,7 +62,28 @@ class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
       if (paymentStatus != null && paymentStatus != 'All') {
         queryParams['paymentStatus'] = paymentStatus.toUpperCase();
       }
+
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+
+      if (startDate != null && startDate.isNotEmpty) {
+        queryParams['startDate'] = startDate;
+      }
+
+      if (endDate != null && endDate.isNotEmpty) {
+        queryParams['endDate'] = endDate;
+      }
+
+      if (eventTypeId != null && eventTypeId != 'All' && eventTypeId.isNotEmpty) {
+        queryParams['eventTypeId'] = eventTypeId;
+      }
+
+
+
+
       final response = await apiClient.get(
+
         ApiConstants.fetchAdminBookings,
         queryParameters: queryParams,
       );
@@ -126,6 +159,19 @@ class AdminBookingRemoteDataSourceImpl implements AdminBookingRemoteDataSource {
         );
       } catch (e) {
         log("Error de-assigning vendor: $e");
+        rethrow;
+      }
+    }
+
+    @override
+    Future<void> updateBookingDetail(String id, Map<String, dynamic> data) async {
+      try {
+        await apiClient.put(
+          ApiConstants.updateBookingDetail.replaceFirst('{id}', id),
+          data: data,
+        );
+      } catch (e) {
+        log("Error updating booking detail as admin: $e");
         rethrow;
       }
     }

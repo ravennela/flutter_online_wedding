@@ -177,21 +177,30 @@ class AdminHomeTrendingDecorationModel {
   final String id;
   final String name;
   final double price;
-  final String? imageUrl;
+  final List<String> imageUrls;
 
   const AdminHomeTrendingDecorationModel({
     required this.id,
     required this.name,
     required this.price,
-    this.imageUrl,
+    required this.imageUrls,
   });
 
   factory AdminHomeTrendingDecorationModel.fromJson(Map<String, dynamic> json) {
+    final imageUrlRaw = json['imageUrl'];
+    List<String> imageUrls = [];
+    if (imageUrlRaw is List) {
+      imageUrls = imageUrlRaw.map((e) => e.toString()).toList();
+    } else if (imageUrlRaw is String && imageUrlRaw.isNotEmpty) {
+      imageUrls = [imageUrlRaw];
+    }
     return AdminHomeTrendingDecorationModel(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      imageUrl: json['imageUrl'] as String?,
+      imageUrls: imageUrls,
     );
   }
+
+  String? get firstImageUrl => imageUrls.isNotEmpty ? imageUrls[0] : null;
 }

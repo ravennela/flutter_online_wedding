@@ -14,17 +14,20 @@ class BookingStatsRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 600) {
-          // Mobile: Horizontally scrollable
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: stats.map((stat) => Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: SizedBox(
-                  width: 200,
-                  child: BookingStatCard(stat: stat),
-                ),
-              )).toList(),
+          return SizedBox(
+            height: 140,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: stats.map((stat) => Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: SizedBox(
+                    width: 200,
+                    child: BookingStatCard(stat: stat),
+                  ),
+                )).toList(),
+              ),
             ),
           );
         } else {

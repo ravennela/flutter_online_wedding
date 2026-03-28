@@ -15,7 +15,7 @@ class DecorationDetail {
   final Map<String, String> features; // Title: Description
   final String description;
   final bool active; // Added active field
-  final num? basePriceRaw; // Raw from API (paise) for edit form
+  final num? basePriceRaw; // Raw from API (Rupees) for edit form
 
   const DecorationDetail({
     required this.id,
@@ -69,7 +69,7 @@ class DecorationDetail {
       eventTypeId: json['eventTypeId'] as String? ?? '',
       providerName: json['cityName'] as String? ?? 'Premium Decorators',
       providerImage: urls.isNotEmpty ? urls.first : 'https://via.placeholder.com/150',
-      price: '₹${(((json['basePrice'] as num?) ?? 0) / 100).toStringAsFixed(2)}',
+      price: '₹${((json['basePrice'] as num?) ?? 0).toStringAsFixed(2)}',
       rating: 4.5, // Placeholder
       images: urls,
       tags: [

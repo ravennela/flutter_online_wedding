@@ -18,8 +18,9 @@ class AdminBookingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          getIt<AdminBookingsBloc>()..add(const FetchAdminBookings()),
+      create: (context) => getIt<AdminBookingsBloc>()
+        ..add(const FetchEventTypes())
+        ..add(const FetchAdminBookings()),
       child: const AdminBookingsView(),
     );
   }
@@ -84,12 +85,13 @@ class AdminBookingsView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildHeader(context),
-                            //const SizedBox(height: 32),
+                            const SizedBox(height: 32),
 
-                           // BookingStatsRow(stats: _getMockStats()),
-                           // const SizedBox(height: 32),
-                            //const BookingFilterBar(),
+                            BookingStatsRow(stats: _getMockStats()),
+                            const SizedBox(height: 32),
+                            const BookingFilterBar(),
                             const SizedBox(height: 24),
+
 
                             if (state.status == AdminBookingsStatus.loading &&
                                 state.bookings.isEmpty)

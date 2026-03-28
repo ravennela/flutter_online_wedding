@@ -6,7 +6,7 @@ import '../../domain/usecases/update_booking_status_usecase.dart';
 import '../../domain/usecases/admin_cancel_booking_usecase.dart';
 import '../../domain/usecases/assign_vendors_usecase.dart';
 import '../../domain/usecases/deassign_vendor_usecase.dart';
-
+import '../../domain/usecases/update_booking_detail_usecase.dart';
 
 // Events
 abstract class AdminBookingDetailEvent extends Equatable {
@@ -54,13 +54,32 @@ class DeAssignVendor extends AdminBookingDetailEvent {
   List<Object?> get props => [bookingId, vendorId];
 }
 
+class UpdateBookingDetail extends AdminBookingDetailEvent {
+  final String id;
+  final Map<String, dynamic> data;
+  const UpdateBookingDetail(this.id, this.data);
+  @override
+  List<Object?> get props => [id, data];
+}
+
 // State
-enum AdminBookingDetailStatus { 
-  initial, loading, success, failure, 
-  updating, updateSuccess, updateFailure, 
-  cancelling, cancelSuccess, cancelFailure,
-  assigning, assignSuccess, assignFailure,
-  deAssigning, deAssignSuccess, deAssignFailure 
+enum AdminBookingDetailStatus {
+  initial,
+  loading,
+  success,
+  failure,
+  updating,
+  updateSuccess,
+  updateFailure,
+  cancelling,
+  cancelSuccess,
+  cancelFailure,
+  assigning,
+  assignSuccess,
+  assignFailure,
+  deAssigning,
+  deAssignSuccess,
+  deAssignFailure,
 }
 
 class AdminBookingDetailState extends Equatable {
@@ -91,12 +110,14 @@ class AdminBookingDetailState extends Equatable {
 }
 
 // Bloc
-class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingDetailState> {
+class AdminBookingDetailBloc
+    extends Bloc<AdminBookingDetailEvent, AdminBookingDetailState> {
   final GetAdminBookingDetailUseCase getAdminBookingDetailUseCase;
   final UpdateBookingStatusUseCase updateBookingStatusUseCase;
   final AdminCancelBookingUseCase adminCancelBookingUseCase;
   final AssignVendorsUseCase assignVendorsUseCase;
   final DeAssignVendorUseCase deAssignVendorUseCase;
+  final UpdateBookingDetailUseCase updateBookingDetailUseCase;
 
   AdminBookingDetailBloc({
     required this.getAdminBookingDetailUseCase,
@@ -104,12 +125,14 @@ class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingD
     required this.adminCancelBookingUseCase,
     required this.assignVendorsUseCase,
     required this.deAssignVendorUseCase,
+    required this.updateBookingDetailUseCase,
   }) : super(const AdminBookingDetailState()) {
     on<FetchBookingDetail>(_onFetchBookingDetail);
     on<UpdateBookingStatus>(_onUpdateBookingStatus);
     on<AdminCancelBooking>(_onAdminCancelBooking);
     on<AssignVendors>(_onAssignVendors);
     on<DeAssignVendor>(_onDeAssignVendor);
+    on<UpdateBookingDetail>(_onUpdateBookingDetail);
   }
 
   Future<void> _onFetchBookingDetail(
@@ -121,14 +144,18 @@ class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingD
     final result = await getAdminBookingDetailUseCase(event.id);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminBookingDetailStatus.failure,
-        errorMessage: failure.message,
-      )),
-      (booking) => emit(state.copyWith(
-        status: AdminBookingDetailStatus.success,
-        booking: booking,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (booking) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.success,
+          booking: booking,
+        ),
+      ),
     );
   }
 
@@ -136,19 +163,19 @@ class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingD
     UpdateBookingStatus event,
     Emitter<AdminBookingDetailState> emit,
   ) async {
-    final previousStatus = state.status;
     emit(state.copyWith(status: AdminBookingDetailStatus.updating));
 
     final result = await updateBookingStatusUseCase(event.id, event.status);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminBookingDetailStatus.updateFailure,
-        errorMessage: failure.message,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.updateFailure,
+          errorMessage: failure.message,
+        ),
+      ),
       (_) {
         emit(state.copyWith(status: AdminBookingDetailStatus.updateSuccess));
-        // Refetch details to update UI
         add(FetchBookingDetail(event.id));
       },
     );
@@ -163,13 +190,14 @@ class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingD
     final result = await adminCancelBookingUseCase(event.id, event.reason);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminBookingDetailStatus.cancelFailure,
-        errorMessage: failure.message,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.cancelFailure,
+          errorMessage: failure.message,
+        ),
+      ),
       (_) {
         emit(state.copyWith(status: AdminBookingDetailStatus.cancelSuccess));
-        // Refetch details to update UI
         add(FetchBookingDetail(event.id));
       },
     );
@@ -184,13 +212,14 @@ class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingD
     final result = await assignVendorsUseCase(event.bookingId, event.vendorIds);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminBookingDetailStatus.assignFailure,
-        errorMessage: failure.message,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.assignFailure,
+          errorMessage: failure.message,
+        ),
+      ),
       (_) {
         emit(state.copyWith(status: AdminBookingDetailStatus.assignSuccess));
-        // Refetch details to update UI
         add(FetchBookingDetail(event.bookingId));
       },
     );
@@ -205,14 +234,37 @@ class AdminBookingDetailBloc extends Bloc<AdminBookingDetailEvent, AdminBookingD
     final result = await deAssignVendorUseCase(event.bookingId, event.vendorId);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminBookingDetailStatus.deAssignFailure,
-        errorMessage: failure.message,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.deAssignFailure,
+          errorMessage: failure.message,
+        ),
+      ),
       (_) {
         emit(state.copyWith(status: AdminBookingDetailStatus.deAssignSuccess));
-        // Refetch details to update UI
         add(FetchBookingDetail(event.bookingId));
+      },
+    );
+  }
+
+  Future<void> _onUpdateBookingDetail(
+    UpdateBookingDetail event,
+    Emitter<AdminBookingDetailState> emit,
+  ) async {
+    emit(state.copyWith(status: AdminBookingDetailStatus.updating));
+
+    final result = await updateBookingDetailUseCase(event.id, event.data);
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AdminBookingDetailStatus.updateFailure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) {
+        emit(state.copyWith(status: AdminBookingDetailStatus.updateSuccess));
+        add(FetchBookingDetail(event.id));
       },
     );
   }

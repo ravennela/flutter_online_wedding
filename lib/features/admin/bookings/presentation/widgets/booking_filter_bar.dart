@@ -2,31 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/admin_bookings_bloc.dart';
 
-class BookingFilterBar extends StatelessWidget {
+class BookingFilterBar extends StatefulWidget {
   const BookingFilterBar({super.key});
 
   @override
+  State<BookingFilterBar> createState() => _BookingFilterBarState();
+}
+
+class _BookingFilterBarState extends State<BookingFilterBar> {
+  late TextEditingController _searchController;
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<AdminBookingsBloc>().state;
+    _searchController = TextEditingController(text: state.searchQuery);
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AdminBookingsBloc, AdminBookingsState>(
-      builder: (context, state) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 600) {
-              return _buildMobileFilters(context, state);
-            } else if (constraints.maxWidth < 1024) {
-              return _buildTabletFilters(context, state);
-            } else {
-              return _buildDesktopFilters(context, state);
-            }
-          },
-        );
+    return BlocListener<AdminBookingsBloc, AdminBookingsState>(
+      listenWhen: (previous, current) => previous.searchQuery != current.searchQuery,
+      listener: (context, state) {
+        if (_searchController.text != state.searchQuery) {
+          _searchController.text = state.searchQuery ?? '';
+        }
       },
+      child: BlocBuilder<AdminBookingsBloc, AdminBookingsState>(
+        builder: (context, state) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return _buildMobileFilters(context, state);
+              }
+              return _buildDesktopFilters(context, state);
+            },
+          );
+        },
+      ),
     );
   }
 
   Widget _buildDesktopFilters(BuildContext context, AdminBookingsState state) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -38,97 +66,116 @@ class BookingFilterBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 300,
-            child: _buildSearchField(context, state),
-          ),
-          SizedBox(
-            width: 150,
-            child: _buildDropdown(
-              'Status',
-              ['All', 'Requested', 'Approved', 'Confirmed', 'Cancelled'],
-              state.selectedStatus ?? 'All',
-              (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(status: val)),
+            height: 90, // Increased height to prevent vertical overflow with labels
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 220,
+                    child: _buildSearchField(context, state),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildStatusDropdown(context, state),
+                  const SizedBox(width: 12),
+                  _buildPaymentDropdown(context, state),
+                  const SizedBox(width: 12),
+                  _buildCityDropdown(context, state),
+                  const SizedBox(width: 12),
+                  _buildEventDropdown(context, state),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 200,
+                    child: _buildDateRangeButton(context, state),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 80,
+                    child: _buildClearButton(context),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 120,
+                    child: _buildExportButton(),
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(
-            width: 150,
-            child: _buildDropdown(
-              'Payment',
-              ['All', 'Pending', 'Success', 'Failed'],
-              state.selectedPaymentStatus ?? 'All',
-              (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(paymentStatus: val)),
-            ),
-          ),
-          SizedBox(
-            width: 150,
-            child: _buildDropdown(
-              'City',
-              ['All Cities', 'Delhi', 'Hyderabad', 'Bangalore', 'Mumbai'],
-              state.selectedCity ?? 'All Cities',
-              (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(city: val)),
-            ),
-          ),
-          _buildDateRangeButton(),
-          _buildClearButton(context),
-          _buildExportButton(),
         ],
       ),
     );
   }
 
-  Widget _buildTabletFilters(BuildContext context, AdminBookingsState state) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildStatusDropdown(BuildContext context, AdminBookingsState state) {
+    return SizedBox(
+      width: 180,
+      child: _buildDropdown(
+        'Status',
+        ['All', 'Requested', 'Approved', 'Confirmed', 'Cancelled', 'VENDOR_ASSIGNED', 'COMPLETED'],
+        state.selectedStatus ?? 'All',
+        (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(status: val)),
       ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(
-            width: 250,
-            child: _buildSearchField(context, state),
-          ),
-          SizedBox(
-            width: 140,
-            child: _buildDropdown(
-              'Status',
-              ['All', 'Requested', 'Approved', 'Confirmed', 'Cancelled'],
-              state.selectedStatus ?? 'All',
-              (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(status: val)),
-            ),
-          ),
-          SizedBox(
-            width: 140,
-            child: _buildDropdown(
-              'Payment',
-              ['All', 'Pending', 'Success', 'Failed'],
-              state.selectedPaymentStatus ?? 'All',
-              (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(paymentStatus: val)),
-            ),
-          ),
-          SizedBox(
-            width: 140,
-            child: _buildDropdown(
-              'City',
-              ['All Cities', 'Delhi', 'Hyderabad', 'Bangalore', 'Mumbai'],
-              state.selectedCity ?? 'All Cities',
-              (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(city: val)),
-            ),
-          ),
-          _buildDateRangeButton(),
-          _buildClearButton(context),
-          _buildExportButton(),
-        ],
+    );
+  }
+
+  Widget _buildPaymentDropdown(BuildContext context, AdminBookingsState state) {
+    return SizedBox(
+      width: 140,
+      child: _buildDropdown(
+        'Payment',
+        ['All', 'Pending', 'Success', 'Failed'],
+        state.selectedPaymentStatus ?? 'All',
+        (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(paymentStatus: val)),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown(BuildContext context, AdminBookingsState state) {
+    return SizedBox(
+      width: 140,
+      child: _buildDropdown(
+        'City',
+        ['All Cities', 'Delhi', 'Hyderabad', 'Bangalore', 'Mumbai'],
+        state.selectedCity ?? 'All Cities',
+        (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(city: val)),
+      ),
+    );
+  }
+
+  Widget _buildEventDropdown(BuildContext context, AdminBookingsState state) {
+    final List<String> eventNames = ['All', ...state.eventTypes.map((e) => e.name)];
+    String currentValue = 'All';
+    if (state.selectedEventType != null && state.selectedEventType != 'All') {
+      final selectedType = state.eventTypes.where((e) => e.id == state.selectedEventType).firstOrNull;
+      if (selectedType != null) {
+        currentValue = selectedType.name;
+      }
+    }
+
+    return SizedBox(
+      width: 220,
+      child: _buildDropdown(
+        'Event',
+        eventNames,
+        currentValue,
+        (val) {
+          if (val == 'All') {
+            context.read<AdminBookingsBloc>().add(const UpdateFilters(eventType: 'All'));
+          } else {
+            final selectedType = state.eventTypes.where((e) => e.name == val).firstOrNull;
+            if (selectedType != null) {
+              context.read<AdminBookingsBloc>().add(UpdateFilters(eventType: selectedType.id));
+            }
+          }
+        },
       ),
     );
   }
@@ -151,9 +198,9 @@ class BookingFilterBar extends StatelessWidget {
 
   Widget _buildSearchField(BuildContext context, AdminBookingsState state) {
     return TextField(
-      onChanged: (val) {
-        // You might want to debounce this
-        // context.read<AdminBookingsBloc>().add(UpdateFilters(query: val));
+      controller: _searchController,
+      onSubmitted: (val) {
+        context.read<AdminBookingsBloc>().add(UpdateFilters(query: val));
       },
       decoration: InputDecoration(
         hintText: 'Search bookings...',
@@ -166,33 +213,83 @@ class BookingFilterBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade200),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         fillColor: Colors.grey.shade50,
         filled: true,
+        suffixIcon: (state.searchQuery != null && state.searchQuery!.isNotEmpty) || _searchController.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 18),
+                onPressed: () {
+                  _searchController.clear();
+                  context.read<AdminBookingsBloc>().add(const UpdateFilters(query: ''));
+                },
+              )
+            : null,
       ),
     );
   }
 
   Widget _buildDropdown(String label, List<String> items, String value, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
-      value: items.contains(value) ? value : items[0],
+      value: items.contains(value) ? value : (items.isNotEmpty ? items[0] : null),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(fontSize: 14),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 13)))).toList(),
+      items: items
+          .map((e) => DropdownMenuItem(
+                value: e,
+                child: Text(
+                  e,
+                  style: const TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ))
+          .toList(),
       onChanged: onChanged,
     );
   }
 
-  Widget _buildDateRangeButton() {
+  Widget _buildDateRangeButton(BuildContext context, AdminBookingsState state) {
+    String label = 'Date Range';
+    if (state.selectedStartDate != null && state.selectedEndDate != null && state.selectedStartDate!.isNotEmpty) {
+      label = '${state.selectedStartDate} - ${state.selectedEndDate}';
+    }
+
     return OutlinedButton.icon(
-      onPressed: () {},
+      onPressed: () async {
+        final DateTimeRange? picked = await showDateRangePicker(
+          context: context,
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          initialDateRange: state.selectedStartDate != null && state.selectedEndDate != null && state.selectedStartDate!.isNotEmpty
+              ? DateTimeRange(
+                  start: DateTime.parse(state.selectedStartDate!),
+                  end: DateTime.parse(state.selectedEndDate!),
+                )
+              : null,
+        );
+
+        if (picked != null) {
+          if (mounted) {
+            context.read<AdminBookingsBloc>().add(UpdateFilters(
+                  startDate: picked.start.toIso8601String().split('T')[0],
+                  endDate: picked.end.toIso8601String().split('T')[0],
+                ));
+          }
+        }
+      },
       icon: const Icon(Icons.calendar_today, size: 16),
-      label: const Text('Date Range'),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 13),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -201,12 +298,16 @@ class BookingFilterBar extends StatelessWidget {
   Widget _buildClearButton(BuildContext context) {
     return TextButton(
       onPressed: () {
+        _searchController.clear();
         context.read<AdminBookingsBloc>().add(const UpdateFilters(
-          status: 'All',
-          city: 'All Cities',
-          paymentStatus: 'All',
-          query: '',
-        ));
+              status: 'All',
+              city: 'All Cities',
+              paymentStatus: 'All',
+              query: '',
+              startDate: '',
+              endDate: '',
+              eventType: 'All',
+            ));
       },
       child: const Text('Clear'),
     );
@@ -214,11 +315,11 @@ class BookingFilterBar extends StatelessWidget {
 
   Widget _buildExportButton() {
     return ElevatedButton.icon(
-      onPressed: null, // Disabled
+      onPressed: null,
       icon: const Icon(Icons.download, size: 16),
       label: const Text('Export'),
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -246,7 +347,7 @@ class BookingFilterBar extends StatelessWidget {
                     const SizedBox(height: 20),
                     _buildDropdown(
                       'Status',
-                      ['All', 'Requested', 'Approved', 'Confirmed', 'Cancelled'],
+                      ['All', 'Requested', 'Approved', 'Confirmed', 'Cancelled', 'VENDOR_ASSIGNED', 'COMPLETED'],
                       state.selectedStatus ?? 'All',
                       (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(status: val)),
                     ),
@@ -264,6 +365,10 @@ class BookingFilterBar extends StatelessWidget {
                       state.selectedCity ?? 'All Cities',
                       (val) => context.read<AdminBookingsBloc>().add(UpdateFilters(city: val)),
                     ),
+                    const SizedBox(height: 12),
+                    _buildEventDropdown(context, state),
+                    const SizedBox(height: 12),
+                    _buildDateRangeButton(context, state),
                     const SizedBox(height: 20),
                     Row(
                       children: [

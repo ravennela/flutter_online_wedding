@@ -47,10 +47,13 @@ class ApiConstants {
    static const String adminBookingDetail = "$baseUrl/admin/bookings/{id}";
    static const String updateBookingStatus = "$baseUrl/admin/bookings/{id}/status";
    static const String cancelBooking = "$baseUrl/admin/bookings/{id}/cancel";
+   static const String updateBookingDetail = "$baseUrl/api/bookings/update/{id}";
    static const String adminVendors = '$baseUrl/admin/vendors';
    static const String vendorAssignments = '$baseUrl/admin/vendors/assignments';
    static const String assignVendors = "$baseUrl/admin/bookings/{id}/assign-vendors";
    static const String deAssignVendor = "$baseUrl/admin/bookings/{id}/vendors/{vendorId}";
+   static const String adminDashboard = "$baseUrl/admin/dashboard";
+
 
 
 
@@ -77,4 +80,6 @@ class ApiConstants {
   // Add more API constants here
 
   static const String token = 'auth_token';
+
+  static const String userProfile="$baseUrl/api/user/profile";
 }
