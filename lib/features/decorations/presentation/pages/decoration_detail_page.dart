@@ -308,6 +308,7 @@ class _DecorationDetailView extends StatelessWidget {
          border: const Border(top: BorderSide(color: Colors.white10)),
       ) : null,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,20 +318,6 @@ class _DecorationDetailView extends StatelessWidget {
               const SizedBox(height: 4),
               Text(detail.price, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
             ],
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {}, 
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1976D2), // Strong CTA Blue
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(Icons.calendar_today, size: 18),
-              label: const Text("Book This Service", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
           ),
         ],
       ),

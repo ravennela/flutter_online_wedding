@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_online/features/booking/data/models/booking_model.dart';
 import 'package:flutter_online/features/payment/domain/entities/razorpay_order_entity.dart';
 import 'package:flutter_online/core/routes/app_routes.dart';
+import 'package:flutter_online/core/config/flavor_config.dart';
 import 'package:razorpay_web/razorpay_web.dart';
 
 
@@ -115,7 +116,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     _createdBookingId = response.bookingId; // Store the ID returned from backend
     
     var options = {
-      'key': response.key,
+      'key': response.key.isNotEmpty ? response.key : FlavorConfig.instance.razorpayKey,
       'amount': response.amount, // already in paise from backend
       'name': 'Online Wedding Planner',
       'order_id': response.orderId,
