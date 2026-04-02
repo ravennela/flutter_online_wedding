@@ -5,7 +5,7 @@ void main() async {
   FlavorConfig.initialize(
     flavor: Flavor.prod,
     name: 'Online Wedding',
-    baseUrl: 'https://springwedding-prod.up.railway.app', // Update with actual Prod URL
+    baseUrl: 'https://api.meeveduka.in', // Update with actual Prod URL
     razorpayKey: 'rzp_live_prod_key', // Replace with real key
   );
   await common.runner();
