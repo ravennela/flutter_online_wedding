@@ -12,16 +12,13 @@ class AppTheme {
     /* ===========================
      * Color Scheme
      * =========================== */
-    colorScheme: const ColorScheme(
-      brightness: Brightness.light,
+    colorScheme: ColorScheme.light(
       primary: AppColors.primary,
       onPrimary: AppColors.onPrimary,
       secondary: AppColors.secondary,
       onSecondary: AppColors.onSecondary,
       error: AppColors.error,
       onError: Colors.white,
-      background: AppColors.background,
-      onBackground: AppColors.textPrimary,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
     ),
@@ -48,7 +45,7 @@ class AppTheme {
     /* ===========================
      * Text Theme
      * =========================== */
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       displayLarge: AppTextStyles.headingXL,
       displayMedium: AppTextStyles.headingL,
       displaySmall: AppTextStyles.headingM,
@@ -73,22 +70,24 @@ class AppTheme {
         foregroundColor: AppColors.onPrimary,
         textStyle: AppTextStyles.buttonPrimary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
         ),
-        minimumSize: const Size(double.infinity, 48),
+        minimumSize: const Size(double.infinity, 52),
         elevation: 0,
       ),
     ),
 
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.secondary,
-        textStyle: AppTextStyles.buttonSecondary,
-        side: const BorderSide(color: AppColors.secondary),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+        foregroundColor: AppColors.textPrimary,
+        textStyle: AppTextStyles.buttonSecondary.copyWith(
+          color: AppColors.textPrimary,
         ),
-        minimumSize: const Size(double.infinity, 48),
+        side: const BorderSide(color: AppColors.border, width: 1.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        minimumSize: const Size(double.infinity, 52),
       ),
     ),
 
@@ -114,23 +113,23 @@ class AppTheme {
       labelStyle: AppTextStyles.labelM,
       errorStyle: AppTextStyles.error,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary),
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         borderSide: const BorderSide(color: AppColors.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         borderSide: const BorderSide(color: AppColors.error),
       ),
     ),

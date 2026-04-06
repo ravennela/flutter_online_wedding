@@ -18,6 +18,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_drawer.dart';
 
+const List<String> _kHeroFallbackImages = [
+  'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=80',
+  'https://images.pexels.com/photos/2072181/pexels-photo-2072181.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/1729799/pexels-photo-1729799.jpeg?auto=compress&cs=tinysrgb&w=800',
+];
+
 class PublicHomePage extends StatefulWidget {
   const PublicHomePage({super.key});
 
@@ -59,7 +65,7 @@ class _PublicHomePageState extends State<PublicHomePage>
       canPop: false,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        extendBodyBehindAppBar: true,
+        extendBodyBehindAppBar: false,
         appBar: _buildAppBar(context),
         drawer: const AppDrawer(),
         body: MultiBlocListener(
@@ -136,7 +142,11 @@ class _PublicHomePageState extends State<PublicHomePage>
                 ),
                 child: Column(
                   children: [
-                    _buildSectionHeader('Explore Categories', isWeb),
+                    _buildSectionHeader(
+                      'Browse by Essential Categories',
+                      isWeb,
+                      kicker: 'DISCOVER',
+                    ),
                     const SizedBox(height: 32),
                     _CategoryRail(categories: data.categories, isWeb: isWeb),
                   ],
@@ -175,8 +185,9 @@ class _PublicHomePageState extends State<PublicHomePage>
                 child: Column(
                   children: [
                     _buildSectionHeader(
-                      'Trending Decorations',
+                      'Popular Vendors',
                       isWeb,
+                      kicker: 'HANDPICKED',
                       showViewAll: true,
                       onViewAll: () => context.push(AppRoutes.eventList),
                     ),
@@ -211,9 +222,9 @@ class _PublicHomePageState extends State<PublicHomePage>
                               ),
                             );
                           }
-                          return const Center(
+                          return Center(
                             child: Padding(
-                              padding: EdgeInsets.all(24.0),
+                              padding: const EdgeInsets.all(24.0),
                               child: Text(
                                 'No decorations found',
                                 style: AppTextStyles.bodyM,
@@ -233,7 +244,7 @@ class _PublicHomePageState extends State<PublicHomePage>
               ),
             ),
             SliverToBoxAdapter(child: _TrustSection(isWeb: isWeb)),
-            SliverToBoxAdapter(child: _buildFooter()),
+            SliverToBoxAdapter(child: _buildFooter(isWeb: isWeb)),
           ],
         );
       },
@@ -242,7 +253,6 @@ class _PublicHomePageState extends State<PublicHomePage>
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final isDesktop = width >= 1024;
     final isTablet = width >= 768 && width < 1024;
     final isMobile = width < 768;
 
@@ -250,22 +260,31 @@ class _PublicHomePageState extends State<PublicHomePage>
       preferredSize: const Size.fromHeight(70),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        color: _isScrolled ? AppColors.surface : Colors.black.withOpacity(0.2),
-
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          boxShadow: _isScrolled
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SafeArea(
           child: BlocBuilder<AuthCubit, AuthState>(
             builder: (context, authState) {
               final isLoggedIn = authState is AuthAuthenticated;
-              final isScrolled = _isScrolled;
 
               if (isMobile) {
-                return _buildMobileAppBar(context, isScrolled);
+                return _buildMobileAppBar(context);
               }
               if (isTablet) {
-                return _buildTabletAppBar(context, isScrolled, isLoggedIn);
+                return _buildTabletAppBar(context, isLoggedIn);
               }
-              return _buildDesktopAppBar(context, isScrolled, isLoggedIn);
+              return _buildDesktopAppBar(context, isLoggedIn);
             },
           ),
         ),
@@ -273,48 +292,30 @@ class _PublicHomePageState extends State<PublicHomePage>
     );
   }
 
-  Widget _buildMobileAppBar(BuildContext context, bool isScrolled) {
+  Widget _buildMobileAppBar(BuildContext context) {
     return Row(
       children: [
         IconButton(
           icon: Icon(
             Icons.menu,
-            color: isScrolled ? AppColors.textPrimary : Colors.white,
+            color: AppColors.textPrimary,
           ),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         Expanded(
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isScrolled
-                        ? AppColors.primary.withOpacity(0.1)
-                        : Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.diamond_outlined,
-                    color: isScrolled ? AppColors.primary : Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Elegant Events',
-                  style: AppTextStyles.headingM.copyWith(
-                    color: isScrolled ? AppColors.textPrimary : Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Meeveduka',
+              style: AppTextStyles.displaySerif.copyWith(fontSize: 18),
             ),
           ),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.search,
+            color: AppColors.primary,
+          ),
+          onPressed: () => context.push(AppRoutes.eventList),
         ),
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
@@ -325,12 +326,12 @@ class _PublicHomePageState extends State<PublicHomePage>
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.accentRose.withOpacity(0.5),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.person_outline,
-                    color: AppColors.primary,
+                    color: AppColors.primaryDark,
                     size: 22,
                   ),
                 ),
@@ -341,8 +342,9 @@ class _PublicHomePageState extends State<PublicHomePage>
               child: Text(
                 'Login',
                 style: AppTextStyles.labelM.copyWith(
-                  color: isScrolled ? AppColors.primary : Colors.white,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             );
@@ -354,58 +356,41 @@ class _PublicHomePageState extends State<PublicHomePage>
 
   Widget _buildTabletAppBar(
     BuildContext context,
-    bool isScrolled,
     bool isLoggedIn,
   ) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isScrolled
-                ? AppColors.primary.withOpacity(0.1)
-                : Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.diamond_outlined,
-            color: isScrolled ? AppColors.primary : Colors.white,
-          ),
-        ),
-        const SizedBox(width: 12),
         Text(
-          'Elegant Events',
-          style: AppTextStyles.headingM.copyWith(
-            color: isScrolled ? AppColors.textPrimary : Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
+          'Meeveduka',
+          style: AppTextStyles.displaySerif.copyWith(fontSize: 20),
         ),
         const Spacer(),
-        CitySelectorWidget(isScrolled: isScrolled),
+        _HeaderSearchPill(compact: true),
+        const SizedBox(width: 12),
+        CitySelectorWidget(isScrolled: true),
         if (isLoggedIn) ...[
-          const SizedBox(width: 24),
-          _MyBookingsLink(isScrolled: isScrolled),
-          const SizedBox(width: 24),
-          _ProfileIcon(isScrolled: isScrolled),
-        ] else ...[
+          const SizedBox(width: 16),
+          const _MyBookingsLink(),
           const SizedBox(width: 12),
+          const _ProfileIcon(),
+        ] else ...[
+          const SizedBox(width: 8),
           TextButton(
             onPressed: () => context.push(AppRoutes.login),
             child: Text(
               'Login',
               style: AppTextStyles.labelM.copyWith(
-                color: isScrolled ? AppColors.primary : Colors.white,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
             ),
           ),
         ],
-        const SizedBox(width: 8),
         IconButton(
           icon: Icon(
             Icons.menu,
-            color: isScrolled ? AppColors.textPrimary : Colors.white,
+            color: AppColors.textPrimary,
           ),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
@@ -415,40 +400,36 @@ class _PublicHomePageState extends State<PublicHomePage>
 
   Widget _buildDesktopAppBar(
     BuildContext context,
-    bool isScrolled,
     bool isLoggedIn,
   ) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isScrolled
-                ? AppColors.primary.withOpacity(0.1)
-                : Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.diamond_outlined,
-            color: isScrolled ? AppColors.primary : Colors.white,
-          ),
-        ),
-        const SizedBox(width: 12),
         Text(
-          'Elegant Events',
-          style: AppTextStyles.headingM.copyWith(
-            color: isScrolled ? AppColors.textPrimary : Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
+          'Meeveduka',
+          style: AppTextStyles.displaySerif.copyWith(fontSize: 22),
+        ),
+        const SizedBox(width: 40),
+        _DesktopNavCapsule(
+          label: 'Venues',
+          onTap: () => context.push(AppRoutes.eventList),
+        ),
+        _DesktopNavCapsule(
+          label: 'Photography',
+          onTap: () => context.push(AppRoutes.eventList),
+        ),
+        _DesktopNavCapsule(
+          label: 'Catering',
+          onTap: () => context.push(AppRoutes.eventList),
         ),
         const Spacer(),
-        CitySelectorWidget(isScrolled: isScrolled),
+        const _HeaderSearchPill(compact: false),
+        const SizedBox(width: 20),
+        CitySelectorWidget(isScrolled: true),
         if (isLoggedIn) ...[
-          const SizedBox(width: 28),
-          _MyBookingsLink(isScrolled: isScrolled),
-          const SizedBox(width: 28),
-          _ProfileIcon(isScrolled: isScrolled),
+          const SizedBox(width: 20),
+          const _MyBookingsLink(),
+          const SizedBox(width: 12),
+          const _ProfileIcon(),
         ] else ...[
           const SizedBox(width: 12),
           TextButton(
@@ -456,17 +437,18 @@ class _PublicHomePageState extends State<PublicHomePage>
             child: Text(
               'Login',
               style: AppTextStyles.labelM.copyWith(
-                color: isScrolled ? AppColors.primary : Colors.white,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
             ),
           ),
         ],
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         IconButton(
           icon: Icon(
             Icons.menu,
-            color: isScrolled ? AppColors.textPrimary : Colors.white,
+            color: AppColors.textPrimary,
           ),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
@@ -474,12 +456,10 @@ class _PublicHomePageState extends State<PublicHomePage>
     );
   }
 
-      
-  }
-
   Widget _buildSectionHeader(
     String title,
     bool isWeb, {
+    String? kicker,
     bool showViewAll = false,
     VoidCallback? onViewAll,
   }) {
@@ -494,67 +474,223 @@ class _PublicHomePageState extends State<PublicHomePage>
               ? CrossAxisAlignment.center
               : CrossAxisAlignment.start,
           children: [
+            if (kicker != null) ...[
+              Text(
+                kicker.toUpperCase(),
+                style: AppTextStyles.labelM.copyWith(
+                  color: AppColors.primary,
+                  letterSpacing: 2.4,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
             Text(
-              title.toUpperCase(),
-              style: AppTextStyles.labelM.copyWith(
-                color: AppColors.primary,
-                letterSpacing: 2,
-                fontWeight: FontWeight.bold,
+              title,
+              textAlign: isWeb ? TextAlign.center : TextAlign.start,
+              style: AppTextStyles.headingL.copyWith(
+                fontSize: isWeb ? 30 : 24,
+                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Container(
               height: 2,
-              width: 60,
-              color: AppColors.primary.withOpacity(0.5),
+              width: 56,
+              decoration: BoxDecoration(
+                color: AppColors.accentRose,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ],
         ),
         if (showViewAll && !isWeb)
           TextButton(
             onPressed: onViewAll ?? () {},
-            child: const Text(
-              'View All',
-              style: TextStyle(color: AppColors.textSecondary),
+            child: Text(
+              'View All  ›',
+              style: AppTextStyles.labelM.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter({required bool isWeb}) {
+    final year = DateTime.now().year;
+    final columnStyle = AppTextStyles.bodyS.copyWith(
+      color: AppColors.textSecondary,
+      height: 1.6,
+    );
+    Widget link(String t) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(t, style: columnStyle),
+        );
+
+    final brand = Column(
+      crossAxisAlignment:
+          isWeb ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      children: [
+        Text(
+          'Meeveduka',
+          style: AppTextStyles.displaySerif.copyWith(fontSize: 24),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Curated wedding experiences, meticulously crafted for your story.',
+          textAlign: isWeb ? TextAlign.start : TextAlign.center,
+          style: AppTextStyles.bodyM.copyWith(
+            color: AppColors.textSecondary,
+            height: 1.55,
+          ),
+        ),
+      ],
+    );
+
+    final col = ({
+      required String title,
+      required List<String> lines,
+    }) =>
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: AppTextStyles.labelM.copyWith(
+                color: AppColors.primary,
+                letterSpacing: 1.6,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...lines.map(link),
+          ],
+        );
+
+    if (isWeb) {
+      return Container(
+        width: double.infinity,
+        color: AppColors.surfaceMuted,
+        padding: const EdgeInsets.fromLTRB(64, 56, 64, 36),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 2, child: brand),
+                Expanded(
+                  child: col(
+                    title: 'Resources',
+                    lines: const [
+                      'Vendor directory',
+                      'Planning guide',
+                      'Style lookbook',
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: col(
+                    title: 'Support',
+                    lines: const [
+                      'Help center',
+                      'Privacy policy',
+                      'Terms of use',
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'NEWSLETTER',
+                        style: AppTextStyles.labelM.copyWith(
+                          color: AppColors.primary,
+                          letterSpacing: 1.6,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Occasional notes on new collections and venues.',
+                        style: columnStyle,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 16),
+                                child: Text(
+                                  'Your email',
+                                  style: AppTextStyles.bodyS.copyWith(
+                                    color: AppColors.textHint,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {},
+                              child: Text(
+                                'Join',
+                                style: AppTextStyles.labelM.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 36),
+            Text(
+              '© $year Meeveduka. All rights reserved.',
+              style: AppTextStyles.caption.copyWith(color: AppColors.textHint),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      color: const Color(0xFF1A1A1A), // Dark footer
+      width: double.infinity,
+      color: AppColors.surfaceMuted,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       child: Column(
         children: [
-          const Icon(
-            Icons.diamond_outlined,
-            size: 40,
-            color: AppColors.primary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Elegant Events',
-            style: AppTextStyles.headingL.copyWith(
-              color: Colors.white,
-              letterSpacing: 1.5,
-            ),
+          brand,
+          const SizedBox(height: 32),
+          col(
+            title: 'Resources',
+            lines: const ['Vendor directory', 'Planning guide'],
           ),
           const SizedBox(height: 24),
           Text(
-            'Making your dreams come true, one event at a time.',
-            style: AppTextStyles.bodyM.copyWith(color: Colors.white54),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            '© 2026 Elegant Events. All rights reserved.',
-            style: AppTextStyles.bodyS.copyWith(color: Colors.white24),
+            '© $year Meeveduka. All rights reserved.',
+            style: AppTextStyles.caption.copyWith(color: AppColors.textHint),
           ),
         ],
       ),
     );
   }
+}
 
 /* =================================================================
    SUB-WIDGETS 
@@ -562,9 +698,7 @@ class _PublicHomePageState extends State<PublicHomePage>
 
 /// Premium nav link for "My Bookings" – text link with hover gold underline.
 class _MyBookingsLink extends StatefulWidget {
-  final bool isScrolled;
-
-  const _MyBookingsLink({required this.isScrolled});
+  const _MyBookingsLink();
 
   @override
   State<_MyBookingsLink> createState() => _MyBookingsLinkState();
@@ -575,10 +709,8 @@ class _MyBookingsLinkState extends State<_MyBookingsLink> {
 
   @override
   Widget build(BuildContext context) {
-    final isScrolled = widget.isScrolled;
-    final color = _hover || !isScrolled
-        ? (isScrolled ? AppColors.primary : Colors.white)
-        : (isScrolled ? AppColors.textPrimary : Colors.white70);
+    final color =
+        _hover ? AppColors.primary : AppColors.textPrimary;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
@@ -590,8 +722,9 @@ class _MyBookingsLinkState extends State<_MyBookingsLink> {
           style: AppTextStyles.labelM.copyWith(
             color: color,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
             decoration: _hover ? TextDecoration.underline : TextDecoration.none,
-            decorationColor: isScrolled ? AppColors.primary : Colors.white,
+            decorationColor: AppColors.primary,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -602,7 +735,7 @@ class _MyBookingsLinkState extends State<_MyBookingsLink> {
                 height: _hover ? 2 : 0,
                 margin: const EdgeInsets.only(top: 2),
                 width: 60,
-                color: isScrolled ? AppColors.primary : Colors.white,
+                color: AppColors.primary,
               ),
             ],
           ),
@@ -613,9 +746,7 @@ class _MyBookingsLinkState extends State<_MyBookingsLink> {
 }
 
 class _ProfileIcon extends StatelessWidget {
-  final bool isScrolled;
-
-  const _ProfileIcon({required this.isScrolled});
+  const _ProfileIcon();
 
   @override
   Widget build(BuildContext context) {
@@ -624,15 +755,113 @@ class _ProfileIcon extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isScrolled
-              ? AppColors.primary.withOpacity(0.1)
-              : Colors.white.withOpacity(0.2),
+          color: AppColors.accentRose.withOpacity(0.45),
           shape: BoxShape.circle,
         ),
         child: Icon(
           Icons.person_outline,
-          color: isScrolled ? AppColors.primary : Colors.white,
+          color: AppColors.primaryDark,
           size: 22,
+        ),
+      ),
+    );
+  }
+}
+
+/// Pill search in header — navigates to the public events list (same as before).
+class _HeaderSearchPill extends StatelessWidget {
+  final bool compact;
+
+  const _HeaderSearchPill({required this.compact});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.eventList),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          constraints: BoxConstraints(
+            minWidth: compact ? 120 : 260,
+            maxWidth: compact ? 200 : 420,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 12 : 18,
+            vertical: compact ? 8 : 10,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search,
+                size: compact ? 18 : 20,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  compact
+                      ? 'Search…'
+                      : 'Find your dream vendor…',
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyS.copyWith(
+                    color: AppColors.textHint,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopNavCapsule extends StatefulWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _DesktopNavCapsule({
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_DesktopNavCapsule> createState() => _DesktopNavCapsuleState();
+}
+
+class _DesktopNavCapsuleState extends State<_DesktopNavCapsule> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: TextButton(
+          onPressed: widget.onTap,
+          style: TextButton.styleFrom(
+            foregroundColor:
+                _hover ? AppColors.primary : AppColors.textSecondary,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+          child: Text(
+            widget.label.toUpperCase(),
+            style: AppTextStyles.labelM.copyWith(
+              letterSpacing: 1.8,
+              fontWeight: FontWeight.w700,
+              color: _hover ? AppColors.primary : AppColors.textSecondary,
+            ),
+          ),
         ),
       ),
     );
@@ -646,12 +875,218 @@ class _HeroHeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double heroHeight = isWeb ? 520 : 420;
+    if (isWeb) {
+      return _SplitWebHero(hero: hero);
+    }
+    const heroHeight = 380.0;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: SizedBox(
+          height: heroHeight,
+          width: double.infinity,
+          child: _HeroCarousel(hero: hero),
+        ),
+      ),
+    );
+  }
+}
 
-    return SizedBox(
-      height: heroHeight,
+class _SplitWebHero extends StatelessWidget {
+  final AdminHomeHeroModel hero;
+  const _SplitWebHero({required this.hero});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = hero.title.isNotEmpty
+        ? hero.title
+        : 'Your Love Story, Meticulously Crafted.';
+    final subtitle = hero.subtitle.isNotEmpty
+        ? hero.subtitle
+        : 'Discover curated venues, artisans, and décor tailored to the tone of your celebration.';
+
+    return Container(
       width: double.infinity,
-      child: _HeroCarousel(hero: hero),
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(56, 36, 56, 40),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CURATED WEDDING EXPERIENCES',
+                  style: AppTextStyles.labelM.copyWith(
+                    color: AppColors.primary,
+                    letterSpacing: 2.6,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  title,
+                  style: AppTextStyles.headingXL.copyWith(
+                    fontSize: 46,
+                    height: 1.08,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.bodyL.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 12,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => context.push(AppRoutes.eventList),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 16,
+                        ),
+                      ),
+                      child: Text(
+                        'START PLANNING',
+                        style: AppTextStyles.buttonPrimary.copyWith(fontSize: 13),
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => context.push(AppRoutes.eventList),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 16,
+                        ),
+                      ),
+                      child: Text(
+                        'BROWSE PORTFOLIO',
+                        style: AppTextStyles.labelM.copyWith(
+                          color: AppColors.textPrimary,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 40),
+          Expanded(
+            flex: 5,
+            child: _WebHeroCollage(hero: hero),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WebHeroCollage extends StatelessWidget {
+  final AdminHomeHeroModel hero;
+  const _WebHeroCollage({required this.hero});
+
+  List<String> get _imageUrls {
+    final h = hero.imageUrl;
+    if (h != null && h.isNotEmpty) {
+      return [h, _kHeroFallbackImages[1], _kHeroFallbackImages[2]];
+    }
+    return _kHeroFallbackImages;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final urls = _imageUrls;
+    return SizedBox(
+      height: 420,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(26),
+              child: Image.network(
+                urls[0],
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Container(color: AppColors.divider),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            flex: 2,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Image.network(
+                      urls[1],
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: AppColors.divider),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Image.network(
+                          urls[2],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              Container(color: AppColors.divider),
+                        ),
+                      ),
+                      Positioned(
+                        left: 12,
+                        bottom: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentRose.withOpacity(0.92),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            '“Every detail reflects the depth of your devotion.”',
+                            style: AppTextStyles.bodyS.copyWith(
+                              color: AppColors.textPrimary,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -665,11 +1100,6 @@ class _HeroCarousel extends StatefulWidget {
 }
 
 class _HeroCarouselState extends State<_HeroCarousel> {
-  static const List<String> _defaultImages = [
-    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=80',
-    'https://images.pexels.com/photos/2072181/pexels-photo-2072181.jpeg?auto=compress&cs=tinysrgb&w=800',
-    'https://images.pexels.com/photos/1729799/pexels-photo-1729799.jpeg?auto=compress&cs=tinysrgb&w=800',
-  ];
   int _currentIndex = 0;
   Timer? _timer;
 
@@ -690,7 +1120,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     if (widget.hero.imageUrl != null && widget.hero.imageUrl!.isNotEmpty) {
       return [widget.hero.imageUrl!];
     }
-    return _defaultImages;
+    return _kHeroFallbackImages;
   }
 
   @override
@@ -900,20 +1330,26 @@ class _ServicesSection extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'OUR SERVICES',
+          'WITH CONFIDENCE',
           style: AppTextStyles.labelM.copyWith(
             color: AppColors.primary,
-            letterSpacing: 2,
-            fontWeight: FontWeight.bold,
+            letterSpacing: 2.4,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
-          'Everything you need for a\nperfect event',
+          'Plan with Confidence',
           textAlign: TextAlign.center,
-          style: AppTextStyles.headingL,
+          style: AppTextStyles.headingL.copyWith(fontSize: 30),
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 12),
+        Text(
+          'Thoughtful curation, transparent pricing, and partners who show up.',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 40),
         Wrap(
           spacing: 32,
           runSpacing: 32,
@@ -963,10 +1399,10 @@ class _ServicesSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.accentRose.withOpacity(0.55),
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: AppColors.primary, size: 28),
+                  child: Icon(icon, color: AppColors.primaryDark, size: 26),
                 ),
                 const SizedBox(height: 16),
                 Text(title, style: AppTextStyles.headingS),
@@ -1025,6 +1461,36 @@ class _FeaturedCollections extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isWeb ? 64 : 16),
+          child: Column(
+            children: [
+              Text(
+                "THE CURATOR'S CHOICE",
+                style: AppTextStyles.labelM.copyWith(
+                  color: AppColors.primary,
+                  letterSpacing: 2.4,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Featured collections',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.headingL.copyWith(fontSize: isWeb ? 30 : 24),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Hand-selected themes and décor moments to inspire your celebration.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyM.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: isWeb ? 36 : 24),
         for (int i = 0; i < featuredEvents.length; i++) ...[
           if (i > 0) const SizedBox(height: 2),
           _buildBigCard(
@@ -1065,7 +1531,7 @@ class _FeaturedCollections extends StatelessWidget {
           title,
           style: AppTextStyles.headingXL.copyWith(
             fontSize: isWeb ? 36 : 28,
-            color: isWeb ? AppColors.secondary : Colors.white,
+            color: isWeb ? AppColors.textPrimary : Colors.white,
           ),
         ),
         const SizedBox(height: 12),
@@ -1081,16 +1547,17 @@ class _FeaturedCollections extends StatelessWidget {
           children: [
             Text(
               'EXPLORE NOW',
-              style: AppTextStyles.buttonPrimary.copyWith(
-                color: isWeb ? AppColors.primary : Colors.white,
-                fontSize: 14,
+              style: AppTextStyles.labelM.copyWith(
+                color: isWeb ? AppColors.primaryDark : Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(width: 8),
             Icon(
               Icons.arrow_forward,
               size: 16,
-              color: isWeb ? AppColors.primary : Colors.white,
+              color: isWeb ? AppColors.primaryDark : Colors.white,
             ),
           ],
         ),
@@ -1135,7 +1602,7 @@ class _FeaturedCollections extends StatelessWidget {
     // Web Layout
     return Container(
       height: 450,
-      color: AppColors.background,
+      color: AppColors.surfaceMuted,
       child: Row(
         children: alignLeft
             ? [
@@ -1199,7 +1666,7 @@ class _RealEventsSection extends StatelessWidget {
           SizedBox(
             height: 280,
             child: realCelebrations.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No celebrations to show',
                       style: AppTextStyles.bodyM,
@@ -1299,7 +1766,7 @@ class _TrendingGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (trendingDecorations.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No trending decorations to show',
           style: AppTextStyles.bodyM,
@@ -1315,7 +1782,7 @@ class _TrendingGrid extends StatelessWidget {
           itemCount: trendingDecorations.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.68,
             crossAxisSpacing: 16,
             mainAxisSpacing: 24,
           ),
@@ -1341,7 +1808,7 @@ class _TrendingGrid extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -1356,15 +1823,36 @@ class _TrendingGrid extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
+                  top: Radius.circular(22),
                 ),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.divider,
-                    child: const Icon(Icons.image_not_supported, size: 48),
-                  ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.divider,
+                        child: const Icon(Icons.image_not_supported, size: 48),
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.92),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.favorite_border,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1377,17 +1865,40 @@ class _TrendingGrid extends StatelessWidget {
                     item.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.bodyL.copyWith(
+                    style: AppTextStyles.headingS.copyWith(
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.star_rounded, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '4.9',
+                        style: AppTextStyles.labelM.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'PRICE RANGE',
+                    style: AppTextStyles.labelS.copyWith(
+                      letterSpacing: 1,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
                   Text(
                     _formatPrice(item.price),
-                    style: AppTextStyles.labelL.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
+                    style: AppTextStyles.price.copyWith(
+                      fontSize: 16,
+                      color: AppColors.primaryDark,
                     ),
                   ),
                 ],
@@ -1407,26 +1918,48 @@ class _TrustSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
-      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05)),
+      padding: EdgeInsets.symmetric(
+        vertical: isWeb ? 72 : 56,
+        horizontal: isWeb ? 64 : 24,
+      ),
+      decoration: const BoxDecoration(color: AppColors.surface),
       child: Column(
         children: [
-          Icon(Icons.verified, size: 40, color: AppColors.secondary),
-          const SizedBox(height: 16),
-          Text('Why Customers Love Us', style: AppTextStyles.headingL),
+          Text(
+            'OUR PROMISE',
+            style: AppTextStyles.labelM.copyWith(
+              color: AppColors.primary,
+              letterSpacing: 2.4,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Celebrate with peace of mind',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.headingL.copyWith(fontSize: isWeb ? 30 : 24),
+          ),
           const SizedBox(height: 40),
           Wrap(
-            spacing: 40,
+            spacing: isWeb ? 56 : 40,
             runSpacing: 40,
             alignment: WrapAlignment.center,
             children: [
               _buildTrustItem(
-                '4.9/5',
-                'Average Rating',
-                'Based on 5000+ reviews',
+                Icons.auto_awesome,
+                'Curated vendors',
+                'Every partner is vetted for craft and reliability.',
               ),
-              _buildTrustItem('1000+', 'Events Planned', 'Across 10+ cities'),
-              _buildTrustItem('100%', 'Satisfaction', 'Or your money back'),
+              _buildTrustItem(
+                Icons.calendar_month_outlined,
+                'Seamless planning',
+                'Clear timelines and responsive coordination.',
+              ),
+              _buildTrustItem(
+                Icons.account_balance_wallet_outlined,
+                'Transparent pricing',
+                'Know what to expect before you commit.',
+              ),
             ],
           ),
         ],
@@ -1434,18 +1967,26 @@ class _TrustSection extends StatelessWidget {
     );
   }
 
-  Widget _buildTrustItem(String stat, String title, String desc) {
+  Widget _buildTrustItem(IconData icon, String title, String desc) {
     return SizedBox(
-      width: 200,
+      width: isWeb ? 240 : 200,
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.accentRose.withOpacity(0.55),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primaryDark, size: 26),
+          ),
+          const SizedBox(height: 16),
           Text(
-            stat,
-            style: AppTextStyles.headingXL.copyWith(color: AppColors.primary),
+            title,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.headingS.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          Text(title, style: AppTextStyles.headingS),
-          const SizedBox(height: 4),
           Text(
             desc,
             textAlign: TextAlign.center,

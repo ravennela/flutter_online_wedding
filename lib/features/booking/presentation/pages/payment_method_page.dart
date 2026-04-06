@@ -118,7 +118,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     var options = {
       'key': response.key.isNotEmpty ? response.key : FlavorConfig.instance.razorpayKey,
       'amount': response.amount, // already in paise from backend
-      'name': 'Online Wedding Planner',
+      'name': 'Meeveduka',
       'order_id': response.orderId,
       'description': 'Booking for ${widget.args.decorationDetail.name}',
       'timeout': 300, // in seconds

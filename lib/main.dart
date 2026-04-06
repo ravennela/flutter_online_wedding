@@ -13,7 +13,7 @@ void main() async {
   // If run directly, default to dev for convenience
   FlavorConfig.initialize(
     flavor: Flavor.dev,
-    name: 'Online Wedding (DEV)',
+    name: 'Meeveduka (DEV)',
     baseUrl: 'https://springwedding-dev.up.railway.app',
     razorpayKey: 'rzp_test_example_dev',
   );
