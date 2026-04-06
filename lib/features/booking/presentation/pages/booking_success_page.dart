@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_online/core/theme/app_colors.dart';
+import 'package:flutter_online/core/theme/app_text_styles.dart';
+import 'package:flutter_online/shared/widgets/primary_button.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 class BookingSuccessPage extends StatelessWidget {
   final String bookingId;
@@ -20,97 +22,96 @@ class BookingSuccessPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateTimeDisplay = time != null ? '$date at $time' : date;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
             child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                
                   Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentRose.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.check_circle_outline,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Booking Created!',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Your booking successfully created. A vendor will be assigned soon. Your event is scheduled for $dateTimeDisplay.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF64748B),
-                      height: 1.5,
+                    child: const Center(
+                      child: Icon(
+                        Icons.celebration_outlined,
+                        size: 50,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 48),
+                  Text(
+                    'Experience Reserved!',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.headingXL,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Your Meeveduka experience is now scheduled for $dateTimeDisplay. Our specialists will begin crafting your celebration shortly.',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyL.copyWith(color: AppColors.textSecondary, height: 1.6),
+                  ),
+                  const SizedBox(height: 64),
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: AppColors.divider),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
                         ),
                       ],
                     ),
                     child: Column(
                       children: [
-                        _buildInfoRow('Booking ID', '#$bookingId'),
-                        const Divider(height: 32),
-                        _buildInfoRow('Amount Paid', amount),
-                        const Divider(height: 32),
-                        _buildInfoRow('Status', 'CONFIRMED', isStatus: true),
+                        _SuccessDetailRow(label: 'Booking ID', value: '#$bookingId'),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Divider(height: 1, color: AppColors.divider),
+                        ),
+                        _SuccessDetailRow(label: 'Investment', value: amount),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Divider(height: 1, color: AppColors.divider),
+                        ),
+                        _SuccessDetailRow(
+                          label: 'Status',
+                          value: 'CONFIRMED',
+                          isTag: true,
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text(
-                        'Back to Home',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                  const SizedBox(height: 64),
+                  PrimaryButton(
+                    text: 'RETURN TO EXPLORE',
+                    onPressed: () => context.go('/'),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   TextButton(
-                    onPressed: () => context.go('/bookings'),
-                    child: const Text(
-                      'View My Bookings',
-                      style: TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontWeight: FontWeight.bold,
+                    onPressed: () => context.push('/bookings'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    ),
+                    child: Text(
+                      'VIEW MY RESERVATIONS',
+                      style: AppTextStyles.labelM.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
                       ),
                     ),
                   ),
@@ -122,50 +123,47 @@ class BookingSuccessPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildInfoRow(String label, String value, {bool isStatus = false}) {
+class _SuccessDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isTag;
+
+  const _SuccessDetailRow({
+    required this.label,
+    required this.value,
+    this.isTag = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
         ),
-        const SizedBox(width: 12),
-        if (isStatus)
+        if (isTag)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              borderRadius: BorderRadius.circular(20),
+              color: AppColors.accentRose.withOpacity(0.25),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF10B981),
+              style: AppTextStyles.labelS.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w900,
               ),
             ),
           )
         else
-          Flexible(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1F2937),
-              ),
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
+          Text(
+            value,
+            style: AppTextStyles.headingS.copyWith(fontSize: 16),
           ),
       ],
     );

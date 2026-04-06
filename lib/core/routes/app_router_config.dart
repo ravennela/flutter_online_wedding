@@ -212,8 +212,6 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         final extra = state.extra;
         if (extra is! OtpScreenArgs) {
-          // Extra lost (e.g. refresh). Navigate after a short delay so we leave loading
-          // but avoid didPopNext (navigation runs after route lifecycle has settled).
           final currentAuthState = authCubit.state;
           Future.delayed(const Duration(milliseconds: 350), () {
             if (!context.mounted) return;
@@ -238,14 +236,12 @@ final GoRouter router = GoRouter(
         return OtpScreen(args: extra);
       },
     ),
-    // Static /booking/... routes MUST come before /booking/:id so they are not matched as decoration id.
     GoRoute(
       path: AppRoutes.selectEventDate,
       builder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
         final args = state.extra;
         if (args is! BookingArgs) {
-          // If extra is lost (refresh), backtrack to step 1 which only needs ID.
           if (id.isEmpty) return _buildSessionExpiredFallback(context);
           return BookingPage(decorationId: id);
         }
@@ -276,9 +272,9 @@ final GoRouter router = GoRouter(
         final extras = state.extra as Map<String, dynamic>?;
         if (extras == null) return _buildSessionExpiredFallback(context);
         return BookingSuccessPage(
-          bookingId: extras['bookingId'],
-          amount: extras['amount'],
-          date: extras['date'],
+          bookingId: extras['bookingId'] ?? '',
+          amount: extras['amount'] ?? '',
+          date: extras['date'] ?? '',
           time: extras['time'],
         );
       },
@@ -371,29 +367,21 @@ final GoRouter router = GoRouter(
         location.startsWith('/events') ||
         location.startsWith('/decoration');
 
-    // 1. MANDATORY CITY: Only redirect when no city ever selected (CityInitial).
-    // Do NOT redirect during CityLoading/CityListLoaded (user changing city from sheet).
     final hasNoCity = cityState is CityInitial;
     if (hasNoCity && !isCitySelection) {
       return AppRoutes.citySelection;
     }
 
-    // 1b. 🔄 While checking auth → stay put (MUST be before OTP check below,
-    //     otherwise AuthLoading during OTP verification would trigger redirect
-    //     to login before AuthAuthenticated has a chance to fire).
     if (authState is AuthLoading) {
       return null;
     }
 
-    // 1c. OTP: if not authenticated and args missing, go to login.
     if (isOtp && authState is! AuthAuthenticated && state.extra is! OtpScreenArgs) {
       return AppRoutes.login;
     }
 
-    // 3. 🔓 Not logged in (guest mode - allow browsing public routes)
     if (authState is AuthUnauthenticated) {
       if (isPublic || isLogin || isOtp) return null;
-      // Redirect to home when on protected routes (admin, booking, my bookings)
       if (location.startsWith('/admin') ||
           location == AppRoutes.booking ||
           location.startsWith('/booking/') ||
@@ -404,20 +392,16 @@ final GoRouter router = GoRouter(
       return null;
     }
 
-    // 4. 🔐 Logged in
     if (authState is AuthAuthenticated) {
       final role = authState.user.role;
       final isAdmin = role.toUpperCase() == 'ADMIN';
 
-      // OTP → post-login: let redirect do the navigation (path-based) so we never
-      // call context.go() from OTP BlocListener — avoids didPopNext after dispose().
       if (isOtp) {
         final pending = LoginRedirectData.pending;
         if (pending != null) {
           LoginRedirectData.pending = null;
           return pending.nextRoute;
         }
-        // No pending redirect: send to appropriate home by role (admin → dashboard, customer → splash).
         return isAdmin ? AppRoutes.adminDashboard : AppRoutes.splash;
       }
 
@@ -447,8 +431,8 @@ Widget _buildSessionExpiredFallback(BuildContext context) {
             children: [
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEFF6FF),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

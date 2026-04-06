@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/section_header.dart';
@@ -77,7 +79,7 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
               const SectionHeader(
                 icon: Icons.person_outline,
                 title: 'Contact Information',
-                subtitle: 'Who should we contact for delivery and setup?',
+                subtitle: 'Essential for scheduling delivery and event logistics support.',
               ),
               const SizedBox(height: 24),
               CustomTextField(
@@ -93,7 +95,7 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
               CustomTextField(
                 controller: _phoneController,
                 label: 'Phone Number',
-                hintText: '+1 (555) 000-0000',
+                hintText: 'Enter 10-digit number',
                 keyboardType: TextInputType.phone,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (value) {
@@ -102,36 +104,39 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                   return null;
                 },
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
 
               // Address Details
               const SectionHeader(
                 icon: Icons.location_on_outlined,
                 title: 'Address Details',
-                subtitle: 'Provide the exact location for the venue.',
+                subtitle: 'Specify the precise location for venue styling and installations.',
               ),
               const SizedBox(height: 24),
               CustomTextField(
                 controller: _address1Controller,
-                label: 'Street Address',
-                hintText: '123 Elegance Avenue',
+                label: 'House / Office Number',
+                hintText: 'Unit number, building name',
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Address is required';
+                  if (value == null || value.isEmpty) return 'Building info is required';
                   return null;
                 },
               ),
               const SizedBox(height: 20),
               CustomTextField(
                 controller: _address2Controller,
-                label: 'Address Line 2',
-                hintText: 'Apt, Suite, Floor',
-                isOptional: true,
+                label: 'Street & Area',
+                hintText: 'Locality or prominent street name',
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Area is required';
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
               CustomTextField(
                 controller: _landmarkController,
                 label: 'Landmark',
-                hintText: 'Nearby famous building',
+                hintText: 'e.g. Near Rose Garden park',
                 isOptional: true,
               ),
               const SizedBox(height: 20),
@@ -141,7 +146,7 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                     child: CustomTextField(
                       controller: _cityController,
                       label: 'City',
-                      hintText: 'Los Angeles',
+                      hintText: 'City name',
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Required';
                         return null;
@@ -153,7 +158,7 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                     child: CustomTextField(
                       controller: _stateController,
                       label: 'State',
-                      hintText: 'California',
+                      hintText: 'State name',
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Required';
                         return null;
@@ -168,13 +173,13 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                   Expanded(
                     child: CustomTextField(
                       controller: _pincodeController,
-                      label: 'Zip Code',
-                      hintText: '90001',
+                      label: 'Pincode',
+                      hintText: '6-digit code',
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Required';
-                        if (value.length < 5) return 'Invalid';
+                        if (value.length < 6) return 'Invalid pincode';
                         return null;
                       },
                     ),
@@ -189,21 +194,20 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
 
               // Options
               const SectionHeader(
-                icon: Icons.settings_outlined,
-                title: 'Options',
+                icon: Icons.bookmark_border_rounded,
+                title: 'Label & Preference',
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'ADDRESS TYPE',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.5,
+              const SizedBox(height: 24),
+              Text(
+                'SAVE AS',
+                style: AppTextStyles.labelS.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 12),
@@ -219,41 +223,45 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                         setState(() => _selectedAddressType = type);
                       }
                     },
-                    selectedColor: const Color(0xFFEFF6FF),
-                    backgroundColor: Colors.white,
-                    labelStyle: TextStyle(
-                      color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    selectedColor: AppColors.accentRose.withOpacity(0.35),
+                    backgroundColor: AppColors.surface,
+                    labelStyle: AppTextStyles.labelM.copyWith(
+                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                     ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                        color: isSelected ? AppColors.primary : AppColors.divider,
+                        width: isSelected ? 1.5 : 1,
                       ),
                     ),
+                    showCheckmark: false,
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Set as Default Address',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E293B),
-                    ),
+                  Text(
+                    'Use as primary address',
+                    style: AppTextStyles.bodyM.copyWith(fontWeight: FontWeight.w600),
                   ),
                   Switch.adaptive(
                     value: _isDefault,
-                    activeColor: const Color(0xFF2563EB),
+                    activeColor: AppColors.primary,
                     onChanged: (value) => setState(() => _isDefault = value),
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 12),
+              Text(
+                'This address will be selected by default for your new bookings.',
+                style: AppTextStyles.caption.copyWith(color: AppColors.textHint),
+              ),
+              const SizedBox(height: 48),
 
               // Buttons (Web style - aligned right inside card)
               if (MediaQuery.of(context).size.width > 900)
@@ -262,15 +270,15 @@ class AddressFormWidgetState extends State<AddressFormWidget> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                      child: Text(
+                        'DISCARD',
+                        style: AppTextStyles.labelM.copyWith(color: AppColors.textSecondary, letterSpacing: 1.2),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
                     PrimaryButton(
-                      text: 'Save Address',
-                      width: 200,
+                      text: 'SAVE EXPERIENCE LOCATION',
+                      width: 280,
                       onPressed: state is AddAddressLoading ? null : submit,
                       isLoading: state is AddAddressLoading,
                     ),

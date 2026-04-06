@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_online/core/routes/app_routes.dart';
 import 'package:flutter_online/core/theme/app_colors.dart';
+import 'package:flutter_online/core/theme/app_text_styles.dart';
 import 'package:flutter_online/features/booking/domain/models/booking_args.dart';
+import 'package:flutter_online/shared/widgets/primary_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -36,107 +38,99 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildStepIndicator(),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth >= 1024) {
-                    return _buildDesktopLayout();
-                  } else if (constraints.maxWidth >= 768) {
-                    return _buildTabletLayout();
-                  } else {
-                    return _buildMobileLayout();
-                  }
-                },
-              ),
-            ),
-          ],
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
         ),
+        title: Text(
+          'Schedule Experience',
+          style: AppTextStyles.headingM,
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          _buildStepIndicator(),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 1024) {
+                  return _buildDesktopLayout();
+                } else if (constraints.maxWidth >= 768) {
+                  return _buildTabletLayout();
+                } else {
+                  return _buildMobileLayout();
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStepIndicator() {
     return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.5)),
+      ),
       child: Column(
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
-                onPressed: () => context.pop(),
-              ),
-              const Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      'STEP 2 OF 4',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Availability & Schedule',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        fontFamily: 'Serif',
-                      ),
-                    ),
-                  ],
+              Text(
+                'RESERVATION STEP 2',
+                style: AppTextStyles.labelS.copyWith(
+                  color: AppColors.textHint,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(width: 48),
+              Text(
+                '50% Completed',
+                style: AppTextStyles.labelS.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'PROGRESS',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    Text(
-                      '50%',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Container(
+                height: 6,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutCubic,
+                height: 6,
+                width: MediaQuery.of(context).size.width * 0.5,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: 0.5,
-                    backgroundColor: AppColors.divider,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    minHeight: 6,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -145,29 +139,16 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
 
   Widget _buildHeading() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'When is your big day?',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-            fontFamily: 'Serif',
-            letterSpacing: 0.3,
-            height: 1.25,
-          ),
-        ),
-        const SizedBox(height: 10),
         Text(
-          'Select a date to check availability for your premium event.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 15,
-            color: AppColors.textSecondary,
-            height: 1.5,
-          ),
+          'Select Date & Time',
+          style: AppTextStyles.headingXL,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Coordinate the perfect moment for your curated celebration.',
+          style: AppTextStyles.bodyL.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -178,15 +159,16 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeading(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
                 _buildCalendarCard(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 _buildBookingSummaryCard(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 48),
               ],
             ),
           ),
@@ -209,25 +191,23 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
                 flex: 6,
                 child: SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeading(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       _buildCalendarCard(),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 32),
               Expanded(
                 flex: 4,
                 child: SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildBookingSummaryCard(isCompact: true),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 24),
                       _buildCTA(),
                     ],
                   ),
@@ -243,9 +223,9 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
   Widget _buildDesktopLayout() {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
+        constraints: const BoxConstraints(maxWidth: 1200),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -253,21 +233,26 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
                 flex: 3,
                 child: SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeading(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 48),
                       _buildCalendarCard(),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 40),
+              const SizedBox(width: 80),
               Expanded(
                 flex: 2,
                 child: SingleChildScrollView(
-                  child: _buildBookingSummaryCard(isDesktop: true),
+                  child: Column(
+                    children: [
+                      _buildBookingSummaryCard(isDesktop: true),
+                      const SizedBox(height: 32),
+                      _buildCTA(),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -279,16 +264,16 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
 
   Widget _buildCalendarCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider.withOpacity(0.8)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 20,
-            offset: const Offset(0, 6),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -296,13 +281,13 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildCalendarHeader(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _buildCalendarGrid(),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           _buildLegend(),
-          const SizedBox(height: 20),
-          Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 20),
+          const SizedBox(height: 32),
+          const Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: 32),
           _buildTimePickerSection(),
         ],
       ),
@@ -313,60 +298,41 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Select Event Time',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-                fontFamily: 'Serif',
-              ),
-            ),
-            if (_selectedTime != null)
-              Text(
-                _selectedTime!.format(context),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-          ],
+        Text(
+          'Select Experience Time',
+          style: AppTextStyles.headingS.copyWith(fontSize: 16),
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 42,
+          height: 48,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _timeSlots.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 10),
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final time = _timeSlots[index];
               final isSelected = _selectedTime == time;
 
-              return GestureDetector(
+              return InkWell(
                 onTap: () => setState(() => _selectedTime = time),
+                borderRadius: BorderRadius.circular(12),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected ? AppColors.primary : AppColors.divider,
-                      width: 1,
+                      width: 1.5,
                     ),
                   ),
                   child: Center(
                     child: Text(
                       time.format(context),
-                      style: TextStyle(
-                        color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      style: AppTextStyles.labelM.copyWith(
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                       ),
                     ),
                   ),
@@ -383,158 +349,118 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
-              });
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 22),
-            ),
-          ),
+        _buildNavButton(
+          icon: Icons.chevron_left,
+          onTap: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1)),
         ),
         Text(
-          DateFormat('MMMM yyyy').format(_focusedDay),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+          DateFormat('MMMM yyyy').format(_focusedDay).toUpperCase(),
+          style: AppTextStyles.labelM.copyWith(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
             color: AppColors.textPrimary,
-            fontFamily: 'Serif',
-            letterSpacing: 0.3,
           ),
         ),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
-              });
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Icon(Icons.chevron_right, color: AppColors.textPrimary, size: 22),
-            ),
-          ),
+        _buildNavButton(
+          icon: Icons.chevron_right,
+          onTap: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1)),
         ),
       ],
+    );
+  }
+
+  Widget _buildNavButton({required IconData icon, required VoidCallback onTap}) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: AppColors.primary, size: 24),
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.accentRose.withOpacity(0.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.all(8),
+      ),
     );
   }
 
   Widget _buildCalendarGrid() {
     final daysInMonth = DateUtils.getDaysInMonth(_focusedDay.year, _focusedDay.month);
     final firstDayOffset = DateTime(_focusedDay.year, _focusedDay.month, 1).weekday % 7;
-    final rows = ((daysInMonth + firstDayOffset) / 7).ceil();
-    final totalCells = rows * 7;
-    const double rowHeight = 48;
+    final totalCells = ((daysInMonth + firstDayOffset) / 7).ceil() * 7;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
-          children: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+          children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
               .map((d) => Expanded(
                     child: Center(
                       child: Text(
                         d,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.8,
+                        style: AppTextStyles.labelS.copyWith(
+                          color: AppColors.textHint,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                   ))
               .toList(),
         ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: rows * (rowHeight + 8) - 8,
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1,
-            ),
-            itemCount: totalCells,
-            itemBuilder: (context, index) {
-              final dayNumber = index - firstDayOffset + 1;
-              if (dayNumber < 1 || dayNumber > daysInMonth) {
-                return const SizedBox.shrink();
-              }
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1,
+          ),
+          itemCount: totalCells,
+          itemBuilder: (context, index) {
+            final dayNumber = index - firstDayOffset + 1;
+            if (dayNumber < 1 || dayNumber > daysInMonth) {
+              return const SizedBox.shrink();
+            }
 
-              final currentDay = DateTime(_focusedDay.year, _focusedDay.month, dayNumber);
-              final isSelected = _selectedDay != null &&
-                  _selectedDay!.year == currentDay.year &&
-                  _selectedDay!.month == currentDay.month &&
-                  _selectedDay!.day == currentDay.day;
+            final currentDay = DateTime(_focusedDay.year, _focusedDay.month, dayNumber);
+            final isSelected = _selectedDay != null &&
+                _selectedDay!.year == currentDay.year &&
+                _selectedDay!.month == currentDay.month &&
+                _selectedDay!.day == currentDay.day;
 
-              final isBooked = _bookedDays.contains(dayNumber);
-              final isPast = currentDay.isBefore(DateTime.now().subtract(const Duration(days: 1)));
-              final isDisabled = isBooked || isPast;
+            final isBooked = _bookedDays.contains(dayNumber);
+            final isPast = currentDay.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+            final isDisabled = isBooked || isPast;
 
-              return GestureDetector(
-                onTap: isDisabled ? null : () => setState(() => _selectedDay = currentDay),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  margin: const EdgeInsets.all(1),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: isSelected
-                        ? null
-                        : Border.all(
-                            color: isDisabled ? Colors.transparent : AppColors.divider.withOpacity(0.5),
-                            width: 1,
-                          ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      dayNumber.toString(),
-                      style: TextStyle(
-                        color: isSelected
-                            ? AppColors.onPrimary
-                            : isDisabled
-                                ? AppColors.textDisabled
-                                : AppColors.textPrimary,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        fontSize: 15,
-                      ),
+            return GestureDetector(
+              onTap: isDisabled ? null : () => setState(() => _selectedDay = currentDay),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: isSelected
+                      ? null
+                      : Border.all(
+                          color: isDisabled ? Colors.transparent : AppColors.divider,
+                          width: 1,
+                        ),
+                ),
+                child: Center(
+                  child: Text(
+                    dayNumber.toString(),
+                    style: AppTextStyles.bodyM.copyWith(
+                      color: isSelected
+                          ? Colors.white
+                          : isDisabled
+                              ? AppColors.textDisabled
+                              : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -548,7 +474,7 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
         const SizedBox(width: 20),
         _buildLegendItem(Colors.transparent, 'Available', isOutline: true),
         const SizedBox(width: 20),
-        _buildLegendItem(AppColors.divider, 'Unavailable'),
+        _buildLegendItem(AppColors.divider, 'Reserved'),
       ],
     );
   }
@@ -561,19 +487,15 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: isOutline ? Colors.transparent : color,
+            color: isOutline ? Colors.transparent : color.withOpacity(0.8),
             shape: BoxShape.circle,
             border: isOutline ? Border.all(color: AppColors.divider, width: 1.5) : null,
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
+          style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -586,8 +508,8 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider.withOpacity(0.6)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -596,55 +518,52 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildSummaryHeader(),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            color: AppColors.accentRose.withOpacity(0.15),
+            child: Text(
+              'EXPERIENCE RECAP',
+              style: AppTextStyles.labelS.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                _buildSummaryRow(Icons.celebration_outlined, 'Event Type', detail.eventTypeName),
-                const SizedBox(height: 10),
-                _buildSummaryRow(Icons.palette_outlined, 'Decoration', detail.name),
-                const SizedBox(height: 10),
-                _buildSummaryRow(Icons.location_on_outlined, 'Location', '${address.area}, ${address.city}'),
-                const SizedBox(height: 10),
-                _buildSummaryRow(Icons.calendar_month_outlined, 'Date',
-                    _selectedDay != null ? DateFormat('MMMM dd, yyyy').format(_selectedDay!) : 'Not Selected'),
-                const SizedBox(height: 10),
-                _buildSummaryRow(Icons.access_time_outlined, 'Time',
-                    _selectedTime != null ? _selectedTime!.format(context) : 'Not Selected'),
-                const SizedBox(height: 16),
-                Divider(height: 1, color: AppColors.divider),
+                _buildSummaryLine(Icons.auto_awesome_outlined, 'Package', detail.name),
+                const SizedBox(height: 12),
+                _buildSummaryLine(Icons.location_on_outlined, 'Venue', '${address.area}, ${address.city}'),
+                const SizedBox(height: 12),
+                _buildSummaryLine(Icons.calendar_today_outlined, 'Date',
+                    _selectedDay != null ? DateFormat('MMMM dd, yyyy').format(_selectedDay!) : 'Pending'),
+                const SizedBox(height: 12),
+                _buildSummaryLine(Icons.schedule_outlined, 'Time',
+                    _selectedTime != null ? _selectedTime!.format(context) : 'Pending'),
+                const SizedBox(height: 20),
+                const Divider(height: 1, color: AppColors.divider),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Total Amount',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
                     ),
                     Text(
                       detail.formattedPrice,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                        fontFamily: 'Serif',
-                      ),
+                      style: AppTextStyles.price.copyWith(fontSize: 22, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
-                if (isDesktop) ...[
-                  const SizedBox(height: 16),
-                  _buildCTA(),
-                ],
               ],
             ),
           ),
@@ -653,63 +572,23 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
     );
   }
 
-  Widget _buildSummaryHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: const Text(
-        'BOOKING SUMMARY',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: AppColors.primary,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(IconData icon, String label, String value) {
+  Widget _buildSummaryLine(IconData icon, String label, String value) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 18, color: AppColors.primary),
-        ),
-        const SizedBox(width: 14),
+        Icon(icon, size: 16, color: AppColors.textHint),
+        const SizedBox(width: 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+          child: RichText(
+            text: TextSpan(
+              style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
+              children: [
+                TextSpan(text: '$label: '),
+                TextSpan(
+                  text: value,
+                  style: AppTextStyles.bodyS.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -718,56 +597,27 @@ class _SelectEventDatePageState extends State<SelectEventDatePage> {
 
   Widget _buildBottomFixedCTA() {
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 14, 20, 14 + MediaQuery.of(context).padding.bottom),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.divider)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            offset: const Offset(0, -2),
-            blurRadius: 8,
-          ),
-        ],
+        color: AppColors.background.withOpacity(0.95),
+        border: const Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: _buildCTA(),
     );
   }
 
   Widget _buildCTA() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: (_selectedDay == null || _selectedTime == null) ? null : () {
-          context.push(
-            AppRoutes.paymentMethod.replaceAll(':id', widget.args.decorationDetail.id),
-            extra: widget.args.copyWith(
-              selectedDate: _selectedDay,
-              selectedTime: _selectedTime,
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
-          disabledBackgroundColor: AppColors.divider,
-          disabledForegroundColor: AppColors.textDisabled,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Confirm Booking',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.3),
-            ),
-            SizedBox(width: 10),
-            Icon(Icons.arrow_forward_rounded, size: 20),
-          ],
-        ),
-      ),
+    return PrimaryButton(
+      text: 'CONFIRM SCHEDULE',
+      onPressed: (_selectedDay == null || _selectedTime == null) ? null : () {
+        context.push(
+          AppRoutes.paymentMethod.replaceAll(':id', widget.args.decorationDetail.id),
+          extra: widget.args.copyWith(
+            selectedDate: _selectedDay,
+            selectedTime: _selectedTime,
+          ),
+        );
+      },
     );
   }
 }
