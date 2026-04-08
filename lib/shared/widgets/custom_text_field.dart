@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_online/core/theme/app_colors.dart';
+import 'package:flutter_online/core/theme/app_text_styles.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -37,25 +39,23 @@ class CustomTextField extends StatelessWidget {
           children: [
             Text(
               label.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF64748B),
-                letterSpacing: 0.5,
+              style: AppTextStyles.labelS.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
               ),
             ),
             if (isOptional)
-              const Text(
+              Text(
                 'OPTIONAL',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFF94A3B8),
-                  fontWeight: FontWeight.w500,
+                style: AppTextStyles.labelS.copyWith(
+                  fontSize: 9,
+                  color: AppColors.textHint,
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         TextFormField(
           controller: controller,
           validator: validator,
@@ -63,39 +63,36 @@ class CustomTextField extends StatelessWidget {
           inputFormatters: inputFormatters,
           maxLines: maxLines,
           onChanged: onChanged,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFF1E293B),
-            fontWeight: FontWeight.w500,
+          style: AppTextStyles.bodyM.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
+            hintStyle: AppTextStyles.bodyM.copyWith(
+              color: AppColors.textHint,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: AppColors.surface,
             suffixIcon: suffixIcon,
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEF4444)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
-            errorStyle: const TextStyle(fontSize: 12, color: Color(0xFFEF4444)),
+            errorStyle: AppTextStyles.error,
           ),
         ),
       ],

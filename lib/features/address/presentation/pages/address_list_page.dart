@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_online/core/routes/app_routes.dart';
+import 'package:flutter_online/core/theme/app_colors.dart';
+import 'package:flutter_online/core/theme/app_text_styles.dart';
 import 'package:flutter_online/di/service_locator.dart';
 import 'package:go_router/go_router.dart';
 import '../cubit/address_cubit.dart';
@@ -25,36 +27,20 @@ class _AddressListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'My Addresses',
-          style: TextStyle(
-            color: Color(0xFF1E293B),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Text(
+          'Saved Locations',
+          style: AppTextStyles.headingM,
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF2563EB)),
-            onPressed: () => context.push(AppRoutes.addAddress).then((_) {
-              // Refresh list when coming back
-              context.read<AddressCubit>().fetchAddresses();
-            }),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
-        ),
       ),
       body: BlocListener<AddressCubit, AddressState>(
         listener: (context, state) {
@@ -62,7 +48,7 @@ class _AddressListView extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: const Color(0xFFEF4444),
+                backgroundColor: AppColors.error,
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -70,8 +56,8 @@ class _AddressListView extends StatelessWidget {
           if (state is AddressDeleteSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Address deleted successfully'),
-                backgroundColor: Color(0xFF10B981),
+                content: Text('Address removed from profile'),
+                backgroundColor: AppColors.textPrimary,
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -83,8 +69,6 @@ class _AddressListView extends StatelessWidget {
           builder: (context, state) {
             if (state is AddressLoading) {
               return _buildShimmerLoader();
-            } else if (state is AddressFailure && state.message.contains('logged in')) {
-              return _buildErrorWidget(context, state.message);
             } else if (state is AddressEmpty) {
               return _buildEmptyState(context);
             } else if (state is AddressLoaded || state is AddressDeleting) {
@@ -98,10 +82,14 @@ class _AddressListView extends StatelessWidget {
         onPressed: () => context.push(AppRoutes.addAddress).then((_) {
           context.read<AddressCubit>().fetchAddresses();
         }),
-        backgroundColor: const Color(0xFF2563EB),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add New Address',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.textPrimary,
+        elevation: 8,
+        icon: const Icon(Icons.add_location_alt_outlined, color: Colors.white, size: 20),
+        label: Text(
+          'ADD NEW LOCATION',
+          style: AppTextStyles.labelM.copyWith(color: Colors.white, letterSpacing: 1.2, fontWeight: FontWeight.w800),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -116,9 +104,10 @@ class _AddressListView extends StatelessWidget {
           addresses = state.currentAddresses;
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
           itemCount: addresses.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 20),
           itemBuilder: (context, index) {
             return _AddressCard(
               address: addresses[index],
@@ -132,128 +121,73 @@ class _AddressListView extends StatelessWidget {
 
   Widget _buildShimmerLoader() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       itemCount: 3,
       itemBuilder: (context, index) {
         return Container(
-          height: 120,
-          margin: const EdgeInsets.only(bottom: 16),
+          height: 160,
+          margin: const EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.divider),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 150,
-                height: 20,
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(width: 48, height: 48, decoration: const BoxDecoration(color: AppColors.divider, shape: BoxShape.circle)),
+                    const SizedBox(width: 16),
+                    Container(width: 100, height: 20, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(6))),
+                  ],
                 ),
-              ),
-              Container(
-                width: 250,
-                height: 15,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.02),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                Container(width: 180, height: 24, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(6))),
+                const SizedBox(height: 12),
+                Container(width: double.infinity, height: 16, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(6))),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildErrorWidget(BuildContext context, String message) {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(40.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Color(0xFFEF4444)),
-            const SizedBox(height: 16),
-            const Text(
-              'Oops! Something went wrong',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.read<AddressCubit>().fetchAddresses(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 40, offset: const Offset(0, 20))
+                ],
               ),
-              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+              child: const Icon(Icons.location_off_outlined, size: 80, color: AppColors.accentRose),
+            ),
+            const SizedBox(height: 48),
+            Text(
+              'No Saved Locations',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.headingL,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your curated experience requires a venue. Add the locations where you would like us to create magic.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyL.copyWith(color: AppColors.textSecondary, height: 1.5),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))
-              ],
-            ),
-            child: const Icon(Icons.location_off_outlined, size: 64, color: Color(0xFF94A3B8)),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'No Addresses Found',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Add your address to enjoy a seamless\nbooking experience.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: () => context.push(AppRoutes.addAddress).then((_) {
-              context.read<AddressCubit>().fetchAddresses();
-            }),
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add New Address', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -270,114 +204,138 @@ class _AddressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDefault = address.isDefault;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isDefault ? AppColors.primary.withOpacity(0.4) : AppColors.divider,
+          width: isDefault ? 2 : 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _getIconData(address.addressType),
-                color: const Color(0xFF2563EB),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTypeIllustration(),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            address.addressType.toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF64748B),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          if (address.isDefault) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'DEFAULT',
-                                style: TextStyle(
-                                  color: Color(0xFF10B981),
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              Text(
+                                address.addressType.toUpperCase(),
+                                style: AppTextStyles.labelS.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
                                 ),
                               ),
-                            ),
-                          ],
+                              if (isDefault) ...[
+                                const SizedBox(width: 12),
+                                _buildPrimaryBadge(),
+                              ],
+                            ],
+                          ),
+                          _buildCustomMenu(context),
                         ],
                       ),
-                      _buildMenu(context),
+                      const SizedBox(height: 16),
+                      Text(
+                        address.fullName,
+                        style: AppTextStyles.headingS.copyWith(fontSize: 18),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        address.mobileNumber,
+                        style: AppTextStyles.bodyS.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Divider(height: 1, color: AppColors.divider),
+                      ),
+                      Text(
+                        '${address.houseNo}, ${address.area}\n${address.city}, ${address.state} - ${address.pincode}',
+                        style: AppTextStyles.bodyM.copyWith(
+                          color: AppColors.textPrimary,
+                          height: 1.6,
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    address.fullName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    address.mobileNumber,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${address.houseNo}, ${address.area}, ${address.city}, ${address.state} - ${address.pincode}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF475569),
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMenu(BuildContext context) {
+  Widget _buildTypeIllustration() {
+    IconData icon;
+    switch (address.addressType.toUpperCase()) {
+      case 'HOME': icon = Icons.home_rounded; break;
+      case 'WORK': icon = Icons.business_center_rounded; break;
+      default: icon = Icons.map_rounded;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.accentRose.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Icon(
+        icon,
+        color: AppColors.primary,
+        size: 24,
+      ),
+    );
+  }
+
+  Widget _buildPrimaryBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        'PRIMARY',
+        style: AppTextStyles.labelS.copyWith(
+          color: Colors.white,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomMenu(BuildContext context) {
     return BlocBuilder<AddressCubit, AddressState>(
       builder: (context, state) {
         final isDeleting = state is AddressDeleting && state.addressId == address.id;
@@ -386,33 +344,27 @@ class _AddressCard extends StatelessWidget {
           return const SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primary),
           );
         }
 
         return PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: Color(0xFF64748B), size: 20),
+          icon: const Icon(Icons.more_vert_rounded, color: AppColors.textHint, size: 24),
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 120),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 12,
+          offset: const Offset(0, 48),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           onSelected: (value) {
-            if (value == 'edit') {
-              // Edit functionality
-            } else if (value == 'delete') {
-              _showDeleteConfirmation(context);
-            }
+            if (value == 'delete') _showPremiumDeleteDialog(context);
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'edit',
               child: Row(
                 children: [
-                  Icon(Icons.edit_outlined, size: 18),
-                  SizedBox(width: 10),
-                  Text('Edit'),
+                  const Icon(Icons.edit_note_rounded, size: 20, color: AppColors.textPrimary),
+                  const SizedBox(width: 12),
+                  Text('Edit Venue', style: AppTextStyles.bodyM),
                 ],
               ),
             ),
@@ -420,9 +372,9 @@ class _AddressCard extends StatelessWidget {
               value: 'delete',
               child: Row(
                 children: [
-                  Icon(Icons.delete_outline, size: 18, color: Colors.red[600]),
-                  const SizedBox(width: 10),
-                  Text('Delete', style: TextStyle(color: Colors.red[600])),
+                  const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.error),
+                  const SizedBox(width: 12),
+                  Text('Remove', style: AppTextStyles.bodyM.copyWith(color: AppColors.error)),
                 ],
               ),
             ),
@@ -432,12 +384,12 @@ class _AddressCard extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
+  void _showPremiumDeleteDialog(BuildContext context) {
     if (allAddresses.length == 1 && address.isDefault) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("You must keep at least one address."),
-          backgroundColor: Color(0xFF64748B),
+          content: Text("A primary location is required for Meeveduka bookings."),
+          backgroundColor: AppColors.textPrimary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -447,35 +399,28 @@ class _AddressCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Address'),
-        content: const Text('Are you sure you want to delete this address?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        title: Text('Remove Location', style: AppTextStyles.headingS),
+        content: Text(
+          'Are you sure you want to remove this venue location from your profile?',
+          style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+            child: Text('CANCEL', style: AppTextStyles.labelM),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<AddressCubit>().deleteAddress(address.id!);
             },
-            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+            child: Text('REMOVE', style: AppTextStyles.labelM.copyWith(color: AppColors.error, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
     );
   }
-
-  IconData _getIconData(String type) {
-    switch (type.toUpperCase()) {
-      case 'HOME':
-        return Icons.home_outlined;
-      case 'WORK':
-        return Icons.work_outline;
-      default:
-        return Icons.location_on_outlined;
-    }
-  }
 }
-

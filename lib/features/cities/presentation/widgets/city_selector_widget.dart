@@ -33,16 +33,16 @@ class CitySelectorWidget extends StatelessWidget {
         }
 
         return GestureDetector(
-          onTap: onTap ?? () => _showCityBottomSheet(context),
+          onTap: onTap ?? () => _showCityDialog(context),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isScrolled
-                  ? AppColors.background
-                  : Colors.black.withOpacity(0.3),
+                  ? AppColors.surfaceMuted
+                  : AppColors.surfaceMuted.withOpacity(0.92),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: isScrolled ? AppColors.divider : Colors.white30,
+                color: isScrolled ? AppColors.border : AppColors.border,
               ),
             ),
             child: Row(
@@ -51,21 +51,22 @@ class CitySelectorWidget extends StatelessWidget {
                 Icon(
                   Icons.location_on,
                   size: 14,
-                  color: isScrolled ? AppColors.primary : Colors.white,
+                  color: AppColors.primaryDark,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   displayName,
                   style: AppTextStyles.labelM.copyWith(
-                    color: isScrolled ? AppColors.textPrimary : Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   hasCity ? 'Change' : '',
                   style: AppTextStyles.labelS.copyWith(
-                    color: isScrolled ? AppColors.primary : Colors.white70,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -73,7 +74,7 @@ class CitySelectorWidget extends StatelessWidget {
                 Icon(
                   Icons.keyboard_arrow_down,
                   size: 16,
-                  color: isScrolled ? AppColors.textSecondary : Colors.white70,
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),
@@ -83,7 +84,7 @@ class CitySelectorWidget extends StatelessWidget {
     );
   }
 
-  void _showCityBottomSheet(BuildContext context) async {
+  Future<void> _showCityDialog(BuildContext context) async {
     final cityCubit = context.read<CityCubit>();
     await cityCubit.loadCities();
 
@@ -99,82 +100,104 @@ class CitySelectorWidget extends StatelessWidget {
 
     if (state is! CityListLoaded) return;
 
-    showModalBottomSheet<void>(
+    if (!context.mounted) return;
+
+    await showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _CitySelectionSheet(
-        cities: state.cities,
-        onSelect: (city) {
-          cityCubit.selectCity(city);
-          Navigator.pop(ctx);
-        },
-      ),
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return _CityPickerAlertDialog(
+          cities: state.cities,
+          onSelect: (city) {
+            cityCubit.selectCity(city);
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
     );
   }
 }
 
-class _CitySelectionSheet extends StatelessWidget {
+class _CityPickerAlertDialog extends StatelessWidget {
   final List<CityItem> cities;
   final void Function(CityItem) onSelect;
 
-  const _CitySelectionSheet({
+  const _CityPickerAlertDialog({
     required this.cities,
     required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      title: Text(
+        'Select City',
+        style: AppTextStyles.headingM.copyWith(
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Select City',
-              style: AppTextStyles.headingM.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Divider(height: 1),
-          Flexible(
-            child: cities.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Text('No cities available'),
-                  )
-                : ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: cities.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final city = cities[index];
-                      return ListTile(
-                        leading: const Icon(Icons.location_city),
-                        title: Text(city.name),
-                        onTap: () => onSelect(city),
-                      );
-                    },
+      content: cities.isEmpty
+          ? Text(
+              'No cities available',
+              style: AppTextStyles.bodyM.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            )
+          : SizedBox(
+              width: double.maxFinite,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.45,
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: cities.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: AppColors.divider,
                   ),
+                  itemBuilder: (context, index) {
+                    final city = cities[index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      leading: Icon(
+                        Icons.location_city_outlined,
+                        color: AppColors.primary,
+                      ),
+                      title: Text(
+                        city.name,
+                        style: AppTextStyles.bodyL.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      onTap: () => onSelect(city),
+                    );
+                  },
+                ),
+              ),
+            ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'Cancel',
+            style: AppTextStyles.labelM.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

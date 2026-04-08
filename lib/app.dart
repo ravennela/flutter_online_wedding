@@ -9,7 +9,7 @@ class WeddingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Online Wedding Planner',
+      title: 'Meeveduka',
       theme: AppTheme.lightTheme,
       routerConfig: router,
     );

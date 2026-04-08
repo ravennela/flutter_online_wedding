@@ -71,7 +71,7 @@ class _EventListViewState extends State<_EventListView> {
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
                 title: Text(
-                  'Elegant Events',
+                  'Meeveduka',
                   style: AppTextStyles.headingM.copyWith(
                     fontFamily: 'Serif',
                     fontWeight: FontWeight.bold,
@@ -240,7 +240,7 @@ class _EventListViewState extends State<_EventListView> {
       );
     }
     if (state is PublicEventsLoaded && events.isEmpty) {
-      return const SliverFillRemaining(
+      return SliverFillRemaining(
         child: Center(
           child: Text(
             'No events to show',

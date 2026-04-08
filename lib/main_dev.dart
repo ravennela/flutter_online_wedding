@@ -4,7 +4,7 @@ import 'package:flutter_online/main.dart' as common;
 void main() async {
   FlavorConfig.initialize(
     flavor: Flavor.dev,
-    name: 'Online Wedding (DEV)',
+    name: 'Meeveduka (DEV)',
     baseUrl: 'https://springwedding-dev.up.railway.app',
     razorpayKey: 'rzp_test_RtNLIrdQnUawTd', // Replace with real key
   );

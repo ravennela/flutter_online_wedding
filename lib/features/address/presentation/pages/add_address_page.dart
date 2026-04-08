@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_online/core/theme/app_colors.dart';
+import 'package:flutter_online/core/theme/app_text_styles.dart';
 import 'package:flutter_online/di/service_locator.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../cubit/add_address_cubit.dart';
 import '../cubit/add_address_state.dart';
@@ -40,7 +43,7 @@ class _AddAddressViewState extends State<_AddAddressView> {
               content: Text(state.message),
               padding: const EdgeInsets.all(20),
               behavior: SnackBarBehavior.floating,
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: AppColors.textPrimary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           );
@@ -51,34 +54,27 @@ class _AddAddressViewState extends State<_AddAddressView> {
               content: Text(state.error),
               padding: const EdgeInsets.all(20),
               behavior: SnackBarBehavior.floating,
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppColors.error,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FB),
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.background,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
-            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
+            onPressed: () => context.pop(),
           ),
-          title: const Text(
-            'Add New Address',
-            style: TextStyle(
-              color: Color(0xFF1E293B),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          title: Text(
+            'Experience Location',
+            style: AppTextStyles.headingM,
           ),
           centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
-          ),
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {
@@ -86,8 +82,8 @@ class _AddAddressViewState extends State<_AddAddressView> {
             
             return SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? (constraints.maxWidth - 1200).clamp(24.0, double.infinity) / 2 : 16,
-                vertical: 24,
+                horizontal: isDesktop ? (constraints.maxWidth - 1200).clamp(24.0, double.infinity) / 2 : 24,
+                vertical: 32,
               ),
               child: Center(
                 child: ConstrainedBox(
@@ -111,31 +107,28 @@ class _AddAddressViewState extends State<_AddAddressView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Add New Address',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+        Text(
+          'Where shall we\ncreate the magic?',
+          style: AppTextStyles.headingXL.copyWith(height: 1.1),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Your location details help us curate the perfect installation and logistics experience for your celebration.',
+          style: AppTextStyles.bodyL.copyWith(
+            color: AppColors.textSecondary,
+            height: 1.5,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'This location will be used for your event booking and vendor delivery logistics.',
-          style: TextStyle(
-            fontSize: 15,
-            color: Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 48),
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: AppColors.divider),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withOpacity(0.02),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -155,23 +148,34 @@ class _AddAddressViewState extends State<_AddAddressView> {
         // Left section: Form Card
         Expanded(
           flex: 2,
-          child: Container(
-            padding: const EdgeInsets.all(40),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               Text(
+                'Experience Location',
+                style: AppTextStyles.headingXL,
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: AppColors.divider),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 40,
+                      offset: const Offset(0, 20),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: AddressFormWidget(key: _widgetKey, formKey: _formKey),
+                child: AddressFormWidget(key: _widgetKey, formKey: _formKey),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 40),
+        const SizedBox(width: 48),
         // Right section: Booking Summary
         const Expanded(
           flex: 1,
@@ -185,35 +189,30 @@ class _AddAddressViewState extends State<_AddAddressView> {
     return BlocBuilder<AddAddressCubit, AddAddressState>(
       builder: (context, state) {
         return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
           decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -5),
-              ),
-            ],
+            color: AppColors.background.withOpacity(0.95),
+            border: const Border(top: BorderSide(color: AppColors.divider)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               PrimaryButton(
-                text: 'Save Address',
+                text: 'SAVE LOCATION',
                 isLoading: state is AddAddressLoading,
                 onPressed: state is AddAddressLoading ? null : () {
                   _widgetKey.currentState?.submit();
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.bold,
+                onPressed: () => context.pop(),
+                child: Text(
+                  'NOT NOW',
+                  style: AppTextStyles.labelM.copyWith(
+                    color: AppColors.textSecondary,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),

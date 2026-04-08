@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_online/core/routes/app_routes.dart';
 import 'package:flutter_online/core/theme/app_colors.dart';
 import 'package:flutter_online/core/theme/app_text_styles.dart';
 import 'package:flutter_online/core/widgets/app_drawer.dart';
@@ -15,6 +16,13 @@ import 'package:go_router/go_router.dart';
 /// Default image when API returns no image.
 const String _defaultDetailImage =
     'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';
+
+const List<IconData> _kInclusionRowIcons = [
+  Icons.local_florist_outlined,
+  Icons.lightbulb_outline,
+  Icons.weekend_outlined,
+  Icons.auto_fix_high_outlined,
+];
 
 class PublicDecorationDetailPage extends StatelessWidget {
   final String decorationId;
@@ -57,13 +65,104 @@ class _PublicDecorationDetailView extends StatelessWidget {
             );
           }
           if (state is DecorationDetailLoaded) {
-            return _DetailContent(
-              detail: state.detail,
-              decorationId: decorationId,
-            );
+            return _DetailContent(detail: state.detail);
           }
           return const SizedBox.shrink();
         },
+      ),
+      bottomNavigationBar:
+          BlocBuilder<DecorationDetailCubit, DecorationDetailState>(
+        builder: (context, state) {
+          if (state is! DecorationDetailLoaded) {
+            return const SizedBox.shrink();
+          }
+          return _StickyBookBar(
+            detail: state.detail,
+            decorationId: decorationId,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StickyBookBar extends StatelessWidget {
+  final PublicDecorationDetail detail;
+  final String decorationId;
+
+  const _StickyBookBar({
+    required this.detail,
+    required this.decorationId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.95),
+        border: const Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          child: Row(
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text(
+                    'TOTAL COST',
+                    style: AppTextStyles.labelS.copyWith(letterSpacing: 1.0),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detail.formattedPrice,
+                    style: AppTextStyles.price.copyWith(fontSize: 20, color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 32),
+              Expanded(
+                child: BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, authState) {
+                    final isLoggedIn = authState is AuthAuthenticated;
+                    return ElevatedButton(
+                      onPressed: () {
+                        if (isLoggedIn) {
+                          context.push('/booking/$decorationId');
+                        } else {
+                          LoginRedirectData.pending = LoginRedirectData(
+                            nextRoute: '/booking/$decorationId',
+                            extra: null,
+                          );
+                          context.push('/login', extra: LoginRedirectData.pending);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.textPrimary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'RESERVE EXPERIENCE',
+                        style: AppTextStyles.buttonPrimary.copyWith(
+                          fontSize: 12,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -71,15 +170,15 @@ class _PublicDecorationDetailView extends StatelessWidget {
 
 class _DetailContent extends StatelessWidget {
   final PublicDecorationDetail detail;
-  final String decorationId;
 
-  const _DetailContent({
-    required this.detail,
-    required this.decorationId,
-  });
+  const _DetailContent({required this.detail});
 
-  String get _imageUrl =>
-      detail.firstImageUrl.isNotEmpty ? detail.firstImageUrl : _defaultDetailImage;
+  List<String> get _galleryUrls {
+    if (detail.imageUrls.isNotEmpty) return detail.imageUrls;
+    final u = detail.firstImageUrl;
+    if (u.isNotEmpty) return [u];
+    return [_defaultDetailImage];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,23 +187,44 @@ class _DetailContent extends StatelessWidget {
       slivers: [
         _buildAppBar(context),
         SliverToBoxAdapter(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeroImage(),
-                  const SizedBox(height: 20),
-                  _buildHeaderCard(),
-                  if (_hasInclusionsOrExclusions) ...[
-                    const SizedBox(height: 16),
-                    _buildInclusionsExclusionsCard(),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    _buildHeroGallery(context),
+                    const SizedBox(height: 32),
+                    _buildTitleSection(),
+                    const SizedBox(height: 40),
+                    if (detail.description != null && detail.description!.isNotEmpty) ...[
+                      _buildSectionTitle('The Vision'),
+                      const SizedBox(height: 12),
+                      Text(
+                        detail.description!,
+                        style: AppTextStyles.bodyL.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.7,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                    ],
+                    if (_hasInclusionsOrExclusions) ...[
+                      _buildIncludedSection(),
+                      const SizedBox(height: 48),
+                    ],
+                    if (detail.providerName != null && detail.providerName!.trim().isNotEmpty) ...[
+                      _buildSectionTitle('The Artist'),
+                      const SizedBox(height: 20),
+                      _buildProviderCard(),
+                      const SizedBox(height: 120), // Bottom padding for sticky bar
+                    ],
                   ],
-                  const SizedBox(height: 24),
-                  _buildBookCard(context),
-                ],
+                ),
               ),
             ),
           ),
@@ -120,318 +240,319 @@ class _DetailContent extends StatelessWidget {
   Widget _buildAppBar(BuildContext context) {
     return SliverAppBar(
       floating: true,
-      backgroundColor: AppColors.surface,
+      pinned: true,
       elevation: 0,
-      leading: Builder(
-        builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
-        ),
+      scrolledUnderElevation: 0,
+      backgroundColor: AppColors.background.withOpacity(0.9),
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+        onPressed: () => context.pop(),
       ),
-      title: Text(
-        detail.name,
-        style: AppTextStyles.headingM.copyWith(
-          fontWeight: FontWeight.bold,
-          fontFamily: 'Serif',
-          color: AppColors.textPrimary,
-        ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/icon/app_logo.png',
+            height: 24,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Meeveduka',
+            style: AppTextStyles.displaySerif.copyWith(fontSize: 18),
+          ),
+        ],
       ),
       centerTitle: true,
     );
   }
 
-  Widget _buildHeroImage() {
-    // Shorter banner: max height 320px, aspect 2.5:1 so image doesn't dominate or force scroll
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = (width / 2.5).clamp(200.0, 320.0);
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: height,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  _imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.divider,
-                    child: const Icon(
-                      Icons.image_not_supported_outlined,
-                      size: 48,
-                      color: AppColors.textSecondary,
-                    ),
+  Widget _buildHeroGallery(BuildContext context) {
+    final urls = _galleryUrls;
+    final total = urls.length;
+
+    return Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 1.2,
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: PageView.builder(
+                  itemCount: total,
+                  itemBuilder: (context, index) => Image.network(
+                    urls[index],
+                    fit: BoxFit.cover,
                   ),
                 ),
-                Container(
+              ),
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.35),
-                      ],
-                      stops: const [0.5, 1.0],
-                    ),
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
                   ),
-                ),
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.photo_library_outlined, size: 14, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        '1 / $total',
+                        style: AppTextStyles.labelS.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      detail.eventTypeName.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        letterSpacing: 1.2,
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
-  Widget _buildHeaderCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+  Widget _buildTitleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _pillBadge('PREMIUM COLLECTION', AppColors.badgeLavender),
+            const SizedBox(width: 8),
+            _pillBadge('LIMITED', AppColors.badgePeach),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          detail.name,
+          style: AppTextStyles.headingXL.copyWith(
+            fontSize: 34,
+            height: 1.1,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            detail.name,
-            style: AppTextStyles.headingL.copyWith(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Serif',
-              color: AppColors.textPrimary,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            detail.eventTypeName.toUpperCase(),
-            style: AppTextStyles.labelM.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildChip(detail.eventTypeName),
-              _buildChip(detail.cityName),
-            ],
-          ),
-          if (detail.description != null && detail.description!.isNotEmpty) ...[
-            const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
             Text(
-              detail.description!,
-              style: AppTextStyles.bodyM.copyWith(
-                color: AppColors.textSecondary,
-                height: 1.5,
-                fontSize: 13,
+              detail.formattedPrice,
+              style: AppTextStyles.price.copyWith(fontSize: 28, color: AppColors.textPrimary),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                'starting investment',
+                style: AppTextStyles.labelM.copyWith(color: AppColors.textSecondary),
               ),
             ),
           ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildChip(String label) {
+  Widget _pillBadge(String text, Color bg) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        label,
-        style: AppTextStyles.labelM.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
+        text,
+        style: AppTextStyles.labelS.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w800,
+          fontSize: 9,
+          letterSpacing: 1.0,
         ),
       ),
     );
   }
 
-  Widget _buildInclusionsExclusionsCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+  Widget _buildSectionTitle(String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title.toUpperCase(),
+          style: AppTextStyles.labelM.copyWith(
+            letterSpacing: 2.0,
+            color: AppColors.primary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: 40,
+          height: 1,
+          color: AppColors.primary.withOpacity(0.3),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncludedSection() {
+    final lines = <String>[];
+    if (detail.inclusions != null && detail.inclusions!.trim().isNotEmpty) {
+      lines.addAll(
+        detail.inclusions!
+            .split(RegExp(r'[\n•·]+'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Experience Inclusions'),
+        const SizedBox(height: 20),
+        if (lines.isNotEmpty)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 3,
+            ),
+            itemCount: lines.length,
+            itemBuilder: (context, index) => _inclusionTile(lines[index], index),
+          ),
+        if (detail.exclusions != null && detail.exclusions!.isNotEmpty) ...[
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.divider),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'LOGISTICS & NOTES',
+                      style: AppTextStyles.labelS.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  detail.exclusions!,
+                  style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _inclusionTile(String label, int index) {
+    final icon = _kInclusionRowIcons[index % _kInclusionRowIcons.length];
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          if (detail.inclusions != null && detail.inclusions!.isNotEmpty) ...[
-            Text(
-              'Inclusions',
-              style: AppTextStyles.headingS.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              detail.inclusions!,
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
               style: AppTextStyles.bodyM.copyWith(
-                color: AppColors.textSecondary,
-                height: 1.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            if (detail.exclusions != null &&
-                detail.exclusions!.isNotEmpty) ...[
-              const SizedBox(height: 20),
-            ],
-          ],
-          if (detail.exclusions != null && detail.exclusions!.isNotEmpty) ...[
-            Text(
-              'Exclusions',
-              style: AppTextStyles.headingS.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              detail.exclusions!,
-              style: AppTextStyles.bodyM.copyWith(
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBookCard(BuildContext context) {
+  Widget _buildProviderCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'TOTAL ESTIMATE',
-                style: AppTextStyles.labelS.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                detail.formattedPrice,
-                style: AppTextStyles.headingL.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Serif',
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            ),
+            child: const CircleAvatar(
+              radius: 32,
+              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'),
+            ),
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 20),
           Expanded(
-            child: BlocBuilder<AuthCubit, AuthState>(
-              builder: (context, authState) {
-                final isLoggedIn = authState is AuthAuthenticated;
-                return ElevatedButton.icon(
-                  onPressed: () {
-                    if (isLoggedIn) {
-                      context.push('/booking/$decorationId');
-                    } else {
-                      // Flipkart-style: after login user lands on booking. Use path-based
-                      // nextRoute so GoRouter redirect can navigate without context.go() from OTP.
-                      LoginRedirectData.pending = LoginRedirectData(
-                        nextRoute: '/booking/$decorationId',
-                        extra: null,
-                      );
-                      context.push('/login', extra: LoginRedirectData.pending);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  detail.providerName ?? 'Meeveduka Partner',
+                  style: AppTextStyles.headingM.copyWith(fontSize: 18),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Award-winning Design Studio',
+                  style: AppTextStyles.bodyS,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ...List.generate(
+                      5,
+                      (i) => Icon(Icons.star_rounded, size: 16, color: AppColors.primary.withOpacity(0.8)),
                     ),
-                  ),
-                  icon: const Icon(Icons.calendar_today, size: 20),
-                  label: Text(
-                    'Book This Service',
-                    style: AppTextStyles.buttonPrimary.copyWith(fontSize: 15),
-                  ),
-                );
-              },
+                    const SizedBox(width: 8),
+                    Text(
+                      '4.9',
+                      style: AppTextStyles.labelS.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

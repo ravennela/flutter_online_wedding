@@ -6,7 +6,8 @@ import 'package:flutter_online/features/auth/presentation/cubit/auth_cubit.dart'
 import 'package:flutter_online/features/auth/presentation/cubit/auth_state.dart';
 import 'package:flutter_online/features/auth/presentation/utils/auth_helpers.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/routes/app_routes.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 
 class OtpScreen extends StatefulWidget {
   final OtpScreenArgs args;
@@ -70,45 +71,51 @@ class _OtpScreenState extends State<OtpScreen> {
     context.read<AuthCubit>().verifyOtp(widget.args.phone, otp);
   }
 
- @override
-Widget build(BuildContext context) {
-  return BlocListener<AuthCubit, AuthState>(
-    listener: (context, state) {
-      if (state is AuthAuthenticated) {
-        onLoginSuccess(
-          context,
-          widget.args.redirectData,
-          userRole: state.user.role,
-        );
-      }
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          onLoginSuccess(
+            context,
+            widget.args.redirectData,
+            userRole: state.user.role,
+          );
+        }
 
-      if (state is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.message)),
-        );
-      }
-    },
-    child: Scaffold(
-      backgroundColor: const Color(0xFFF9F6F0),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 768) {
-            return _buildDesktopLayout();
-          } else {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth > 768) {
+              return _buildDesktopLayout();
+            }
             return _buildMobileLayout();
-          }
-        },
+          },
+        ),
       ),
-    ),
-  );
-}
-  // --- Desktop Layout ---
+    );
+  }
+
   Widget _buildDesktopLayout() {
     return Stack(
       children: [
         // Background
         Positioned.fill(
-          child: Container(color: const Color(0xFFF9F6F0)),
+          child: Container(color: AppColors.background),
         ),
         
         // Floating Back Button
@@ -127,17 +134,17 @@ Widget build(BuildContext context) {
             constraints: const BoxConstraints(maxHeight: 900),
             padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 56),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFC79A2B).withOpacity(0.08),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
+                  color: AppColors.primary.withOpacity(0.08),
+                  blurRadius: 32,
+                  offset: const Offset(0, 16),
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 10,
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
@@ -161,7 +168,7 @@ Widget build(BuildContext context) {
   // --- Mobile Layout ---
   Widget _buildMobileLayout() {
     return Container(
-      color: Colors.white,
+      color: AppColors.background,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,83 +222,72 @@ class _OtpFormContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const goldColor = Color(0xFFC79A2B); // Rich Gold // From Login Screen
-    const blueColor = Color(0xFF4285F4); // Google Blue, but matching design somewhat
-    // The design shows a blue button, let's stick to the Login Screen's gold theme for consistency 
-    // unless strictly asked to match the blue image. 
-    // "Match the attached OTP designs exactly (visual style, spacing, typography, colors)"
-    // The design images show:
-    // Image 1: Blue button (Verify & Continue), Blue text (Resend OTP).
-    // Image 2: Blue button (Verify & Continue).
-    // Okay, I will use the Blue color from the design images where appropriate, but maybe keep some gold accents if it makes sense?
-    // Actually, "Do NOT redesign or change UI style." suggests I should follow the image colors.
-    // The image has a very specific blue: #1A73E8 or similar.
-    final primaryColor = const Color(0xFF1A73E8); 
+    final accent = AppColors.primaryDark;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // 1. Lock Icon
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
-            shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(20),
+            color: AppColors.accentRose.withOpacity(0.55),
+            borderRadius: BorderRadius.circular(22),
           ),
           child: Center(
-            child: Icon(Icons.lock_person_outlined, color: primaryColor, size: 32),
+            child: Icon(
+              Icons.lock_person_outlined,
+              color: accent,
+              size: 32,
+            ),
           ),
         ),
-        
-        const SizedBox(height: 32),
-
-        // 2. Title
-        const Text(
-          "Verify OTP",
-          style: TextStyle(
+        const SizedBox(height: 28),
+        Text(
+          'Verify OTP',
+          style: AppTextStyles.headingXL.copyWith(
             fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1F36),
-            letterSpacing: -0.5,
+            fontStyle: FontStyle.normal,
           ),
         ),
-        const SizedBox(height: 12),
-        
-        // 3. Subtitle
+        const SizedBox(height: 8),
+        Text(
+          'Meeveduka',
+          style: AppTextStyles.labelM.copyWith(
+            color: AppColors.primary,
+            letterSpacing: 2,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 20),
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey.shade600,
+            style: AppTextStyles.bodyM.copyWith(
+              color: AppColors.textSecondary,
               height: 1.5,
-              fontFamily: 'Roboto', // Default flutter font, but explicit
             ),
             children: [
-              const TextSpan(text: "We’ve sent a 6-digit code to "),
+              const TextSpan(text: "We've sent a 6-digit code to "),
               TextSpan(
-                text: "+91 ${phone.length >= 8 ? '******${phone.substring(phone.length - 2)}' : phone}",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                text:
+                    "+91 ${phone.length >= 8 ? '******${phone.substring(phone.length - 2)}' : phone}",
+                style: AppTextStyles.bodyM.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
         ),
-
-        const SizedBox(height: 48),
-
-        // 4. OTP Inputs
+        const SizedBox(height: 40),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (index) {
             return SizedBox(
-              width: 50, // Slightly large for desktop, but fits mobile
-              height: 56,
+              width: 48,
+              height: 54,
               child: TextField(
                 controller: controllers[index],
                 focusNode: focusNodes[index],
@@ -299,19 +295,18 @@ class _OtpFormContent extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 maxLength: 1,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.headingXL.copyWith(fontSize: 22),
                 decoration: InputDecoration(
-                  counterText: "",
+                  counterText: '',
+                  filled: true,
+                  fillColor: AppColors.surfaceMuted,
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: primaryColor, width: 2),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: accent, width: 2),
                   ),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -319,74 +314,58 @@ class _OtpFormContent extends StatelessWidget {
                   if (value.isNotEmpty && index < 5) {
                     focusNodes[index + 1].requestFocus();
                   } else if (value.isEmpty && index > 0) {
-                     // Handle backspace logic if needed differently, but standard behavior usually works
-                     // To properly handle backspace on empty, we might need RawKeyboardListener, but simple is requested.
-                     focusNodes[index - 1].requestFocus();
+                    focusNodes[index - 1].requestFocus();
                   }
                 },
               ),
             );
           }),
         ),
-
-        const SizedBox(height: 40),
-
-        // 5. Action Button
+        const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 54,
           child: ElevatedButton(
             onPressed: onVerify,
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.buttonPrimary,
+              foregroundColor: AppColors.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(22),
               ),
             ),
-            child: const Text(
-              "Verify & Continue",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
+            child: Text(
+              'VERIFY & CONTINUE',
+              style: AppTextStyles.buttonPrimary.copyWith(fontSize: 13),
             ),
           ),
         ),
-
-        const SizedBox(height: 24),
-
-        // 6. Resend Timer
+        const SizedBox(height: 22),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Didn’t receive the code? ",
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
+              "Didn't receive the code? ",
+              style: AppTextStyles.bodyM.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
             GestureDetector(
               onTap: timerValue == 0 ? onResend : null,
               child: Text(
                 timerValue > 0
-                    ? "Resend in 00:${timerValue.toString().padLeft(2, '0')}"
-                    : "Resend OTP",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: timerValue == 0 ? primaryColor : Colors.grey.shade600,
+                    ? 'Resend in 00:${timerValue.toString().padLeft(2, '0')}'
+                    : 'Resend OTP',
+                style: AppTextStyles.bodyM.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: timerValue == 0 ? accent : AppColors.textSecondary,
                 ),
               ),
             ),
           ],
         ),
-        
-        // Footer spacing
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
       ],
     );
   }
@@ -398,19 +377,32 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          // No shadow in one design, slight shadow in other. Using subtle.
-          border: Border.all(color: Colors.white), // distinct from background if any
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_new,
+            size: 18,
+            color: AppColors.primaryDark,
+          ),
         ),
-        child: const Icon(Icons.arrow_back, size: 24, color: Colors.black),
       ),
     );
   }
