@@ -32,11 +32,11 @@ class _BookingPageState extends State<BookingPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => getIt<DecorationDetailCubit>()..loadDecorationDetail(widget.decorationId),
+          create: (_) =>
+              getIt<DecorationDetailCubit>()
+                ..loadDecorationDetail(widget.decorationId),
         ),
-        BlocProvider(
-          create: (_) => getIt<AddressCubit>()..fetchAddresses(),
-        ),
+        BlocProvider(create: (_) => getIt<AddressCubit>()..fetchAddresses()),
       ],
       child: Builder(
         builder: (context) {
@@ -47,15 +47,18 @@ class _BookingPageState extends State<BookingPage> {
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 20,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () {
-                  context.go('/decoration/${widget.decorationId}');
+                  context.go(
+                    AppRoutes.decorationDetailPath(widget.decorationId),
+                  );
                 },
               ),
-              title: Text(
-                'Reserve Experience',
-                style: AppTextStyles.headingM,
-              ),
+              title: Text('Reserve Experience', style: AppTextStyles.headingM),
               centerTitle: true,
             ),
             body: MultiBlocListener(
@@ -89,7 +92,11 @@ class _BookingPageState extends State<BookingPage> {
               child: BlocBuilder<DecorationDetailCubit, DecorationDetailState>(
                 builder: (context, state) {
                   if (state is DecorationDetailLoading) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    );
                   }
                   if (state is DecorationDetailError) {
                     return Center(child: Text('Error: ${state.message}'));
@@ -98,11 +105,20 @@ class _BookingPageState extends State<BookingPage> {
                     return LayoutBuilder(
                       builder: (layoutContext, constraints) {
                         if (constraints.maxWidth > 1000) {
-                          return _buildDesktopLayout(layoutContext, state.detail);
+                          return _buildDesktopLayout(
+                            layoutContext,
+                            state.detail,
+                          );
                         } else if (constraints.maxWidth > 700) {
-                          return _buildTabletLayout(layoutContext, state.detail);
+                          return _buildTabletLayout(
+                            layoutContext,
+                            state.detail,
+                          );
                         } else {
-                          return _buildMobileLayout(layoutContext, state.detail);
+                          return _buildMobileLayout(
+                            layoutContext,
+                            state.detail,
+                          );
                         }
                       },
                     );
@@ -119,7 +135,10 @@ class _BookingPageState extends State<BookingPage> {
 
   // --- Layouts ---
 
-  Widget _buildMobileLayout(BuildContext context, PublicDecorationDetail detail) {
+  Widget _buildMobileLayout(
+    BuildContext context,
+    PublicDecorationDetail detail,
+  ) {
     return Column(
       children: [
         Expanded(
@@ -133,14 +152,12 @@ class _BookingPageState extends State<BookingPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Venue Location",
-                      style: AppTextStyles.headingL,
-                    ),
+                    Text("Venue Location", style: AppTextStyles.headingL),
                     TextButton(
-                      onPressed: () => context.push(AppRoutes.addressList).then((_) {
-                        context.read<AddressCubit>().fetchAddresses();
-                      }),
+                      onPressed: () =>
+                          context.push(AppRoutes.addressList).then((_) {
+                            context.read<AddressCubit>().fetchAddresses();
+                          }),
                       child: Text(
                         'MANAGE',
                         style: AppTextStyles.labelS.copyWith(
@@ -155,13 +172,17 @@ class _BookingPageState extends State<BookingPage> {
                 const SizedBox(height: 8),
                 Text(
                   "Choose where you'd like your Meeveduka experience to be set up.",
-                  style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodyM.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 _buildAddressSelectionList(context),
-                _AddAddressButton(onTap: () => context.push(AppRoutes.addAddress).then((_) {
-                  context.read<AddressCubit>().fetchAddresses();
-                })),
+                _AddAddressButton(
+                  onTap: () => context.push(AppRoutes.addAddress).then((_) {
+                    context.read<AddressCubit>().fetchAddresses();
+                  }),
+                ),
                 const SizedBox(height: 48),
               ],
             ),
@@ -171,13 +192,15 @@ class _BookingPageState extends State<BookingPage> {
           onContinue: () {
             final addressState = context.read<AddressCubit>().state;
             if (addressState is AddressLoaded && selectedAddressId != null) {
-              final address = addressState.addresses.firstWhere((a) => a.id == selectedAddressId);
+              final address = addressState.addresses.firstWhere(
+                (a) => a.id == selectedAddressId,
+              );
               context.push(
-                AppRoutes.selectEventDate.replaceAll(':id', widget.decorationId),
-                extra: BookingArgs(
-                  decorationDetail: detail,
-                  address: address,
+                AppRoutes.selectEventDate.replaceAll(
+                  ':id',
+                  widget.decorationId,
                 ),
+                extra: BookingArgs(decorationDetail: detail, address: address),
               );
             }
           },
@@ -186,7 +209,10 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  Widget _buildTabletLayout(BuildContext context, PublicDecorationDetail detail) {
+  Widget _buildTabletLayout(
+    BuildContext context,
+    PublicDecorationDetail detail,
+  ) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 800),
@@ -203,14 +229,12 @@ class _BookingPageState extends State<BookingPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Venue Location",
-                          style: AppTextStyles.headingL,
-                        ),
+                        Text("Venue Location", style: AppTextStyles.headingL),
                         TextButton(
-                          onPressed: () => context.push(AppRoutes.addressList).then((_) {
-                            context.read<AddressCubit>().fetchAddresses();
-                          }),
+                          onPressed: () =>
+                              context.push(AppRoutes.addressList).then((_) {
+                                context.read<AddressCubit>().fetchAddresses();
+                              }),
                           child: Text(
                             'MANAGE ADDRESSES',
                             style: AppTextStyles.labelS.copyWith(
@@ -225,13 +249,17 @@ class _BookingPageState extends State<BookingPage> {
                     const SizedBox(height: 8),
                     Text(
                       "Specify the location where our experts will bring your chosen wedding theme to life.",
-                      style: AppTextStyles.bodyL.copyWith(color: AppColors.textSecondary),
+                      style: AppTextStyles.bodyL.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     _buildAddressSelectionList(context),
-                    _AddAddressButton(onTap: () => context.push(AppRoutes.addAddress).then((_) {
-                      context.read<AddressCubit>().fetchAddresses();
-                    })),
+                    _AddAddressButton(
+                      onTap: () => context.push(AppRoutes.addAddress).then((_) {
+                        context.read<AddressCubit>().fetchAddresses();
+                      }),
+                    ),
                     const SizedBox(height: 48),
                   ],
                 ),
@@ -240,10 +268,16 @@ class _BookingPageState extends State<BookingPage> {
             _StickyBottomBar(
               onContinue: () {
                 final addressState = context.read<AddressCubit>().state;
-                if (addressState is AddressLoaded && selectedAddressId != null) {
-                  final address = addressState.addresses.firstWhere((a) => a.id == selectedAddressId);
+                if (addressState is AddressLoaded &&
+                    selectedAddressId != null) {
+                  final address = addressState.addresses.firstWhere(
+                    (a) => a.id == selectedAddressId,
+                  );
                   context.push(
-                    AppRoutes.selectEventDate.replaceAll(':id', widget.decorationId),
+                    AppRoutes.selectEventDate.replaceAll(
+                      ':id',
+                      widget.decorationId,
+                    ),
                     extra: BookingArgs(
                       decorationDetail: detail,
                       address: address,
@@ -258,7 +292,10 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, PublicDecorationDetail detail) {
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    PublicDecorationDetail detail,
+  ) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
@@ -284,9 +321,10 @@ class _BookingPageState extends State<BookingPage> {
                             style: AppTextStyles.headingXL,
                           ),
                           TextButton(
-                            onPressed: () => context.push(AppRoutes.addressList).then((_) {
-                              context.read<AddressCubit>().fetchAddresses();
-                            }),
+                            onPressed: () =>
+                                context.push(AppRoutes.addressList).then((_) {
+                                  context.read<AddressCubit>().fetchAddresses();
+                                }),
                             child: Text(
                               'MANAGE ADDRESSES',
                               style: AppTextStyles.labelM.copyWith(
@@ -308,9 +346,12 @@ class _BookingPageState extends State<BookingPage> {
                       ),
                       const SizedBox(height: 48),
                       _buildAddressSelectionList(context),
-                      _AddAddressButton(onTap: () => context.push(AppRoutes.addAddress).then((_) {
-                        context.read<AddressCubit>().fetchAddresses();
-                      })),
+                      _AddAddressButton(
+                        onTap: () =>
+                            context.push(AppRoutes.addAddress).then((_) {
+                              context.read<AddressCubit>().fetchAddresses();
+                            }),
+                      ),
                     ],
                   ),
                 ),
@@ -330,12 +371,19 @@ class _BookingPageState extends State<BookingPage> {
                         onPressed: selectedAddressId == null
                             ? null
                             : () {
-                                final addressState = context.read<AddressCubit>().state;
+                                final addressState = context
+                                    .read<AddressCubit>()
+                                    .state;
                                 if (addressState is AddressLoaded) {
                                   final address = addressState.addresses
-                                      .firstWhere((a) => a.id == selectedAddressId);
+                                      .firstWhere(
+                                        (a) => a.id == selectedAddressId,
+                                      );
                                   context.push(
-                                    AppRoutes.selectEventDate.replaceAll(':id', widget.decorationId),
+                                    AppRoutes.selectEventDate.replaceAll(
+                                      ':id',
+                                      widget.decorationId,
+                                    ),
                                     extra: BookingArgs(
                                       decorationDetail: detail,
                                       address: address,
@@ -359,7 +407,9 @@ class _BookingPageState extends State<BookingPage> {
   Widget _buildAddressSelectionList(BuildContext context) {
     return BlocConsumer<AddressCubit, AddressState>(
       listener: (context, state) {
-        if (state is AddressLoaded && selectedAddressId == null && state.addresses.isNotEmpty) {
+        if (state is AddressLoaded &&
+            selectedAddressId == null &&
+            state.addresses.isNotEmpty) {
           final defaultAddr = state.addresses.any((a) => a.isDefault)
               ? state.addresses.firstWhere((a) => a.isDefault)
               : state.addresses.first;
@@ -370,16 +420,22 @@ class _BookingPageState extends State<BookingPage> {
         if (state is AddressLoading) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
-            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           );
         }
         if (state is AddressLoaded) {
           return Column(
-            children: state.addresses.map((addr) => _AddressCard(
-              address: addr,
-              isSelected: selectedAddressId == addr.id,
-              onTap: () => setState(() => selectedAddressId = addr.id),
-            )).toList(),
+            children: state.addresses
+                .map(
+                  (addr) => _AddressCard(
+                    address: addr,
+                    isSelected: selectedAddressId == addr.id,
+                    onTap: () => setState(() => selectedAddressId = addr.id),
+                  ),
+                )
+                .toList(),
           );
         }
         if (state is AddressEmpty) {
@@ -410,13 +466,14 @@ class _BookingPageState extends State<BookingPage> {
               color: AppColors.accentRose.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.location_off_outlined, size: 32, color: AppColors.primary),
+            child: const Icon(
+              Icons.location_off_outlined,
+              size: 32,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(height: 24),
-          Text(
-            "No saved locations",
-            style: AppTextStyles.headingS,
-          ),
+          Text("No saved locations", style: AppTextStyles.headingS),
           const SizedBox(height: 8),
           Text(
             "Add the address where you want us to create the magic.",
@@ -435,7 +492,10 @@ class _BookingProgressBar extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
 
-  const _BookingProgressBar({required this.currentStep, required this.totalSteps});
+  const _BookingProgressBar({
+    required this.currentStep,
+    required this.totalSteps,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -477,7 +537,9 @@ class _BookingProgressBar extends StatelessWidget {
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeOutCubic,
               height: 6,
-              width: MediaQuery.of(context).size.width * (currentStep / totalSteps),
+              width:
+                  MediaQuery.of(context).size.width *
+                  (currentStep / totalSteps),
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(3),
@@ -552,7 +614,10 @@ class _AddressCard extends StatelessWidget {
                         if (address.isDefault) ...[
                           const SizedBox(width: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accentRose.withOpacity(0.25),
                               borderRadius: BorderRadius.circular(6),
@@ -572,7 +637,9 @@ class _AddressCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       '${address.fullName} • ${address.mobileNumber}',
-                      style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
+                      style: AppTextStyles.bodyS.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -611,22 +678,32 @@ class _AddressCard extends StatelessWidget {
   Widget _buildMenu(BuildContext context) {
     return BlocBuilder<AddressCubit, AddressState>(
       builder: (context, state) {
-        final isDeleting = state is AddressDeleting && state.addressId == address.id;
+        final isDeleting =
+            state is AddressDeleting && state.addressId == address.id;
 
         if (isDeleting) {
           return const SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
           );
         }
 
         return PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: AppColors.textHint, size: 20),
+          icon: const Icon(
+            Icons.more_vert,
+            color: AppColors.textHint,
+            size: 20,
+          ),
           padding: EdgeInsets.zero,
           elevation: 8,
           offset: const Offset(0, 40),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           onSelected: (value) async {
             if (value == 'delete') {
               final confirmed = await _showDeleteConfirmation(context);
@@ -640,9 +717,16 @@ class _AddressCard extends StatelessWidget {
               value: 'delete',
               child: Row(
                 children: [
-                  const Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                  const Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: AppColors.error,
+                  ),
                   const SizedBox(width: 12),
-                  Text('Remove', style: AppTextStyles.bodyM.copyWith(color: AppColors.error)),
+                  Text(
+                    'Remove',
+                    style: AppTextStyles.bodyM.copyWith(color: AppColors.error),
+                  ),
                 ],
               ),
             ),
@@ -673,16 +757,30 @@ class _AddressCard extends StatelessWidget {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         title: Text('Remove Location', style: AppTextStyles.headingS),
-        content: Text('Are you sure you want to remove this address?', style: AppTextStyles.bodyM),
+        content: Text(
+          'Are you sure you want to remove this address?',
+          style: AppTextStyles.bodyM,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text('CANCEL', style: AppTextStyles.labelM.copyWith(color: AppColors.textSecondary)),
+            child: Text(
+              'CANCEL',
+              style: AppTextStyles.labelM.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text('REMOVE', style: AppTextStyles.labelM.copyWith(color: AppColors.error, fontWeight: FontWeight.w800)),
+            child: Text(
+              'REMOVE',
+              style: AppTextStyles.labelM.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
@@ -698,7 +796,9 @@ class _AddressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.accentRose.withOpacity(0.3) : AppColors.surface,
+        color: isSelected
+            ? AppColors.accentRose.withOpacity(0.3)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
@@ -738,7 +838,10 @@ class _AddAddressButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.add_location_alt_outlined, color: AppColors.primary),
+                const Icon(
+                  Icons.add_location_alt_outlined,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   'Add New Venue Location',
@@ -775,10 +878,17 @@ class _DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    path.addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(strokeWidth/2, strokeWidth/2, size.width - strokeWidth, size.height - strokeWidth),
-      Radius.circular(radius),
-    ));
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          strokeWidth / 2,
+          strokeWidth / 2,
+          size.width - strokeWidth,
+          size.height - strokeWidth,
+        ),
+        Radius.circular(radius),
+      ),
+    );
 
     final dashPath = _buildDashedPath(path, 12, 6);
     canvas.drawPath(dashPath, paint);
@@ -855,7 +965,11 @@ class _BookingSummaryCard extends StatelessWidget {
                     width: 70,
                     height: 70,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: AppColors.divider, width: 70, height: 70),
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.divider,
+                      width: 70,
+                      height: 70,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -880,7 +994,9 @@ class _BookingSummaryCard extends StatelessWidget {
                       ),
                       Text(
                         'By Meeveduka Curated',
-                        style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -903,11 +1019,16 @@ class _BookingSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   'Total Investment',
-                  style: AppTextStyles.bodyL.copyWith(fontWeight: FontWeight.w800),
+                  style: AppTextStyles.bodyL.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 Text(
                   '₹${(detail.price + 150).toInt()}',
-                  style: AppTextStyles.price.copyWith(fontSize: 24, color: AppColors.textPrimary),
+                  style: AppTextStyles.price.copyWith(
+                    fontSize: 24,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -931,8 +1052,14 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary)),
-          Text(value, style: AppTextStyles.bodyM.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
+          ),
+          Text(
+            value,
+            style: AppTextStyles.bodyM.copyWith(fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -952,10 +1079,7 @@ class _StickyBottomBar extends StatelessWidget {
         color: AppColors.background.withOpacity(0.95),
         border: const Border(top: BorderSide(color: AppColors.divider)),
       ),
-      child: PrimaryButton(
-        text: 'PROCEED TO CALENDAR',
-        onPressed: onContinue,
-      ),
+      child: PrimaryButton(text: 'PROCEED TO CALENDAR', onPressed: onContinue),
     );
   }
 }

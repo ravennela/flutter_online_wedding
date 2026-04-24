@@ -14,6 +14,7 @@ import 'package:flutter_online/features/decorations/presentation/cubit/decoratio
 import 'package:flutter_online/features/decorations/presentation/widgets/decoration_card.dart';
 import 'package:flutter_online/shared/widgets/error_widget.dart' as app_error;
 import 'package:go_router/go_router.dart';
+import 'package:flutter_online/core/routes/app_routes.dart';
 
 class DecorationListPage extends StatelessWidget {
   final String eventId;
@@ -96,22 +97,24 @@ class _DecorationListViewState extends State<_DecorationListView> {
         final cityId = cityState is CitySelected
             ? cityState.cityId
             : cityState is CityListLoaded
-                ? cityState.cityId
-                : null;
-        if (cityId != null && cityId.isNotEmpty && _lastLoadedCityId != cityId) {
+            ? cityState.cityId
+            : null;
+        if (cityId != null &&
+            cityId.isNotEmpty &&
+            _lastLoadedCityId != cityId) {
           _lastLoadedCityId = cityId;
           context.read<DecorationListCubit>().loadDecorations(
-                cityId: cityId,
-                eventTypeId: widget.eventId.isEmpty ? null : widget.eventId,
-              );
+            cityId: cityId,
+            eventTypeId: widget.eventId.isEmpty ? null : widget.eventId,
+          );
         }
       },
       builder: (context, cityState) {
         final cityId = cityState is CitySelected
             ? cityState.cityId
             : cityState is CityListLoaded
-                ? cityState.cityId
-                : null;
+            ? cityState.cityId
+            : null;
         final hasCity = cityId != null && cityId.isNotEmpty;
 
         if (hasCity && _lastLoadedCityId != cityId) {
@@ -120,10 +123,9 @@ class _DecorationListViewState extends State<_DecorationListView> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               context.read<DecorationListCubit>().loadDecorations(
-                    cityId: id,
-                    eventTypeId:
-                        widget.eventId.isEmpty ? null : widget.eventId,
-                  );
+                cityId: id,
+                eventTypeId: widget.eventId.isEmpty ? null : widget.eventId,
+              );
             }
           });
         }
@@ -146,8 +148,11 @@ class _DecorationListViewState extends State<_DecorationListView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.location_city,
-                        size: 64, color: AppColors.textHint),
+                    Icon(
+                      Icons.location_city,
+                      size: 64,
+                      color: AppColors.textHint,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Please select a city to view decorations',
@@ -189,7 +194,7 @@ class _DecorationListViewState extends State<_DecorationListView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
-              'assets/icon/app_logo.png',
+              'assets/veduka_logo.png',
               height: 26,
               fit: BoxFit.contain,
             ),
@@ -214,10 +219,12 @@ class _DecorationListViewState extends State<_DecorationListView> {
             return Center(
               child: app_error.ErrorWidget(
                 message: state.message,
-                onRetry: () => context.read<DecorationListCubit>().loadDecorations(
+                onRetry: () =>
+                    context.read<DecorationListCubit>().loadDecorations(
                       cityId: cityId,
-                      eventTypeId:
-                          widget.eventId.isEmpty ? null : widget.eventId,
+                      eventTypeId: widget.eventId.isEmpty
+                          ? null
+                          : widget.eventId,
                     ),
               ),
             );
@@ -227,8 +234,11 @@ class _DecorationListViewState extends State<_DecorationListView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.auto_awesome_mosaic_outlined,
-                      size: 48, color: AppColors.textHint),
+                  Icon(
+                    Icons.auto_awesome_mosaic_outlined,
+                    size: 48,
+                    color: AppColors.textHint,
+                  ),
                   const SizedBox(height: 16),
                   Text('No collections available', style: AppTextStyles.bodyL),
                 ],
@@ -237,8 +247,7 @@ class _DecorationListViewState extends State<_DecorationListView> {
           }
           if (state is DecorationListLoaded) {
             final filtered = _filtered(state.decorations);
-            final spotlight =
-                filtered.isNotEmpty ? filtered.first : null;
+            final spotlight = filtered.isNotEmpty ? filtered.first : null;
             final gridItems = filtered.length > 1
                 ? filtered.sublist(1)
                 : <PublicDecorationListItem>[];
@@ -258,26 +267,27 @@ class _DecorationListViewState extends State<_DecorationListView> {
                             Text(
                               'CURATED COLLECTIONS',
                               textAlign: TextAlign.center,
-                              style: AppTextStyles.labelM
-                                  .copyWith(letterSpacing: 2.4),
+                              style: AppTextStyles.labelM.copyWith(
+                                letterSpacing: 2.4,
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Text(
                               'Marriage Decorations',
                               textAlign: TextAlign.center,
                               style: AppTextStyles.headingXL.copyWith(
-                                fontSize:
-                                    MediaQuery.sizeOf(context).width > 600
-                                        ? 38
-                                        : 28,
+                                fontSize: MediaQuery.sizeOf(context).width > 600
+                                    ? 38
+                                    : 28,
                               ),
                             ),
                             const SizedBox(height: 14),
                             Text(
                               'Hand-selected installations and full-venue concepts — staged for clarity and effortless booking in your city.',
                               textAlign: TextAlign.center,
-                              style: AppTextStyles.bodyL
-                                  .copyWith(color: AppColors.textSecondary),
+                              style: AppTextStyles.bodyL.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             const SizedBox(height: 22),
                             SingleChildScrollView(
@@ -296,7 +306,8 @@ class _DecorationListViewState extends State<_DecorationListView> {
                                       child: InkWell(
                                         borderRadius: BorderRadius.circular(24),
                                         onTap: () => setState(
-                                            () => _selectedFilter = filter),
+                                          () => _selectedFilter = filter,
+                                        ),
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 18,
@@ -323,15 +334,15 @@ class _DecorationListViewState extends State<_DecorationListView> {
                               _SpotlightBannerDecoration(
                                 item: spotlight,
                                 onViewConcept: () => context.push(
-                                  '/decoration/${spotlight.id}',
+                                  AppRoutes.decorationDetailPath(spotlight.id),
                                 ),
                               ),
-                            if (spotlight != null)
-                              const SizedBox(height: 28),
+                            if (spotlight != null) const SizedBox(height: 28),
                             if (filtered.isEmpty)
                               Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 32),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 32,
+                                ),
                                 child: Text(
                                   'No concepts in this category yet.',
                                   textAlign: TextAlign.center,
@@ -356,24 +367,22 @@ class _DecorationListViewState extends State<_DecorationListView> {
                           child: LayoutBuilder(
                             builder: (context, constraints) {
                               final cw = constraints.maxWidth;
-                              final cols =
-                                  cw > 900 ? 3 : (cw > 560 ? 2 : 1);
+                              final cols = cw > 900 ? 3 : (cw > 560 ? 2 : 1);
                               const gap = 16.0;
                               return GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: cols,
-                                  mainAxisSpacing: gap,
-                                  crossAxisSpacing: gap,
-                                  childAspectRatio: 0.68,
-                                ),
+                                      crossAxisCount: cols,
+                                      mainAxisSpacing: gap,
+                                      crossAxisSpacing: gap,
+                                      childAspectRatio: 0.68,
+                                    ),
                                 itemCount: gridItems.length,
                                 itemBuilder: (context, index) {
                                   final raw = gridItems[index];
-                                  final item =
-                                      DecorationItem.fromPublic(raw);
+                                  final item = DecorationItem.fromPublic(raw);
                                   final fav = _favoriteIds.contains(item.id);
                                   return DecorationCard(
                                     item: item,
@@ -388,7 +397,7 @@ class _DecorationListViewState extends State<_DecorationListView> {
                                       });
                                     },
                                     onTap: () => context.push(
-                                      '/decoration/${raw.id}',
+                                      AppRoutes.decorationDetailPath(raw.id),
                                     ),
                                   );
                                 },
@@ -454,8 +463,7 @@ class _SpotlightBannerDecoration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deco = DecorationItem.fromPublic(item);
-    final imageUrl =
-        item.thumbnailUrl ?? DecorationItem.defaultImageUrl;
+    final imageUrl = item.thumbnailUrl ?? DecorationItem.defaultImageUrl;
     final desc =
         'Estate-scale concepts tailored to ${item.cityName.isNotEmpty ? item.cityName : 'your venue'} — florals, lighting, and flow designed for photography and guest comfort.';
 
@@ -518,7 +526,9 @@ class _SpotlightBannerDecoration extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             item.name,
-                            style: AppTextStyles.headingL.copyWith(fontSize: 22),
+                            style: AppTextStyles.headingL.copyWith(
+                              fontSize: 22,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -592,7 +602,10 @@ class _CollectionsFooter extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Image.asset('assets/icon/app_logo.png', height: 22),
+                              Image.asset(
+                                'assets/icon/app_logo.png',
+                                height: 22,
+                              ),
                               const SizedBox(width: 8),
                               Text('Meeveduka', style: AppTextStyles.headingS),
                             ],

@@ -100,7 +100,7 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/decoration/:id',
+      path: '${AppRoutes.decorationDetail}/:id',
       builder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
         return PublicDecorationDetailPage(decorationId: id);
@@ -117,8 +117,8 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: AppRoutes.adminBookingDetail,
       builder: (context, state) {
-        final bookingId = state.extra as String? ?? 
-                         (state.pathParameters['id']);
+        final bookingId =
+            state.extra as String? ?? (state.pathParameters['id']);
         return AdminBookingDetailPage(bookingId: bookingId);
       },
     ),
@@ -129,13 +129,15 @@ final GoRouter router = GoRouter(
         return MultiBlocProvider(
           providers: [
             BlocProvider(
-              create: (_) => getIt<AdminBookingDetailBloc>()..add(FetchBookingDetail(bookingId!)),
+              create: (_) =>
+                  getIt<AdminBookingDetailBloc>()
+                    ..add(FetchBookingDetail(bookingId!)),
             ),
+            BlocProvider(create: (_) => getIt<VendorBloc>()),
             BlocProvider(
-              create: (_) => getIt<VendorBloc>(),
-            ),
-            BlocProvider(
-              create: (_) => getIt<AdminDecorationListBloc>()..add(LoadAdminDecorations(size: 100)),
+              create: (_) =>
+                  getIt<AdminDecorationListBloc>()
+                    ..add(LoadAdminDecorations(size: 100)),
             ),
           ],
           child: EditBookingPage(bookingId: bookingId!),
@@ -147,7 +149,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         final args = state.extra;
         if (args is! SelectVendorArgs) {
-             return _buildSessionExpiredFallback(context);
+          return _buildSessionExpiredFallback(context);
         }
         return SelectVendorScreen(args: args);
       },
@@ -219,11 +221,15 @@ final GoRouter router = GoRouter(
               final pending = LoginRedirectData.pending;
               if (pending != null) {
                 LoginRedirectData.pending = null;
-                GoRouter.of(context).go(pending.nextRoute, extra: pending.extra);
+                GoRouter.of(
+                  context,
+                ).go(pending.nextRoute, extra: pending.extra);
               } else {
                 final role = (currentAuthState as AuthAuthenticated).user.role;
                 final isAdmin = role.toUpperCase() == 'ADMIN';
-                GoRouter.of(context).go(isAdmin ? AppRoutes.adminDashboard : AppRoutes.splash);
+                GoRouter.of(
+                  context,
+                ).go(isAdmin ? AppRoutes.adminDashboard : AppRoutes.splash);
               }
             } else if (currentAuthState is! AuthLoading) {
               GoRouter.of(context).go(AppRoutes.login);
@@ -254,8 +260,8 @@ final GoRouter router = GoRouter(
         final id = state.pathParameters['id'] ?? '';
         final args = state.extra;
         if (args is! BookingArgs) {
-           if (id.isEmpty) return _buildSessionExpiredFallback(context);
-           return BookingPage(decorationId: id);
+          if (id.isEmpty) return _buildSessionExpiredFallback(context);
+          return BookingPage(decorationId: id);
         }
         return MultiBlocProvider(
           providers: [
@@ -299,28 +305,30 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '${AppRoutes.adminDecorationsDetail}/:id',
       builder: (context, state) {
-        final decorationId = state.pathParameters['id'] ?? state.extra as String? ?? '';
-        return DecorationDetailPage( decorationId: decorationId,);
+        final decorationId =
+            state.pathParameters['id'] ?? state.extra as String? ?? '';
+        return DecorationDetailPage(decorationId: decorationId);
       },
     ),
 
     GoRoute(
       path: '${AppRoutes.editDeceoration}/:id',
       builder: (context, state) {
-        final decorationId = state.pathParameters['id'] ?? state.extra as String? ?? '';
+        final decorationId =
+            state.pathParameters['id'] ?? state.extra as String? ?? '';
         return MultiBlocProvider(
           providers: [
             BlocProvider(
               create: (_) =>
-                  getIt<CreateDecorationBloc>()..add(const LoadEventTypesAndCities()),
+                  getIt<CreateDecorationBloc>()
+                    ..add(const LoadEventTypesAndCities()),
             ),
             BlocProvider(
-              create: (_) => getIt<DecorationDetailBloc>()
-                ..add(LoadDecorationDetail(decorationId)),
+              create: (_) =>
+                  getIt<DecorationDetailBloc>()
+                    ..add(LoadDecorationDetail(decorationId)),
             ),
-            BlocProvider(
-              create: (_) => getIt<UpdateDecorationBloc>(),
-            ),
+            BlocProvider(create: (_) => getIt<UpdateDecorationBloc>()),
           ],
           child: EditDecerationPage(decorationId: decorationId),
         );
@@ -376,7 +384,9 @@ final GoRouter router = GoRouter(
       return null;
     }
 
-    if (isOtp && authState is! AuthAuthenticated && state.extra is! OtpScreenArgs) {
+    if (isOtp &&
+        authState is! AuthAuthenticated &&
+        state.extra is! OtpScreenArgs) {
       return AppRoutes.login;
     }
 
@@ -470,7 +480,9 @@ Widget _buildSessionExpiredFallback(BuildContext context) {
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'Back to Home',
