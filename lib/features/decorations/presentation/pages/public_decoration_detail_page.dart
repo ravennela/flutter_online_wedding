@@ -17,13 +17,6 @@ import 'package:go_router/go_router.dart';
 const String _defaultDetailImage =
     'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';
 
-const List<IconData> _kInclusionRowIcons = [
-  Icons.local_florist_outlined,
-  Icons.lightbulb_outline,
-  Icons.weekend_outlined,
-  Icons.auto_fix_high_outlined,
-];
-
 class PublicDecorationDetailPage extends StatelessWidget {
   final String decorationId;
 
@@ -72,16 +65,16 @@ class _PublicDecorationDetailView extends StatelessWidget {
       ),
       bottomNavigationBar:
           BlocBuilder<DecorationDetailCubit, DecorationDetailState>(
-        builder: (context, state) {
-          if (state is! DecorationDetailLoaded) {
-            return const SizedBox.shrink();
-          }
-          return _StickyBookBar(
-            detail: state.detail,
-            decorationId: decorationId,
-          );
-        },
-      ),
+            builder: (context, state) {
+              if (state is! DecorationDetailLoaded) {
+                return const SizedBox.shrink();
+              }
+              return _StickyBookBar(
+                detail: state.detail,
+                decorationId: decorationId,
+              );
+            },
+          ),
     );
   }
 }
@@ -90,10 +83,7 @@ class _StickyBookBar extends StatelessWidget {
   final PublicDecorationDetail detail;
   final String decorationId;
 
-  const _StickyBookBar({
-    required this.detail,
-    required this.decorationId,
-  });
+  const _StickyBookBar({required this.detail, required this.decorationId});
 
   @override
   Widget build(BuildContext context) {
@@ -112,14 +102,17 @@ class _StickyBookBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(
+                  Text(
                     'TOTAL COST',
                     style: AppTextStyles.labelS.copyWith(letterSpacing: 1.0),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     detail.formattedPrice,
-                    style: AppTextStyles.price.copyWith(fontSize: 20, color: AppColors.textPrimary),
+                    style: AppTextStyles.price.copyWith(
+                      fontSize: 20,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -137,7 +130,10 @@ class _StickyBookBar extends StatelessWidget {
                             nextRoute: '/booking/$decorationId',
                             extra: null,
                           );
-                          context.push('/login', extra: LoginRedirectData.pending);
+                          context.push(
+                            '/login',
+                            extra: LoginRedirectData.pending,
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -200,7 +196,8 @@ class _DetailContent extends StatelessWidget {
                     const SizedBox(height: 32),
                     _buildTitleSection(),
                     const SizedBox(height: 40),
-                    if (detail.description != null && detail.description!.isNotEmpty) ...[
+                    if (detail.description != null &&
+                        detail.description!.isNotEmpty) ...[
                       _buildSectionTitle('The Vision'),
                       const SizedBox(height: 12),
                       Text(
@@ -217,11 +214,14 @@ class _DetailContent extends StatelessWidget {
                       _buildIncludedSection(),
                       const SizedBox(height: 48),
                     ],
-                    if (detail.providerName != null && detail.providerName!.trim().isNotEmpty) ...[
+                    if (detail.providerName != null &&
+                        detail.providerName!.trim().isNotEmpty) ...[
                       _buildSectionTitle('The Artist'),
                       const SizedBox(height: 20),
                       _buildProviderCard(),
-                      const SizedBox(height: 120), // Bottom padding for sticky bar
+                      const SizedBox(
+                        height: 120,
+                      ), // Bottom padding for sticky bar
                     ],
                   ],
                 ),
@@ -253,7 +253,7 @@ class _DetailContent extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(
-            'assets/icon/app_logo.png',
+            'assets/veduka_logo.png',
             height: 24,
             fit: BoxFit.contain,
           ),
@@ -282,17 +282,18 @@ class _DetailContent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 child: PageView.builder(
                   itemCount: total,
-                  itemBuilder: (context, index) => Image.network(
-                    urls[index],
-                    fit: BoxFit.cover,
-                  ),
+                  itemBuilder: (context, index) =>
+                      Image.network(urls[index], fit: BoxFit.cover),
                 ),
               ),
               Positioned(
                 bottom: 20,
                 right: 20,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(20),
@@ -301,7 +302,11 @@ class _DetailContent extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.photo_library_outlined, size: 14, color: Colors.white),
+                      const Icon(
+                        Icons.photo_library_outlined,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '1 / $total',
@@ -335,10 +340,7 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           detail.name,
-          style: AppTextStyles.headingXL.copyWith(
-            fontSize: 34,
-            height: 1.1,
-          ),
+          style: AppTextStyles.headingXL.copyWith(fontSize: 34, height: 1.1),
         ),
         const SizedBox(height: 16),
         Row(
@@ -346,14 +348,19 @@ class _DetailContent extends StatelessWidget {
           children: [
             Text(
               detail.formattedPrice,
-              style: AppTextStyles.price.copyWith(fontSize: 28, color: AppColors.textPrimary),
+              style: AppTextStyles.price.copyWith(
+                fontSize: 28,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(width: 8),
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 'starting investment',
-                style: AppTextStyles.labelM.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.labelM.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],
@@ -404,92 +411,54 @@ class _DetailContent extends StatelessWidget {
   }
 
   Widget _buildIncludedSection() {
-    final lines = <String>[];
-    if (detail.inclusions != null && detail.inclusions!.trim().isNotEmpty) {
-      lines.addAll(
-        detail.inclusions!
-            .split(RegExp(r'[\n•·]+'))
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Experience Inclusions'),
-        const SizedBox(height: 20),
-        if (lines.isNotEmpty)
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 3,
-            ),
-            itemCount: lines.length,
-            itemBuilder: (context, index) => _inclusionTile(lines[index], index),
+        if (detail.inclusions != null &&
+            detail.inclusions!.trim().isNotEmpty) ...[
+          _buildInfoCard(
+            'EXPERIENCE INCLUSIONS',
+            detail.inclusions!,
+            Icons.check_circle_outline,
           ),
-        if (detail.exclusions != null && detail.exclusions!.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.divider),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 18, color: AppColors.primary),
-                    const SizedBox(width: 10),
-                    Text(
-                      'LOGISTICS & NOTES',
-                      style: AppTextStyles.labelS.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  detail.exclusions!,
-                  style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
+        ],
+        if (detail.exclusions != null &&
+            detail.exclusions!.trim().isNotEmpty) ...[
+          if (detail.inclusions != null && detail.inclusions!.trim().isNotEmpty)
+            const SizedBox(height: 20),
+          _buildInfoCard('EXCLUSIONS', detail.exclusions!, Icons.info_outline),
         ],
       ],
     );
   }
 
-  Widget _inclusionTile(String label, int index) {
-    final icon = _kInclusionRowIcons[index % _kInclusionRowIcons.length];
+  Widget _buildInfoCard(String title, String content, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surfaceMuted.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.divider),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.bodyM.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+          Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: AppTextStyles.labelS.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            content,
+            style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -521,7 +490,9 @@ class _DetailContent extends StatelessWidget {
             ),
             child: const CircleAvatar(
               radius: 32,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'),
+              backgroundImage: NetworkImage(
+                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
+              ),
             ),
           ),
           const SizedBox(width: 20),
@@ -534,21 +505,24 @@ class _DetailContent extends StatelessWidget {
                   style: AppTextStyles.headingM.copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Award-winning Design Studio',
-                  style: AppTextStyles.bodyS,
-                ),
+                Text('Award-winning Design Studio', style: AppTextStyles.bodyS),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     ...List.generate(
                       5,
-                      (i) => Icon(Icons.star_rounded, size: 16, color: AppColors.primary.withOpacity(0.8)),
+                      (i) => Icon(
+                        Icons.star_rounded,
+                        size: 16,
+                        color: AppColors.primary.withOpacity(0.8),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '4.9',
-                      style: AppTextStyles.labelS.copyWith(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.labelS.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
