@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/whatsapp_constants.dart';
 import '../../core/services/whatsapp_service.dart';
 
 /// A modern, responsive floating action button that opens WhatsApp.
 /// Works smoothly across Android, iOS, and Web environments.
-/// 
+///
 /// Note: To use this widget, wrap it in an overarching Stack or
 /// put it in the floatingActionButton slot of a Scaffold.
 /// For raw positioning on the bottom right of any screen,
@@ -20,7 +21,7 @@ class _WhatsAppFloatingButtonState extends State<WhatsAppFloatingButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  
+
   // Track hover state for Flutter Web
   bool _isHovered = false;
 
@@ -67,7 +68,8 @@ class _WhatsAppFloatingButtonState extends State<WhatsAppFloatingButton>
     );
 
     // If WhatsApp failed to open (e.g. app not installed, permissions, etc.)
-    if (!success && mounted) {
+    if (!success) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -110,8 +112,8 @@ class _WhatsAppFloatingButtonState extends State<WhatsAppFloatingButton>
             borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(
-            color: Colors.white, 
-            fontSize: 12, 
+            color: Colors.white,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -125,37 +127,31 @@ class _WhatsAppFloatingButtonState extends State<WhatsAppFloatingButton>
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
                 // Grow slightly on hover for Web
-                transform: Matrix4.identity()..scale(_isHovered ? 1.05 : 1.0),
+                transform: Matrix4.diagonal3Values(
+                  _isHovered ? 1.05 : 1.0,
+                  _isHovered ? 1.05 : 1.0,
+                  1.0,
+                ),
                 transformAlignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   // Smooth material design shadow effect
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF25D366).withOpacity(_isHovered ? 0.6 : 0.3),
+                      color: const Color(
+                        0xFF25D366,
+                      ).withValues(alpha: _isHovered ? 0.6 : 0.3),
                       blurRadius: _isHovered ? 20 : 12,
                       offset: const Offset(0, 6),
                       spreadRadius: _isHovered ? 4 : 0,
                     ),
                   ],
                 ),
-                // Core WhatsApp icon using standard Material conventions
-                child: Container(
+                // The SVG handles its own colors and circular background
+                child: SvgPicture.asset(
+                  'assets/whatsapp-svgrepo-com.svg',
                   width: 60,
                   height: 60,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF25D366), // Official WhatsApp Green
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      // Using a fallback chat icon since there is no native WhatsApp icon
-                      // in the standard Flutter Material icons.
-                      Icons.chat_bubble_rounded, 
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
                 ),
               ),
             ),
